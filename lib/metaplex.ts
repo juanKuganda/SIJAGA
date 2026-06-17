@@ -12,38 +12,124 @@ import {
 import { Keypair } from "@solana/web3.js";
 import bs58 from "bs58";
 
+// Retry configuration
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 2000; // 2 seconds between retries
+
+/**
+ * Helper: sleep for ms
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Custom fetch wrapper with retry logic and timeout
+ * Solana Devnet public RPC sering rate-limited / timeout,
+ * jadi kita perlu retry mechanism.
+ */
+function createFetchWithRetry(maxRetries = MAX_RETRIES) {
+  return async (
+    input: RequestInfo | URL,
+    init?: RequestInit
+  ): Promise<Response> => {
+    let lastError: Error | null = null;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+
+        const response = await fetch(input, {
+          ...init,
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        // Check for rate limiting (HTTP 429)
+        if (response.status === 429) {
+          console.warn(
+            `[Metaplex] Rate limited (429), retry ${attempt}/${maxRetries}...`
+          );
+          if (attempt < maxRetries) {
+            await sleep(RETRY_DELAY_MS * attempt); // Exponential backoff
+            continue;
+          }
+        }
+
+        return response;
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+        console.warn(
+          `[Metaplex] Fetch attempt ${attempt}/${maxRetries} failed:`,
+          lastError.message
+        );
+
+        if (attempt < maxRetries) {
+          await sleep(RETRY_DELAY_MS * attempt);
+        }
+      }
+    }
+
+    throw new Error(
+      `Fetch failed after ${maxRetries} retries. Last error: ${lastError?.message || "unknown"}`
+    );
+  };
+}
+
 /**
  * Inisialisasi Umi instance untuk Metaplex
+ * Menggunakan custom fetch dengan retry logic
  */
 export function createUmiInstance() {
   const rpcUrl =
     process.env.NEXT_PUBLIC_SOLANA_RPC || "https://api.devnet.solana.com";
-  const umi = createUmi(rpcUrl).use(mplTokenMetadata());
+
+  console.log("[Metaplex] Using RPC:", rpcUrl);
+
+  const umi = createUmi(rpcUrl, {
+    httpHeaders: {},
+    fetch: createFetchWithRetry(MAX_RETRIES),
+  }).use(mplTokenMetadata());
+
   return umi;
 }
 
 /**
  * Get admin keypair dari environment variable
+ *
+ * Support 2 format:
+ * 1. Base58 string (contoh: "3wHg7...")
+ * 2. JSON array (contoh: "[123,45,67,...]")
  */
 export function getAdminKeypair(): Keypair {
-  const privateKeyJson = process.env.ADMIN_WALLET_PRIVATE_KEY;
-  if (!privateKeyJson) {
+  const privateKey = process.env.ADMIN_WALLET_PRIVATE_KEY;
+  if (!privateKey) {
     throw new Error("ADMIN_WALLET_PRIVATE_KEY tidak ditemukan");
   }
 
   try {
-    const secretKey = Uint8Array.from(JSON.parse(privateKeyJson));
-    return Keypair.fromSecretKey(secretKey);
-  } catch {
-    throw new Error("Format ADMIN_WALLET_PRIVATE_KEY tidak valid");
+    // Coba parse sebagai JSON array dulu
+    if (privateKey.startsWith("[")) {
+      const secretKey = Uint8Array.from(JSON.parse(privateKey));
+      return Keypair.fromSecretKey(secretKey);
+    }
+
+    // Jika bukan array, anggap base58 string
+    const decoded = bs58.decode(privateKey);
+    return Keypair.fromSecretKey(decoded);
+  } catch (error) {
+    console.error("Error parsing private key:", error);
+    throw new Error(
+      "Format ADMIN_WALLET_PRIVATE_KEY tidak valid. Gunakan base58 string atau JSON array."
+    );
   }
 }
 
 /**
  * Mint NFT Soulbound (non-transferable)
- *
- * Note: Untuk production, implementasi lengkap Metaplex diperlukan.
- * Fungsi ini adalah placeholder yang menunjukkan struktur dasar.
+ * Menggunakan Metaplex UMI untuk mint NFT di Solana Devnet.
  */
 export async function mintSoulboundNFT(data: {
   nama: string;
@@ -54,8 +140,15 @@ export async function mintSoulboundNFT(data: {
   walletTujuan: string;
 }) {
   try {
+    console.log("[Metaplex] Starting NFT mint for:", data.nama);
+
     const umi = createUmiInstance();
     const adminKeypair = getAdminKeypair();
+
+    console.log(
+      "[Metaplex] Admin wallet:",
+      adminKeypair.publicKey.toBase58()
+    );
 
     // Convert keypair ke format Umi dan set sebagai identity
     const umiKeypair = umi.eddsa.createKeypairFromSecretKey(
@@ -68,6 +161,10 @@ export async function mintSoulboundNFT(data: {
     // Generate new signer untuk mint NFT
     const mintSigner = generateSigner(umi);
 
+    console.log("[Metaplex] Mint address:", mintSigner.publicKey);
+    console.log("[Metaplex] Recipient:", data.walletTujuan);
+    console.log("[Metaplex] Metadata URI:", data.metadataUri);
+
     // Create NFT dengan Metaplex
     const result = await createNft(umi, {
       mint: mintSigner,
@@ -77,20 +174,46 @@ export async function mintSoulboundNFT(data: {
       sellerFeeBasisPoints: percentAmount(0), // Tidak ada royalti (Soulbound)
       tokenOwner: recipient,
       isMutable: false, // Metadata tidak bisa diubah setelah mint (Soulbound)
-    }).sendAndConfirm(umi);
+    }).sendAndConfirm(umi, {
+      send: { commitment: "finalized" },
+      confirm: { commitment: "finalized" },
+    });
 
     // Convert signature dari Uint8Array ke base58 string
     const signatureBase58 = bs58.encode(result.signature);
+    const mintAddress = mintSigner.publicKey.toString();
+
+    console.log("[Metaplex] NFT minted successfully!");
+    console.log("[Metaplex] Signature:", signatureBase58);
+    console.log("[Metaplex] Mint address:", mintAddress);
 
     return {
       success: true,
       signature: signatureBase58,
+      mintAddress,
     };
   } catch (error) {
-    console.error("Error minting NFT:", error);
+    console.error("[Metaplex] Error minting NFT:", error);
+
+    // Provide more helpful error messages
+    let errorMessage = "Gagal mint NFT";
+    if (error instanceof Error) {
+      if (error.message.includes("fetch failed") || error.message.includes("blockhash")) {
+        errorMessage =
+          "Koneksi ke Solana Devnet gagal. Coba lagi dalam beberapa detik. Jika terus gagal, gunakan RPC provider seperti Helius (gratis).";
+      } else if (error.message.includes("insufficient")) {
+        errorMessage =
+          "Saldo SOL wallet admin tidak cukup. Tambahkan SOL devnet via https://faucet.solana.com";
+      } else if (error.message.includes("private key") || error.message.includes("ADMIN_WALLET")) {
+        errorMessage = error.message;
+      } else {
+        errorMessage = error.message;
+      }
+    }
+
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Gagal mint NFT",
+      error: errorMessage,
     };
   }
 }

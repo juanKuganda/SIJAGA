@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
     const certificate = await prisma.certificate.upsert({
       where: { userId },
       update: {
-        nftAddress: mintResult.signature, // Note: ini seharusnya NFT address, bukan signature
+        nftAddress: mintResult.mintAddress || mintResult.signature,
         metadataUri,
         txSignature: mintResult.signature,
         status: "MINTED",
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
       },
       create: {
         userId,
-        nftAddress: mintResult.signature,
+        nftAddress: mintResult.mintAddress || mintResult.signature,
         metadataUri,
         txSignature: mintResult.signature,
         status: "MINTED",
