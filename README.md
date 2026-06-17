@@ -1,36 +1,195 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SIJAGA
+
+**Sistem Jaminan Autentikasi Gelar Akademik**
+
+Verifikasi ijazah anti-pemalsuan berbasis NFT Soulbound pada blockchain Solana.
+
+Universitas Tadulako | Tugas Akhir S1 Informatika
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Frontend | Next.js 14 (App Router), TypeScript, Tailwind CSS |
+| Backend | Next.js API Routes |
+| Database | SQLite (dev) / PostgreSQL (prod) via Prisma ORM |
+| Blockchain | Solana Devnet |
+| NFT | Metaplex (Umi + Token Metadata) |
+| Storage | Pinata (IPFS) |
+| Auth | JWT + bcryptjs |
+
+---
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18+
+- pnpm (recommended) or npm
+
+### Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+# Clone repository
+git clone <repository-url>
+cd sijaga
+
+# Install dependencies
+pnpm install
+
+# Setup environment variables
+cp .env.example .env
+# Edit .env dengan konfigurasi Anda
+
+# Push database schema
+npx prisma db push
+
+# Seed database dengan data test
+npx tsx prisma/seed.ts
+
+# Jalankan development server
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Login Credentials (Test Data)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Role | NIM | Password |
+|------|-----|----------|
+| Admin | ADMIN001 | admin123 |
+| Mahasiswa | H071211001 | mahasiswa123 |
+| Mahasiswa | H071211002 | mahasiswa123 |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## Fitur
 
-To learn more about Next.js, take a look at the following resources:
+### Admin Kampus
+- Dashboard statistik (total mahasiswa, wallet status, ijazah status)
+- Kelola data mahasiswa (search, filter)
+- Verifikasi/approve/reject wallet mahasiswa
+- Terbitkan NFT ijazah Soulbound
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Mahasiswa
+- Profil dan status ijazah
+- Daftarkan wallet Phantom
+- Status wallet (pending/verified/rejected)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Verifikasi Publik
+- Cek keaslian ijazah berdasarkan alamat wallet
+- Tampilkan data ijazah dari blockchain
+- Link ke Solana Explorer
 
-## Deploy on Vercel
+### Blinks (Klaim Ijazah)
+- Preview kartu ijazah
+- Klaim NFT ke wallet mahasiswa
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## API Endpoints
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | /api/auth/login | Public | Login user |
+| POST | /api/auth/logout | User | Logout |
+| GET | /api/auth/me | User | Get current user |
+| POST | /api/wallet/register | Mahasiswa | Daftar wallet |
+| GET | /api/wallet/status | Mahasiswa | Status wallet |
+| POST | /api/wallet/verify | Admin | Approve/reject wallet |
+| POST | /api/nft/mint | Admin | Mint NFT ijazah |
+| GET | /api/nft/status | Mahasiswa | Status NFT |
+| GET | /api/verify?wallet=xxx | Public | Verifikasi publik |
+| GET | /api/actions/claim?nim=xxx | Public | Blinks preview |
+| POST | /api/actions/claim?nim=xxx | Public | Klaim ijazah |
+| GET | /api/admin/stats | Admin | Dashboard stats |
+| GET | /api/admin/mahasiswa | Admin | List mahasiswa |
+
+---
+
+## Project Structure
+
+```
+sijaga/
+├── app/                    # Next.js App Router
+│   ├── (auth)/            # Auth pages (login)
+│   ├── (admin)/           # Admin pages (dashboard, mahasiswa, terbitkan)
+│   ├── (mahasiswa)/       # Mahasiswa pages (profil, wallet)
+│   ├── verifikasi/        # Public verification page
+│   └── api/               # API routes
+├── components/            # React components
+│   └── ui/                # Reusable UI components
+├── lib/                   # Utility functions
+│   ├── auth.ts            # Authentication utilities
+│   ├── prisma.ts          # Prisma client
+│   ├── solana.ts          # Solana connection
+│   ├── metaplex.ts        # Metaplex NFT minting
+│   ├── pinata.ts          # Pinata IPFS upload
+│   └── validation.ts      # Zod schemas
+├── prisma/                # Database schema & seed
+├── .paul/                 # PAUL project management
+└── projects/              # SEED planning docs
+```
+
+---
+
+## Environment Variables
+
+```env
+# Database
+DATABASE_URL="file:./dev.db"
+
+# Auth
+JWT_SECRET="your-jwt-secret"
+
+# Solana
+NEXT_PUBLIC_SOLANA_NETWORK="devnet"
+NEXT_PUBLIC_SOLANA_RPC="https://api.devnet.solana.com"
+ADMIN_WALLET_PRIVATE_KEY=""
+
+# Pinata (IPFS)
+PINATA_JWT=""
+NEXT_PUBLIC_PINATA_GATEWAY="https://gateway.pinata.cloud"
+
+# App
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+```
+
+---
+
+## Deployment
+
+### Vercel
+
+1. Push ke GitHub
+2. Import repository di Vercel
+3. Setup environment variables
+4. Deploy
+
+### Database Production
+
+Untuk production, migrasi dari SQLite ke PostgreSQL:
+
+1. Setup Vercel Postgres atau Neon
+2. Update `DATABASE_URL` di environment variables
+3. Update `provider` di `prisma/schema.prisma` ke `"postgresql"`
+4. Run `npx prisma db push`
+
+---
+
+## Dokumen Proyek
+
+- [PRD.md](PRD.md) — Product Requirements Document
+- [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) — Implementation Plan
+- [TRD.md](TRD.md) — Technical Requirements Document
+- [projects/sijaga/PLANNING.md](projects/sijaga/PLANNING.md) — SEED Planning Document
+
+---
+
+## License
+
+Tugas Akhir S1 Informatika — Universitas Tadulako
+
+---
+
+*Built with Next.js, Solana, and Metaplex*
