@@ -3,7 +3,9 @@ import jwt from "jsonwebtoken";
 import { prisma } from "./prisma";
 import { Role } from "@prisma/client";
 
-const JWT_SECRET = process.env.JWT_SECRET || "sijaga-jwt-secret-key";
+const JWT_SECRET: string = process.env.JWT_SECRET ?? (() => {
+  throw new Error("JWT_SECRET tidak ditemukan di environment variables. Set di .env.local");
+})();
 
 export interface JWTPayload {
   userId: string;

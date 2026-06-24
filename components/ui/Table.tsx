@@ -8,7 +8,7 @@ interface TableProps {
 export default function Table({ children, className = "" }: TableProps) {
   return (
     <div className="overflow-x-auto">
-      <table className={`min-w-full divide-y divide-gray-200 ${className}`}>
+      <table className={`min-w-full divide-y divide-[#27272A] ${className}`}>
         {children}
       </table>
     </div>
@@ -22,7 +22,7 @@ export function TableHeader({
   children: ReactNode;
   className?: string;
 }) {
-  return <thead className={`bg-gray-50 ${className}`}>{children}</thead>;
+  return <thead className={`bg-[#0A0A0F]/60 ${className}`}>{children}</thead>;
 }
 
 export function TableBody({
@@ -33,7 +33,7 @@ export function TableBody({
   className?: string;
 }) {
   return (
-    <tbody className={`bg-white divide-y divide-gray-200 ${className}`}>
+    <tbody className={`divide-y divide-[#27272A] ${className}`}>
       {children}
     </tbody>
   );
@@ -46,7 +46,11 @@ export function TableRow({
   children: ReactNode;
   className?: string;
 }) {
-  return <tr className={className}>{children}</tr>;
+  return (
+    <tr className={`hover:bg-white/[0.02] transition-colors ${className}`}>
+      {children}
+    </tr>
+  );
 }
 
 export function TableHead({
@@ -58,7 +62,7 @@ export function TableHead({
 }) {
   return (
     <th
-      className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${className}`}
+      className={`px-6 py-3 text-left text-xs font-medium text-[#71717A] uppercase tracking-wider ${className}`}
     >
       {children}
     </th>
@@ -73,7 +77,7 @@ export function TableCell({
   className?: string;
 }) {
   return (
-    <td className={`px-6 py-4 whitespace-nowrap text-sm ${className}`}>
+    <td className={`px-6 py-4 whitespace-nowrap text-sm text-[#A1A1AA] ${className}`}>
       {children}
     </td>
   );

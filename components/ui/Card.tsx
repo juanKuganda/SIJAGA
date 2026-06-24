@@ -3,12 +3,15 @@ import { ReactNode } from "react";
 interface CardProps {
   children: ReactNode;
   className?: string;
+  glow?: boolean;
 }
 
-export default function Card({ children, className = "" }: CardProps) {
+export default function Card({ children, className = "", glow = false }: CardProps) {
   return (
     <div
-      className={`bg-white rounded-lg shadow-md border border-gray-200 ${className}`}
+      className={`bg-[#111118] rounded-xl border border-[#27272A] transition-all duration-300 hover:border-[rgba(220,38,38,0.2)] ${
+        glow ? "shadow-[0_0_20px_rgba(220,38,38,0.15)]" : ""
+      } ${className}`}
     >
       {children}
     </div>
@@ -23,7 +26,7 @@ export function CardHeader({
   className?: string;
 }) {
   return (
-    <div className={`px-6 py-4 border-b border-gray-200 ${className}`}>
+    <div className={`px-6 py-4 border-b border-[#27272A] ${className}`}>
       {children}
     </div>
   );
@@ -48,7 +51,7 @@ export function CardFooter({
 }) {
   return (
     <div
-      className={`px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-lg ${className}`}
+      className={`px-6 py-4 border-t border-[#27272A] bg-[#0A0A0F]/50 rounded-b-xl ${className}`}
     >
       {children}
     </div>

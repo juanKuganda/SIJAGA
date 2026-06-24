@@ -21,12 +21,14 @@ export async function GET(request: NextRequest) {
       walletVerified,
       ijazahMinted,
       ijazahClaimed,
+      ijazahRevoked,
     ] = await Promise.all([
       prisma.user.count({ where: { role: "MAHASISWA" } }),
       prisma.wallet.count({ where: { status: "PENDING" } }),
       prisma.wallet.count({ where: { status: "VERIFIED" } }),
       prisma.certificate.count({ where: { status: "MINTED" } }),
       prisma.certificate.count({ where: { status: "CLAIMED" } }),
+      prisma.certificate.count({ where: { status: "REVOKED" } }),
     ]);
 
     return NextResponse.json({
@@ -36,6 +38,7 @@ export async function GET(request: NextRequest) {
         walletVerified,
         ijazahMinted,
         ijazahClaimed,
+        ijazahRevoked,
       },
     });
   } catch (error) {

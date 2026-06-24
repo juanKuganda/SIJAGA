@@ -63,8 +63,13 @@ export async function POST(request: NextRequest) {
     }
 
     if (user.certificate && user.certificate.status !== "NOT_ISSUED") {
+      const statusMsg: Record<string, string> = {
+        MINTED: "Ijazah sudah diterbitkan dan menunggu klaim",
+        CLAIMED: "Ijazah sudah diklaim oleh mahasiswa",
+        REVOKED: "Ijazah sudah direvoke. Gunakan fitur Recovery untuk mengembalikan",
+      };
       return NextResponse.json(
-        { error: "Ijazah sudah diterbitkan" },
+        { error: statusMsg[user.certificate.status] || "Ijazah sudah diterbitkan" },
         { status: 400 }
       );
     }
@@ -119,12 +124,12 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Buat audit log
+    // Buat audit log — userId merujuk ke mahasiswa, bukan admin
     await prisma.auditLog.create({
       data: {
-        userId: payload.userId,
+        userId: userId,
         action: "NFT_MINT",
-        detail: `NFT ijazah di-mint untuk ${user.nama} (${user.nim})`,
+        detail: `NFT ijazah di-mint untuk ${user.nama} (${user.nim}) oleh admin ${payload.userId}`,
         ipAddress: request.headers.get("x-forwarded-for") || "unknown",
       },
     });

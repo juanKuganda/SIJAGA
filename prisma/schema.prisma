@@ -48,9 +48,27 @@ model Certificate {
   issuedAt       DateTime?
   issuedBy       String?               // wallet admin
   claimedAt      DateTime?
+  revokedAt      DateTime?
+  revokedBy      String?               // admin yang merevoke
+  revokeReason   String?               // alasan revoke
   createdAt      DateTime    @default(now())
 
   user           User        @relation(fields: [userId], references: [id])
+}
+
+model CertificateBackup {
+  id             String    @id @default(cuid())
+  certificateId  String
+  userId         String
+  backupData     String    // JSON string dari semua data sertifikat
+  nftAddress     String?
+  metadataUri    String?
+  txSignature    String?
+  reason         String?   // alasan backup (revoke, recovery, manual, etc)
+  createdAt      DateTime  @default(now())
+  createdBy      String    // admin yang membuat backup
+  usedAt         DateTime? // waktu backup digunakan untuk recovery
+  usedBy         String?   // admin yang menggunakan backup untuk recovery
 }
 
 model AuditLog {
@@ -79,4 +97,5 @@ enum CertStatus {
   NOT_ISSUED
   MINTED
   CLAIMED
+  REVOKED
 }

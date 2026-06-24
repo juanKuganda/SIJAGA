@@ -2,7 +2,7 @@ import { ButtonHTMLAttributes, ReactNode } from "react";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
-  variant?: "primary" | "secondary" | "danger" | "ghost";
+  variant?: "primary" | "secondary" | "danger" | "ghost" | "outline";
   size?: "sm" | "md" | "lg";
   loading?: boolean;
 }
@@ -17,21 +17,25 @@ export default function Button({
   ...props
 }: ButtonProps) {
   const baseStyles =
-    "inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
+    "inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#0A0A0F] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer";
 
   const variants = {
-    primary: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
+    primary:
+      "bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-500 hover:to-red-600 focus:ring-red-500 shadow-lg shadow-red-900/20 hover:shadow-red-900/40",
     secondary:
-      "bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500",
-    danger: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500",
+      "bg-[#1A1A24] text-[#A1A1AA] border border-[#27272A] hover:border-red-600/30 hover:text-white hover:bg-[#1E1E2A] focus:ring-red-500",
+    danger:
+      "bg-red-900/50 text-red-300 border border-red-800/50 hover:bg-red-900/70 hover:text-red-200 focus:ring-red-500",
     ghost:
-      "bg-transparent text-gray-700 hover:bg-gray-100 focus:ring-gray-500",
+      "bg-transparent text-[#A1A1AA] hover:bg-white/5 hover:text-white focus:ring-[#27272A]",
+    outline:
+      "bg-transparent text-red-500 border border-red-600/40 hover:bg-red-600/10 hover:border-red-500 focus:ring-red-500",
   };
 
   const sizes = {
-    sm: "px-3 py-1.5 text-sm",
-    md: "px-4 py-2 text-sm",
-    lg: "px-6 py-3 text-base",
+    sm: "px-3 py-1.5 text-sm gap-1.5",
+    md: "px-4 py-2.5 text-sm gap-2",
+    lg: "px-6 py-3 text-base gap-2",
   };
 
   return (
@@ -42,7 +46,7 @@ export default function Button({
     >
       {loading && (
         <svg
-          className="animate-spin -ml-1 mr-2 h-4 w-4"
+          className="animate-spin -ml-1 h-4 w-4"
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"

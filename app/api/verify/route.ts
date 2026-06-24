@@ -62,6 +62,24 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Cek apakah sertifikat sudah direvoke
+    if (certificate.status === "REVOKED") {
+      return NextResponse.json({
+        verified: false,
+        revoked: true,
+        message: "Ijazah ini telah DIREVOKE / DICABUT",
+        revokeReason: certificate.revokeReason || "Tidak ada alasan yang diberikan",
+        revokedAt: certificate.revokedAt,
+        data: {
+          nama: walletData.user.nama,
+          nim: walletData.user.nim,
+          prodi: walletData.user.prodi,
+          tahunLulus: walletData.user.angkatan,
+          nftAddress: certificate.nftAddress,
+        },
+      });
+    }
+
     return NextResponse.json({
       verified: true,
       data: {

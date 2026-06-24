@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { loginUser } from "@/lib/auth";
 import { loginSchema } from "@/lib/validation";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,6 +41,16 @@ export async function POST(request: NextRequest) {
       maxAge: 60 * 60 * 24, // 24 jam
       path: "/",
     });
+
+    // Audit log untuk login
+    await prisma.auditLog.create({
+      data: {
+        userId: loginResult.user.id,
+        action: "USER_LOGIN",
+        detail: `User ${loginResult.user.nama} (${loginResult.user.nim}) login sebagai ${loginResult.user.role}`,
+        ipAddress: request.headers.get("x-forwarded-for") || "unknown",
+      },
+    }).catch(console.error); // Jangan gagalkan login jika audit log error
 
     return response;
   } catch (error) {

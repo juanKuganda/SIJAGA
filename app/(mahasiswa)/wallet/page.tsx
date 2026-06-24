@@ -75,7 +75,7 @@ export default function WalletPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#27272A] border-t-red-600" />
       </div>
     );
   }
@@ -83,8 +83,8 @@ export default function WalletPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Wallet Saya</h1>
-        <p className="text-gray-600 mt-1">
+        <h1 className="text-2xl font-bold text-white">Wallet Saya</h1>
+        <p className="text-[#71717A] mt-1">
           Daftarkan alamat wallet Phantom Anda untuk menerima ijazah digital
         </p>
       </div>
@@ -92,7 +92,7 @@ export default function WalletPage() {
       <div className="max-w-2xl">
         <Card>
           <CardHeader>
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-white">
               {wallet ? "Status Wallet" : "Daftarkan Wallet"}
             </h2>
           </CardHeader>
@@ -100,22 +100,22 @@ export default function WalletPage() {
             {wallet ? (
               <div className="space-y-4">
                 <div>
-                  <p className="text-sm text-gray-600">Alamat Wallet</p>
-                  <p className="font-mono text-sm break-all bg-gray-50 p-3 rounded-lg">
+                  <p className="text-xs text-[#71717A] uppercase tracking-wider">Alamat Wallet</p>
+                  <p className="font-mono text-sm break-all text-[#A1A1AA] bg-[#0A0A0F] p-3 rounded-lg mt-1">
                     {wallet.walletAddress}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Status</p>
+                  <p className="text-xs text-[#71717A] uppercase tracking-wider mb-1">Status</p>
                   <div className="mt-1">{getStatusBadge(wallet.status)}</div>
                 </div>
 
                 {wallet.status === "PENDING" && (
-                  <div className="p-4 bg-yellow-50 rounded-lg">
-                    <p className="text-yellow-800 font-medium">
+                  <div className="p-4 bg-amber-900/10 border border-amber-600/20 rounded-lg">
+                    <p className="text-amber-400 font-medium text-sm">
                       Menunggu Verifikasi
                     </p>
-                    <p className="text-yellow-600 text-sm mt-1">
+                    <p className="text-amber-400/70 text-sm mt-1">
                       Wallet Anda sedang diverifikasi oleh admin. Proses ini
                       biasanya memakan waktu 1-2 hari kerja.
                     </p>
@@ -123,11 +123,11 @@ export default function WalletPage() {
                 )}
 
                 {wallet.status === "VERIFIED" && (
-                  <div className="p-4 bg-green-50 rounded-lg">
-                    <p className="text-green-800 font-medium">
+                  <div className="p-4 bg-emerald-900/10 border border-emerald-600/20 rounded-lg">
+                    <p className="text-emerald-400 font-medium text-sm">
                       Wallet Terverifikasi
                     </p>
-                    <p className="text-green-600 text-sm mt-1">
+                    <p className="text-emerald-400/70 text-sm mt-1">
                       Wallet Anda sudah terverifikasi. Admin dapat menerbitkan
                       NFT ijazah ke wallet ini.
                     </p>
@@ -135,22 +135,34 @@ export default function WalletPage() {
                 )}
 
                 {wallet.status === "REJECTED" && (
-                  <div className="p-4 bg-red-50 rounded-lg">
-                    <p className="text-red-800 font-medium">Wallet Ditolak</p>
-                    <p className="text-red-600 text-sm mt-1">
-                      Wallet Anda ditolak oleh admin. Silakan hubungi admin
-                      untuk informasi lebih lanjut.
+                  <div className="p-4 bg-red-900/10 border border-red-600/20 rounded-lg">
+                    <p className="text-red-400 font-medium text-sm">Wallet Ditolak</p>
+                    <p className="text-red-400/70 text-sm mt-1">
+                      Wallet Anda ditolak oleh admin. Anda bisa mendaftarkan wallet baru.
                     </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-3"
+                      onClick={() => {
+                        setWallet(null);
+                        setWalletAddress("");
+                        setError("");
+                        setSuccess("");
+                      }}
+                    >
+                      Daftarkan Wallet Baru
+                    </Button>
                   </div>
                 )}
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="p-4 bg-blue-50 rounded-lg mb-4">
-                  <p className="text-blue-800 font-medium">
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="p-4 bg-sky-900/10 border border-sky-600/20 rounded-lg">
+                  <p className="text-sky-400 font-medium text-sm">
                     Cara Mendapatkan Alamat Wallet
                   </p>
-                  <ol className="text-blue-600 text-sm mt-2 space-y-1 list-decimal list-inside">
+                  <ol className="text-sky-400/70 text-sm mt-2 space-y-1 list-decimal list-inside">
                     <li>Install ekstensi Phantom Wallet di browser Anda</li>
                     <li>Buat wallet baru atau import wallet yang sudah ada</li>
                     <li>Klik ikon wallet dan copy alamat wallet Anda</li>
@@ -159,13 +171,13 @@ export default function WalletPage() {
                 </div>
 
                 {error && (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+                  <div className="p-3 bg-red-900/20 border border-red-600/30 rounded-lg text-sm text-red-400">
                     {error}
                   </div>
                 )}
 
                 {success && (
-                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-600">
+                  <div className="p-3 bg-emerald-900/20 border border-emerald-600/30 rounded-lg text-sm text-emerald-400">
                     {success}
                   </div>
                 )}
@@ -179,7 +191,7 @@ export default function WalletPage() {
                   helperText="Alamat wallet Solana (base58 format, 32-44 karakter)"
                 />
 
-                <Button type="submit" className="w-full" loading={submitting}>
+                <Button type="submit" className="w-full" loading={submitting} size="lg">
                   Daftarkan Wallet
                 </Button>
               </form>
