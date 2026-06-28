@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { toast } from "sonner";
 import Card, { CardContent, CardHeader } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
@@ -34,10 +36,6 @@ export default function TerbitkanPage() {
   const [minting, setMinting] = useState<string | null>(null);
   const [confirmModal, setConfirmModal] = useState<{ userId: string; nama: string; nim: string } | null>(null);
 
-  useEffect(() => {
-    fetchMahasiswa();
-  }, []);
-
   const fetchMahasiswa = async () => {
     try {
       const response = await fetch("/api/admin/mahasiswa");
@@ -47,7 +45,6 @@ export default function TerbitkanPage() {
       }
       const data = await response.json();
       if (data.mahasiswa) {
-        // Filter hanya yang wallet terverifikasi dan belum ada ijazah
         setMahasiswa(
           data.mahasiswa.filter(
             (m: Mahasiswa) =>
@@ -64,6 +61,11 @@ export default function TerbitkanPage() {
     }
   };
 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchMahasiswa();
+  }, []);
+
   const handleMint = async (userId: string) => {
     setMinting(userId);
 
@@ -77,15 +79,20 @@ export default function TerbitkanPage() {
       const data = await response.json();
 
       if (response.ok) {
-        alert(`Ijazah berhasil diterbitkan!\nTx: ${data.certificate.txSignature}`);
+        toast.success("Ijazah berhasil diterbitkan", {
+          description: `Tx: ${data.certificate.txSignature?.slice(0, 16)}...`,
+          duration: 8000,
+        });
         setConfirmModal(null);
         fetchMahasiswa();
       } else {
-        alert(`Gagal: ${data.error}`);
+        toast.error("Gagal menerbitkan ijazah", {
+          description: data.error,
+        });
       }
     } catch (error) {
       console.error("Error minting:", error);
-      alert("Terjadi kesalahan saat menerbitkan ijazah");
+      toast.error("Terjadi kesalahan saat menerbitkan ijazah");
     } finally {
       setMinting(null);
     }
@@ -93,8 +100,23 @@ export default function TerbitkanPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#27272A] border-t-red-600" />
+      <div>
+        <div className="mb-8">
+          <div className="h-8 w-48 bg-[#1A1A24] rounded-lg animate-pulse" />
+          <div className="h-4 w-72 bg-[#1A1A24] rounded-lg animate-pulse mt-2" />
+        </div>
+        <Card>
+          <CardHeader>
+            <div className="h-6 w-40 bg-[#1A1A24] rounded animate-pulse" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-12 bg-[#1A1A24] rounded-lg animate-pulse" />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -108,12 +130,13 @@ export default function TerbitkanPage() {
           </svg>
         </div>
         <p className="text-red-400 font-medium">{error}</p>
-        <button
+        <Button
+          variant="secondary"
+          className="mt-4"
           onClick={() => { setError(null); setLoading(true); fetchMahasiswa(); }}
-          className="mt-4 px-4 py-2 bg-zinc-800 text-white rounded-lg hover:bg-zinc-700 transition-colors"
         >
           Coba Lagi
-        </button>
+        </Button>
       </div>
     );
   }
@@ -124,7 +147,7 @@ export default function TerbitkanPage() {
         <h1 className="text-2xl font-bold text-white">
           Terbitkan Ijazah
         </h1>
-        <p className="text-[#71717A] mt-1">
+        <p className="text-[#A1A1AA] mt-1">
           Mint NFT Soulbound untuk mahasiswa yang wallet-nya sudah terverifikasi
         </p>
       </div>
@@ -147,10 +170,10 @@ export default function TerbitkanPage() {
                   <polyline points="14 2 14 8 20 8"/>
                 </svg>
               </div>
-              <p className="text-[#71717A]">
+              <p className="text-[#A1A1AA]">
                 Tidak ada mahasiswa yang siap untuk diterbitkan ijazahnya.
               </p>
-              <p className="text-sm text-[#52525B] mt-1">
+              <p className="text-sm text-[#71717A] mt-1">
                 Pastikan wallet mahasiswa sudah terverifikasi.
               </p>
             </div>
@@ -178,19 +201,26 @@ export default function TerbitkanPage() {
                       </span>
                     </TableCell>
                     <TableCell>
-                      <Button
-                        size="sm"
-                        loading={minting === m.id}
-                        onClick={() =>
-                          setConfirmModal({
-                            userId: m.id,
-                            nama: m.nama,
-                            nim: m.nim,
-                          })
-                        }
-                      >
-                        Terbitkan
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          loading={minting === m.id}
+                          onClick={() =>
+                            setConfirmModal({
+                              userId: m.id,
+                              nama: m.nama,
+                              nim: m.nim,
+                            })
+                          }
+                        >
+                          Terbitkan
+                        </Button>
+                        <Link href={`/detail-ijazah/${m.nim}`}>
+                          <Button size="sm" variant="secondary">
+                            Detail
+                          </Button>
+                        </Link>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -254,7 +284,6 @@ export default function TerbitkanPage() {
                 Batal
               </Button>
               <Button
-                variant="primary"
                 className="flex-1"
                 onClick={() => handleMint(confirmModal.userId)}
                 loading={minting === confirmModal.userId}

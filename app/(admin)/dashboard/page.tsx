@@ -1,8 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import Card, { CardContent, CardHeader } from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
+import Button from "@/components/ui/Button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/Table";
 
 interface Stats {
   totalMahasiswa: number;
@@ -26,7 +36,6 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Fetch stats dari API
     fetch("/api/admin/stats")
       .then((res) => {
         if (!res.ok) {
@@ -46,14 +55,14 @@ export default function DashboardPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const statCards = [
+  const primaryCards = [
     {
       title: "Total Mahasiswa",
       value: stats.totalMahasiswa,
       icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
         </svg>
       ),
       color: "text-sky-400",
@@ -64,7 +73,7 @@ export default function DashboardPage() {
       value: stats.walletPending,
       icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
         </svg>
       ),
       color: "text-amber-400",
@@ -75,20 +84,23 @@ export default function DashboardPage() {
       value: stats.walletVerified,
       icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-          <polyline points="22 4 12 14.01 9 11.01"/>
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+          <polyline points="22 4 12 14.01 9 11.01" />
         </svg>
       ),
       color: "text-emerald-400",
       bg: "bg-emerald-900/20 border-emerald-800/30",
     },
+  ];
+
+  const secondaryCards = [
     {
       title: "Ijazah Diterbitkan",
       value: stats.ijazahMinted,
       icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-          <polyline points="14 2 14 8 20 8"/>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <polyline points="14 2 14 8 20 8" />
         </svg>
       ),
       color: "text-purple-400",
@@ -98,8 +110,8 @@ export default function DashboardPage() {
       title: "Ijazah Diklaim",
       value: stats.ijazahClaimed,
       icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="12" cy="8" r="7" /><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" />
         </svg>
       ),
       color: "text-red-400",
@@ -109,8 +121,8 @@ export default function DashboardPage() {
       title: "Ijazah Direvoke",
       value: stats.ijazahRevoked,
       icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
         </svg>
       ),
       color: "text-orange-400",
@@ -120,8 +132,37 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#27272A] border-t-red-600" />
+      <div>
+        <div className="mb-8">
+          <div className="h-8 w-48 bg-[#1A1A24] rounded-lg animate-pulse" />
+          <div className="h-4 w-72 bg-[#1A1A24] rounded-lg animate-pulse mt-2" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          {[1, 2, 3].map((i) => (
+            <Card key={i}>
+              <CardContent className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-[#1A1A24] rounded-lg animate-pulse" />
+                <div className="flex-1">
+                  <div className="h-4 w-24 bg-[#1A1A24] rounded animate-pulse" />
+                  <div className="h-8 w-16 bg-[#1A1A24] rounded animate-pulse mt-1" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+          {[1, 2, 3].map((i) => (
+            <Card key={i}>
+              <CardContent className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-[#1A1A24] rounded-lg animate-pulse" />
+                <div className="flex-1">
+                  <div className="h-3 w-20 bg-[#1A1A24] rounded animate-pulse" />
+                  <div className="h-6 w-12 bg-[#1A1A24] rounded animate-pulse mt-1" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     );
   }
@@ -131,22 +172,24 @@ export default function DashboardPage() {
       <div className="flex flex-col items-center justify-center h-64">
         <div className="text-red-400 mb-4">
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
         </div>
         <p className="text-red-400 font-medium">{error}</p>
-        <button
+        <Button
+          variant="secondary"
+          className="mt-4"
           onClick={() => window.location.reload()}
-          className="mt-4 px-4 py-2 bg-zinc-800 text-white rounded-lg hover:bg-zinc-700 transition-colors"
         >
           Coba Lagi
-        </button>
+        </Button>
       </div>
     );
   }
 
   return (
     <div>
+      {/* Page Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-white">Dashboard Admin</h1>
         <p className="text-[#71717A] mt-1">
@@ -154,9 +197,9 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
-        {statCards.map((stat, i) => (
+      {/* Primary Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        {primaryCards.map((stat) => (
           <Card key={stat.title}>
             <CardContent className="flex items-center space-x-4">
               <div
@@ -173,97 +216,120 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Secondary Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        {secondaryCards.map((stat) => (
+          <Card key={stat.title}>
+            <CardContent className="flex items-center space-x-3">
+              <div
+                className={`w-10 h-10 rounded-lg flex items-center justify-center border ${stat.bg} ${stat.color}`}
+              >
+                {stat.icon}
+              </div>
+              <div>
+                <p className="text-xs text-[#71717A]">{stat.title}</p>
+                <p className="text-xl font-bold text-white">{stat.value}</p>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Quick Actions + System Info */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Quick Actions as Table */}
         <Card>
           <CardHeader>
-            <h2 className="text-lg font-semibold text-white">
-              Aksi Cepat
-            </h2>
+            <h2 className="text-lg font-semibold text-white">Aksi Cepat</h2>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <a
-              href="/mahasiswa"
-              className="block p-3 rounded-lg border border-[#27272A] hover:border-red-600/20 hover:bg-white/[0.02] transition-all"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-white">
-                    Kelola Mahasiswa
-                  </p>
-                  <p className="text-sm text-[#71717A]">
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow className="border-[#27272A]">
+                  <TableHead className="text-[#A1A1AA]">Menu</TableHead>
+                  <TableHead className="text-[#A1A1AA]">Deskripsi</TableHead>
+                  <TableHead className="text-[#A1A1AA] text-right">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow className="border-[#27272A] hover:bg-white/[0.02]">
+                  <TableCell>
+                    <Link href="/mahasiswa" className="font-medium text-white hover:text-red-400 transition-colors">
+                      Kelola Mahasiswa
+                    </Link>
+                  </TableCell>
+                  <TableCell className="text-[#71717A] text-xs">
                     Lihat dan verifikasi wallet mahasiswa
-                  </p>
-                </div>
-                <Badge variant="info">{stats.walletPending} pending</Badge>
-              </div>
-            </a>
-            <a
-              href="/terbitkan"
-              className="block p-3 rounded-lg border border-[#27272A] hover:border-red-600/20 hover:bg-white/[0.02] transition-all"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-white">
-                    Terbitkan Ijazah
-                  </p>
-                  <p className="text-sm text-[#71717A]">
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Badge variant="info">{stats.walletPending} pending</Badge>
+                  </TableCell>
+                </TableRow>
+                <TableRow className="border-[#27272A] hover:bg-white/[0.02]">
+                  <TableCell>
+                    <Link href="/terbitkan" className="font-medium text-white hover:text-red-400 transition-colors">
+                      Terbitkan Ijazah
+                    </Link>
+                  </TableCell>
+                  <TableCell className="text-[#71717A] text-xs">
                     Mint NFT ijazah untuk mahasiswa
-                  </p>
-                </div>
-                <Badge variant="success">
-                  {stats.walletVerified} siap
-                </Badge>
-              </div>
-            </a>
-            <a
-              href="/revoke"
-              className="block p-3 rounded-lg border border-[#27272A] hover:border-red-600/20 hover:bg-white/[0.02] transition-all"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-white">
-                    Revoke & Backup
-                  </p>
-                  <p className="text-sm text-[#71717A]">
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Badge variant="success">{stats.walletVerified} siap</Badge>
+                  </TableCell>
+                </TableRow>
+                <TableRow className="border-[#27272A] hover:bg-white/[0.02]">
+                  <TableCell>
+                    <Link href="/revoke" className="font-medium text-white hover:text-red-400 transition-colors">
+                      Revoke & Backup
+                    </Link>
+                  </TableCell>
+                  <TableCell className="text-[#71717A] text-xs">
                     Cabut ijazah atau backup data sertifikat
-                  </p>
-                </div>
-                <Badge variant="danger">Revoke</Badge>
-              </div>
-            </a>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Badge variant="danger">Revoke</Badge>
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
 
+        {/* System Info */}
         <Card>
           <CardHeader>
-            <h2 className="text-lg font-semibold text-white">
-              Info Sistem
-            </h2>
+            <h2 className="text-lg font-semibold text-white">Info Sistem</h2>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between items-center">
-                <span className="text-[#71717A]">Blockchain</span>
-                <span className="font-medium text-white">Solana Devnet</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-[#71717A]">Network</span>
-                <Badge variant="info">Development</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-[#71717A]">IPFS Provider</span>
-                <span className="font-medium text-white">Pinata</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-[#71717A]">NFT Standard</span>
-                <span className="font-medium text-white">Metaplex (Soulbound)</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-[#71717A]">Revoke System</span>
-                <Badge variant="success">Aktif</Badge>
-              </div>
-            </div>
+            <Table>
+              <TableBody>
+                <TableRow className="border-[#27272A]">
+                  <TableCell className="text-[#71717A] pl-0">Blockchain</TableCell>
+                  <TableCell className="text-white font-medium text-right pr-0">Solana Devnet</TableCell>
+                </TableRow>
+                <TableRow className="border-[#27272A]">
+                  <TableCell className="text-[#71717A] pl-0">Network</TableCell>
+                  <TableCell className="text-right pr-0">
+                    <Badge variant="info">Development</Badge>
+                  </TableCell>
+                </TableRow>
+                <TableRow className="border-[#27272A]">
+                  <TableCell className="text-[#71717A] pl-0">IPFS Provider</TableCell>
+                  <TableCell className="text-white font-medium text-right pr-0">Pinata</TableCell>
+                </TableRow>
+                <TableRow className="border-[#27272A]">
+                  <TableCell className="text-[#71717A] pl-0">NFT Standard</TableCell>
+                  <TableCell className="text-white font-medium text-right pr-0">Metaplex (Soulbound)</TableCell>
+                </TableRow>
+                <TableRow className="border-[#27272A]">
+                  <TableCell className="text-[#71717A] pl-0">Revoke System</TableCell>
+                  <TableCell className="text-right pr-0">
+                    <Badge variant="success">Aktif</Badge>
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>

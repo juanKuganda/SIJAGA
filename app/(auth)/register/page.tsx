@@ -49,9 +49,13 @@ export default function RegisterPage() {
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
+    let value = e.target.value;
+    if (e.target.name === "nim") {
+      value = value.trim().toUpperCase();
+    }
     setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [e.target.name]: value,
     }));
   };
 
@@ -98,7 +102,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <Card className="animate-fade-in-up glass-card">
+    <Card className="animate-fade-in-up">
       <CardHeader>
         <h2 className="text-xl font-semibold text-white">Daftar Akun</h2>
         <p className="text-[#71717A] text-sm mt-1">

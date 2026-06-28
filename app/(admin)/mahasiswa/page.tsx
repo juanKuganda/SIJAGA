@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import Card, { CardContent, CardHeader } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
@@ -62,10 +63,6 @@ export default function MahasiswaPage() {
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState("");
 
-  useEffect(() => {
-    fetchMahasiswa();
-  }, []);
-
   const fetchMahasiswa = async () => {
     try {
       const response = await fetch("/api/admin/mahasiswa");
@@ -83,6 +80,11 @@ export default function MahasiswaPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchMahasiswa();
+  }, []);
 
   const handleVerify = async (walletId: string, status: "VERIFIED" | "REJECTED") => {
     setVerifyError(null);
@@ -190,8 +192,30 @@ export default function MahasiswaPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#27272A] border-t-red-600" />
+      <div>
+        <div className="mb-8">
+          <div className="h-8 w-48 bg-[#1A1A24] rounded-lg animate-pulse" />
+          <div className="h-4 w-72 bg-[#1A1A24] rounded-lg animate-pulse mt-2" />
+        </div>
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1 h-10 bg-[#1A1A24] rounded-lg animate-pulse" />
+              <div className="flex gap-2">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="h-8 w-20 bg-[#1A1A24] rounded-lg animate-pulse" />
+                ))}
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="h-12 bg-[#1A1A24] rounded-lg animate-pulse" />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -205,12 +229,13 @@ export default function MahasiswaPage() {
           </svg>
         </div>
         <p className="text-red-400 font-medium">{error}</p>
-        <button
+        <Button
+          variant="secondary"
+          className="mt-4"
           onClick={() => window.location.reload()}
-          className="mt-4 px-4 py-2 bg-zinc-800 text-white rounded-lg hover:bg-zinc-700 transition-colors"
         >
           Coba Lagi
-        </button>
+        </Button>
       </div>
     );
   }
@@ -318,6 +343,15 @@ export default function MahasiswaPage() {
                           </svg>
                           Edit
                         </Button>
+                        <Link href={`/detail-ijazah/${m.nim}`}>
+                          <Button size="sm" variant="secondary">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                              <circle cx="12" cy="12" r="3" />
+                            </svg>
+                            Detail
+                          </Button>
+                        </Link>
                         {m.wallet?.status === "PENDING" && (
                           <>
                             <Button

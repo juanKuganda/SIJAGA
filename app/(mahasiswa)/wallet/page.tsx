@@ -29,10 +29,21 @@ export default function WalletPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const isValidSolanaAddress = (addr: string): boolean => {
+    // Base58 format, 32-44 characters
+    return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(addr);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccess("");
+
+    if (!isValidSolanaAddress(walletAddress)) {
+      setError("Format wallet address tidak valid. Gunakan alamat Solana (base58, 32-44 karakter).");
+      return;
+    }
+
     setSubmitting(true);
 
     try {

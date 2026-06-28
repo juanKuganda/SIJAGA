@@ -55,3 +55,8 @@ prisma/dev.db-journal
 
 projects/
 
+# editor and mcp configs
+/.vscode
+/.cursor
+/.mcp.json
+/.gemini

@@ -5,18 +5,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-import Card, { CardContent, CardHeader } from "@/components/ui/Card";
 
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <Card className="animate-fade-in-up glass-card">
-        <CardContent>
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#27272A] border-t-red-600" />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#27272A] border-t-red-600" />
+      </div>
     }>
       <LoginForm />
     </Suspense>
@@ -34,6 +29,7 @@ function LoginForm() {
 
   useEffect(() => {
     if (searchParams.get("registered") === "true") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSuccess("Registrasi berhasil! Silakan login dengan akun Anda.");
     }
   }, [searchParams]);
@@ -58,7 +54,6 @@ function LoginForm() {
         return;
       }
 
-      // Redirect berdasarkan role
       if (data.user.role === "ADMIN") {
         router.push("/dashboard");
       } else {
@@ -72,48 +67,109 @@ function LoginForm() {
   };
 
   return (
-    <Card className="animate-fade-in-up glass-card">
-      <CardHeader>
-        <h2 className="text-xl font-semibold text-white">Login</h2>
-        <p className="text-[#71717A] text-sm mt-1">Masuk ke portal SIJAGA</p>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-5">
+    <div className="min-h-screen bg-[#0A0A0F] flex">
+      {/* Left Panel - Brand */}
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
+        <div className="absolute inset-0 gradient-bg-hero" />
+        <div className="absolute inset-0 grid-pattern opacity-30" />
+
+        <div className="relative flex flex-col justify-center px-16 xl:px-24">
+          {/* Logo */}
+          <div className="flex items-center gap-3 mb-12">
+            <div className="w-12 h-12 rounded-xl bg-red-600 flex items-center justify-center">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+            </div>
+            <span className="text-2xl font-bold text-white">SIJAGA</span>
+          </div>
+
+          {/* Tagline */}
+          <h1 className="text-4xl xl:text-5xl font-bold text-white leading-tight mb-6">
+            Sistem Jaminan
+            <br />
+            <span className="text-red-500">Autentikasi</span>
+            <br />
+            Gelar Akademik
+          </h1>
+
+          <p className="text-lg text-[#A1A1AA] max-w-md leading-relaxed mb-10">
+            Verifikasi ijazah anti-pemalsuan berbasis NFT Soulbound pada blockchain Solana. Universitas Tadulako.
+          </p>
+
+          {/* Features */}
+          <div className="space-y-4">
+            {[
+              { icon: "⛓️", text: "Blockchain Solana Devnet" },
+              { icon: "🛡️", text: "NFT Soulbound Non-transferable" },
+              { icon: "✅", text: "Verifikasi Publik Real-time" },
+            ].map((item) => (
+              <div key={item.text} className="flex items-center gap-3 text-[#A1A1AA]">
+                <span className="text-lg">{item.icon}</span>
+                <span className="text-sm">{item.text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Right Panel - Login Form */}
+      <div className="flex-1 flex items-center justify-center px-6 py-12">
+        <div className="w-full max-w-md">
+          {/* Mobile Logo */}
+          <div className="flex items-center gap-2 mb-8 lg:hidden">
+            <div className="w-8 h-8 rounded-lg bg-red-600 flex items-center justify-center">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+            </div>
+            <span className="text-lg font-bold text-white">SIJAGA</span>
+          </div>
+
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-white mb-2">Masuk ke Portal</h2>
+            <p className="text-[#71717A]">
+              Masukkan NIM dan password untuk mengakses akun Anda
+            </p>
+          </div>
+
           {success && (
-            <div className="p-3 bg-emerald-900/20 border border-emerald-600/30 rounded-lg text-sm text-emerald-400">
+            <div className="mb-6 p-3 bg-emerald-900/20 border border-emerald-600/30 rounded-lg text-sm text-emerald-400">
               {success}
             </div>
           )}
 
           {error && (
-            <div className="p-3 bg-red-900/20 border border-red-600/30 rounded-lg text-sm text-red-400">
+            <div className="mb-6 p-3 bg-red-900/20 border border-red-600/30 rounded-lg text-sm text-red-400">
               {error}
             </div>
           )}
 
-          <Input
-            label="NIM"
-            type="text"
-            placeholder="Masukkan NIM Anda"
-            value={nim}
-            onChange={(e) => setNim(e.target.value)}
-            required
-          />
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <Input
+              label="NIM"
+              type="text"
+              placeholder="Masukkan NIM Anda"
+              value={nim}
+              onChange={(e) => setNim(e.target.value.trim().toUpperCase())}
+              required
+            />
 
-          <Input
-            label="Password"
-            type="password"
-            placeholder="Masukkan password Anda"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+            <Input
+              label="Password"
+              type="password"
+              placeholder="Masukkan password Anda"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
 
-          <Button type="submit" className="w-full" loading={loading} size="lg">
-            Login
-          </Button>
+            <Button type="submit" className="w-full" loading={loading} size="lg">
+              Login
+            </Button>
+          </form>
 
-          <div className="text-center space-y-2">
+          <div className="mt-6 text-center space-y-3">
             <p className="text-sm text-[#71717A]">
               Belum punya akun?{" "}
               <Link
@@ -125,14 +181,25 @@ function LoginForm() {
             </p>
             <Link
               href="/"
-              className="text-sm text-[#71717A] hover:text-red-400 transition-colors inline-block"
+              className="text-sm text-[#71717A] hover:text-red-400 transition-colors inline-flex items-center gap-1"
             >
-              ← Kembali ke beranda
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+              </svg>
+              Kembali ke beranda
             </Link>
           </div>
-        </form>
-      </CardContent>
-    </Card>
+
+          {/* Test credentials hint */}
+          <div className="mt-8 p-4 bg-[#111118] border border-[#27272A] rounded-lg">
+            <p className="text-xs text-[#71717A] font-medium mb-2">Akun Test:</p>
+            <div className="space-y-1 text-xs text-[#52525B]">
+              <p>Admin: <span className="text-[#A1A1AA]">ADMIN001</span> / <span className="text-[#A1A1AA]">admin123</span></p>
+              <p>Mahasiswa: <span className="text-[#A1A1AA]">H071211001</span> / <span className="text-[#A1A1AA]">mahasiswa123</span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
-

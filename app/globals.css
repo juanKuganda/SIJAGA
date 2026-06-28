@@ -1,4 +1,8 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
 
 /* ========================================
    SIJAGA Web3 Dark Theme Design System
@@ -45,15 +49,95 @@
   /* Font */
   --font-main: 'Space Grotesk', system-ui, sans-serif;
 
-  /* Set tailwind theme */
-  --background: var(--bg-primary);
-  --foreground: var(--text-primary);
+  /* shadcn theme: dark-first to match SIJAGA vault palette */
+  --background: #0A0A0F;
+  --foreground: #FFFFFF;
+
+  --card: #111118;
+  --card-foreground: #FFFFFF;
+
+  --popover: #111118;
+  --popover-foreground: #FFFFFF;
+
+  --primary: #DC2626;
+  --primary-foreground: #FFFFFF;
+
+  --secondary: #1A1A24;
+  --secondary-foreground: #A1A1AA;
+
+  --muted: #1A1A24;
+  --muted-foreground: #71717A;
+
+  --accent: #1A1A24;
+  --accent-foreground: #FFFFFF;
+
+  --destructive: #EF4444;
+
+  --border: #27272A;
+
+  --input: #27272A;
+
+  --ring: #DC2626;
+
+  --chart-1: #DC2626;
+  --chart-2: #10B981;
+  --chart-3: #F59E0B;
+  --chart-4: #38BDF8;
+  --chart-5: #71717A;
+
+  --radius: 0.625rem;
+
+  --sidebar: #111118;
+  --sidebar-foreground: #FFFFFF;
+  --sidebar-primary: #DC2626;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #1A1A24;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #27272A;
+  --sidebar-ring: #DC2626;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-main);
+  --font-sans: var(--font-sans);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
 /* ========================================
@@ -163,6 +247,34 @@ body {
 .delay-500 { animation-delay: 0.5s; }
 
 /* ========================================
+   Reduced Motion
+   ======================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-fade-in-up,
+  .animate-fade-in,
+  .animate-float,
+  .animate-pulse-glow,
+  .animate-shimmer {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .grid-pattern {
+    animation: none !important;
+  }
+}
+
+/* ========================================
    Glassmorphism Utilities
    ======================================== */
 .glass {
@@ -256,3 +368,146 @@ body {
   }
 }
 
+.dark {
+  --background: #0A0A0F;
+  --foreground: #FFFFFF;
+  --card: #111118;
+  --card-foreground: #FFFFFF;
+  --popover: #111118;
+  --popover-foreground: #FFFFFF;
+  --primary: #DC2626;
+  --primary-foreground: #FFFFFF;
+  --secondary: #1A1A24;
+  --secondary-foreground: #A1A1AA;
+  --muted: #1A1A24;
+  --muted-foreground: #71717A;
+  --accent: #1A1A24;
+  --accent-foreground: #FFFFFF;
+  --destructive: #EF4444;
+  --border: #27272A;
+  --input: #27272A;
+  --ring: #DC2626;
+  --chart-1: #DC2626;
+  --chart-2: #10B981;
+  --chart-3: #F59E0B;
+  --chart-4: #38BDF8;
+  --chart-5: #71717A;
+  --sidebar: #111118;
+  --sidebar-foreground: #FFFFFF;
+  --sidebar-primary: #DC2626;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #1A1A24;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #27272A;
+  --sidebar-ring: #DC2626;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+@theme inline {
+  --color-tertiary-fixed-dim: #91cdff;
+  --color-surface-container-lowest: #1a0a07;
+  --color-on-tertiary-container: #002c46;
+  --color-on-secondary-container: #dfbcff;
+  --color-background: #200f0c;
+  --color-on-surface: #fedad5;
+  --color-secondary-fixed: #f0dbff;
+  --color-surface-container-low: #291714;
+  --color-secondary: #ddb8ff;
+  --color-on-tertiary: #003350;
+  --color-surface: #200f0c;
+  --color-primary-fixed: #ffdad5;
+  --color-inverse-primary: #c00003;
+  --color-inverse-on-surface: #412b28;
+  --color-surface-tint: #ffb4a8;
+  --color-inverse-surface: #fedad5;
+  --color-secondary-container: #7c03d3;
+  --color-on-primary-fixed: #410000;
+  --color-on-primary: #690001;
+  --color-secondary-fixed-dim: #ddb8ff;
+  --color-surface-dim: #200f0c;
+  --color-on-tertiary-fixed: #001e31;
+  --color-tertiary-fixed: #cce5ff;
+  --color-on-tertiary-fixed-variant: #004b72;
+  --color-primary-container: #ff5542;
+  --color-surface-variant: #452f2c;
+  --color-on-secondary: #490080;
+  --color-surface-container: #2e1b18;
+  --color-on-secondary-fixed: #2c0051;
+  --color-error-container: #93000a;
+  --color-tertiary-container: #2598dd;
+  --color-surface-container-high: #3a2522;
+  --color-error: #ffb4ab;
+  --color-primary-fixed-dim: #ffb4a8;
+  --color-surface-bright: #4a3430;
+  --color-outline-variant: #5e3f3a;
+  --color-on-surface-variant: #e8bcb6;
+  --color-on-secondary-fixed-variant: #6800b4;
+  --color-outline: #af8781;
+  --color-on-primary-container: #5c0000;
+  --color-on-error-container: #ffdad6;
+  --color-tertiary: #91cdff;
+  --color-on-primary-fixed-variant: #930001;
+  --color-primary: #ffb4a8;
+  --color-on-error: #690005;
+  --color-surface-container-highest: #452f2c;
+  --color-on-background: #fedad5;
+
+  --spacing-gutter: 24px;
+  --spacing-margin-mobile: 16px;
+  --spacing-unit: 8px;
+  --spacing-margin-desktop: 64px;
+  --spacing-container-max: 1280px;
+
+  --font-headline-sm: "Playfair Display", serif;
+  --font-headline-lg: "Playfair Display", serif;
+  --font-body-lg: "Inter", sans-serif;
+  --font-headline-md: "Playfair Display", serif;
+  --font-body-md: "Inter", sans-serif;
+  --font-headline-lg-mobile: "Playfair Display", serif;
+  --font-display-lg: "Playfair Display", serif;
+  --font-label-caps: "JetBrains Mono", monospace;
+  --font-code-sm: "JetBrains Mono", monospace;
+}
+
+@layer utilities {
+  .text-headline-sm { font-size: 24px; line-height: 32px; font-weight: 500; }
+  .text-headline-lg { font-size: 40px; line-height: 48px; font-weight: 600; }
+  .text-body-lg { font-size: 18px; line-height: 28px; font-weight: 400; }
+  .text-headline-md { font-size: 32px; line-height: 40px; font-weight: 600; }
+  .text-body-md { font-size: 16px; line-height: 24px; font-weight: 400; }
+  .text-headline-lg-mobile { font-size: 32px; line-height: 40px; font-weight: 700; }
+  .text-display-lg { font-size: 64px; line-height: 72px; font-weight: 700; letter-spacing: -0.02em; }
+  .text-label-caps { font-size: 12px; line-height: 16px; font-weight: 600; letter-spacing: 0.1em; }
+  .text-code-sm { font-size: 14px; line-height: 20px; font-weight: 400; }
+
+  .holographic-border {
+    position: relative;
+  }
+  .holographic-border::before {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    background: linear-gradient(45deg, #ff5542, #ddb8ff, #91cdff);
+    z-index: -1;
+    opacity: 0.5;
+  }
+  .guilloche-bg {
+    background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.03) 0, rgba(255, 255, 255, 0.03) 1px, transparent 1px, transparent 10px), repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.03) 0, rgba(255, 255, 255, 0.03) 1px, transparent 1px, transparent 10px);
+  }
+  .blueprint-bg {
+    background-image: linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+}

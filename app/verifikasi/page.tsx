@@ -57,7 +57,6 @@ export default function VerifikasiPage() {
 
   return (
     <div className="min-h-screen bg-[#0A0A0F] relative">
-      {/* Background */}
       <div className="absolute inset-0 gradient-bg-hero" />
       <div className="absolute inset-0 grid-pattern opacity-30" />
 
@@ -71,7 +70,7 @@ export default function VerifikasiPage() {
             Kembali ke beranda
           </Link>
           <h1 className="text-4xl font-bold text-white mb-4">
-            <span className="gradient-text">Verifikasi</span> Ijazah
+            <span className="text-red-500">Verifikasi</span> Ijazah
           </h1>
           <p className="text-lg text-[#A1A1AA]">
             SIJAGA — Sistem Jaminan Autentikasi Gelar Akademik
@@ -82,12 +81,12 @@ export default function VerifikasiPage() {
         </div>
 
         {/* Form Verifikasi */}
-        <Card className="mb-8 glass-card animate-pulse-glow">
+        <Card className="mb-8">
           <CardHeader>
             <h2 className="text-xl font-semibold text-white">
               Cek Keaslian Ijazah
             </h2>
-            <p className="text-[#71717A] mt-1">
+            <p className="text-[#A1A1AA] mt-1">
               Masukkan alamat wallet untuk memverifikasi keaslian ijazah
             </p>
           </CardHeader>
@@ -174,7 +173,7 @@ export default function VerifikasiPage() {
                     <p className="text-red-400">{result.revokeReason}</p>
                   </div>
                   {result.revokedAt && (
-                    <p className="text-xs text-[#52525B] mt-3">
+                    <p className="text-xs text-[#71717A] mt-3">
                       Direvoke pada: {new Date(result.revokedAt).toLocaleDateString("id-ID", {
                         day: "numeric", month: "long", year: "numeric",
                       })}
@@ -263,7 +262,7 @@ export default function VerifikasiPage() {
                           <line x1="10" y1="14" x2="21" y2="3"/>
                         </svg>
                       </a>
-                      <p className="text-xs text-[#52525B] mt-1">
+                      <p className="text-xs text-[#71717A] mt-1">
                         Bukti on-chain yang bisa dicek secara independen
                       </p>
                     </div>
@@ -293,7 +292,7 @@ export default function VerifikasiPage() {
         )}
 
         {/* Info */}
-        <div className="mt-12 text-center text-[#52525B] text-sm">
+        <div className="mt-12 text-center text-[#71717A] text-sm">
           <p>
             Sistem ini menggunakan teknologi blockchain Solana untuk memastikan
             keaslian ijazah.
