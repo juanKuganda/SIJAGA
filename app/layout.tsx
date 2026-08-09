@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Space_Grotesk } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { GlobalLoadingWrapper } from "@/components/LoadingContext";
+import { LenisProvider } from "@/components/LenisProvider";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -79,10 +80,12 @@ export default function RootLayout({
   return (
     <html lang="id">
       <body className={`${spaceGrotesk.className} antialiased`}>
-        <GlobalLoadingWrapper>
-          {children}
-          <Toaster position="top-right" richColors />
-        </GlobalLoadingWrapper>
+        <LenisProvider>
+          <GlobalLoadingWrapper>
+            {children}
+            <Toaster position="top-right" richColors />
+          </GlobalLoadingWrapper>
+        </LenisProvider>
       </body>
     </html>
   );

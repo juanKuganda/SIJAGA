@@ -341,21 +341,21 @@ export default function HomePage() {
           <nav className="hidden md:flex items-center gap-8">
             <a
               className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
+              href="#verification"
+            >
+              Verifikasi
+            </a>
+            <a
+              className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
               href="#features"
             >
-              Platform
+              Fitur
             </a>
             <a
               className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
-              href="#how-it-works"
+              href="#faq"
             >
-              Solusi
-            </a>
-            <a
-              className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
-              href="#"
-            >
-              API
+              FAQ
             </a>
           </nav>
 
@@ -394,14 +394,19 @@ export default function HomePage() {
           className="md:hidden fixed inset-0 bg-white/95 backdrop-blur-lg z-40 flex flex-col items-center justify-center invisible opacity-0"
         >
           <nav className="flex flex-col gap-8 text-center">
-            {["Platform", "Solusi", "API", "Log In"].map((item, i) => (
+            {[
+              { label: "Verifikasi", href: "#verification" },
+              { label: "Fitur", href: "#features" },
+              { label: "FAQ", href: "#faq" },
+              { label: "Log In", href: "/login" },
+            ].map((item) => (
               <a
-                key={item}
-                href={item === "Log In" ? "/login" : `#${item.toLowerCase()}`}
+                key={item.label}
+                href={item.href}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="mobile-nav-item text-3xl font-black tracking-tight text-foreground"
               >
-                {item}
+                {item.label}
               </a>
             ))}
             <a
@@ -854,7 +859,7 @@ export default function HomePage() {
       </main>
 
       {/* Minimalist FAQ Section with Full Red Background */}
-      <section className="w-full relative z-10 bg-red-600 text-white py-24 px-6 md:px-12">
+      <section id="faq" className="w-full relative z-10 bg-red-600 text-white py-24 px-6 md:px-12">
         <div className="max-w-4xl mx-auto w-full">
           <h2 className="text-5xl md:text-6xl font-black tracking-tighter mb-12 uppercase text-center text-white">
             FAQ
@@ -917,22 +922,22 @@ export default function HomePage() {
                 Platform
               </h4>
               <a
-                href="#"
+                href="#verification"
                 className="text-lg font-bold text-white hover:text-red-500 hover:translate-x-1 transition-transform"
               >
-                Verification
+                Verifikasi
               </a>
               <a
-                href="#"
+                href="#features"
                 className="text-lg font-bold text-white hover:text-red-500 hover:translate-x-1 transition-transform"
               >
-                Issuance
+                Fitur
               </a>
               <a
-                href="#"
+                href="#faq"
                 className="text-lg font-bold text-white hover:text-red-500 hover:translate-x-1 transition-transform"
               >
-                API
+                FAQ
               </a>
             </div>
             <div className="flex flex-col gap-4">
@@ -943,13 +948,13 @@ export default function HomePage() {
                 href="#"
                 className="text-lg font-bold text-white hover:text-red-500 hover:translate-x-1 transition-transform"
               >
-                Privacy Policy
+                Kebijakan Privasi
               </a>
               <a
                 href="#"
                 className="text-lg font-bold text-white hover:text-red-500 hover:translate-x-1 transition-transform"
               >
-                Terms of Use
+                Syarat & Ketentuan
               </a>
             </div>
           </div>

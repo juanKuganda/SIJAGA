@@ -96,7 +96,7 @@ export default function VerifikasiPage() {
                 label="Alamat Wallet"
                 placeholder="Contoh: 7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
                 value={wallet}
-                onChange={(e) => setWallet(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setWallet(e.target.value)}
                 required
                 helperText="Masukkan alamat wallet Solana yang ingin diverifikasi"
               />
