@@ -1,17 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Card, { CardContent, CardHeader } from "@/components/ui/Card";
-import Button from "@/components/ui/Button";
-import Badge from "@/components/ui/Badge";
-import Table, {
+import Link from "next/link";
+import { Search, Pencil, Eye, Check, X, XCircle, Users } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/Table";
-import Input from "@/components/ui/Input";
+} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface Mahasiswa {
   id: string;
@@ -62,10 +66,6 @@ export default function MahasiswaPage() {
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState("");
 
-  useEffect(() => {
-    fetchMahasiswa();
-  }, []);
-
   const fetchMahasiswa = async () => {
     try {
       const response = await fetch("/api/admin/mahasiswa");
@@ -84,7 +84,15 @@ export default function MahasiswaPage() {
     }
   };
 
-  const handleVerify = async (walletId: string, status: "VERIFIED" | "REJECTED") => {
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchMahasiswa();
+  }, []);
+
+  const handleVerify = async (
+    walletId: string,
+    status: "VERIFIED" | "REJECTED",
+  ) => {
     setVerifyError(null);
     try {
       const response = await fetch("/api/wallet/verify", {
@@ -165,33 +173,76 @@ export default function MahasiswaPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "PENDING":
-        return <Badge variant="warning">Pending</Badge>;
+        return (
+          <Badge
+            variant="secondary"
+            className="bg-amber-50 text-amber-700 border-amber-200"
+          >
+            Pending
+          </Badge>
+        );
       case "VERIFIED":
-        return <Badge variant="success">Terverifikasi</Badge>;
+        return (
+          <Badge
+            variant="secondary"
+            className="bg-emerald-50 text-emerald-700 border-emerald-200"
+          >
+            Terverifikasi
+          </Badge>
+        );
       case "REJECTED":
-        return <Badge variant="danger">Ditolak</Badge>;
+        return <Badge variant="destructive">Ditolak</Badge>;
       default:
-        return <Badge>{status}</Badge>;
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
   const getCertBadge = (status: string | undefined) => {
     switch (status) {
       case "MINTED":
-        return <Badge variant="info">Minted</Badge>;
+        return (
+          <Badge
+            variant="secondary"
+            className="bg-blue-50 text-blue-700 border-blue-200"
+          >
+            Minted
+          </Badge>
+        );
       case "CLAIMED":
-        return <Badge variant="success">Claimed</Badge>;
+        return (
+          <Badge
+            variant="secondary"
+            className="bg-emerald-50 text-emerald-700 border-emerald-200"
+          >
+            Claimed
+          </Badge>
+        );
       case "REVOKED":
-        return <Badge variant="danger">Revoked</Badge>;
+        return <Badge variant="destructive">Revoked</Badge>;
       default:
-        return <Badge variant="default">—</Badge>;
+        return <Badge variant="outline">—</Badge>;
     }
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#27272A] border-t-red-600" />
+      <div>
+        <div className="mb-8">
+          <div className="h-8 w-48 bg-muted rounded-lg animate-pulse" />
+          <div className="h-4 w-72 bg-muted rounded-lg animate-pulse mt-2" />
+        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div
+                  key={i}
+                  className="h-12 bg-muted rounded-lg animate-pulse"
+                />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -199,18 +250,15 @@ export default function MahasiswaPage() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-64">
-        <div className="text-red-400 mb-4">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
-        </div>
-        <p className="text-red-400 font-medium">{error}</p>
-        <button
+        <XCircle className="w-12 h-12 text-red-400 mb-4" />
+        <p className="text-red-600 font-semibold">{error}</p>
+        <Button
+          variant="outline"
+          className="mt-4"
           onClick={() => window.location.reload()}
-          className="mt-4 px-4 py-2 bg-zinc-800 text-white rounded-lg hover:bg-zinc-700 transition-colors"
         >
           Coba Lagi
-        </button>
+        </Button>
       </div>
     );
   }
@@ -218,14 +266,16 @@ export default function MahasiswaPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white">Kelola Mahasiswa</h1>
-        <p className="text-[#71717A] mt-1">
+        <h1 className="text-3xl font-extrabold text-foreground tracking-tight">
+          Kelola Mahasiswa
+        </h1>
+        <p className="text-muted-foreground mt-1">
           Verifikasi wallet, edit data, dan kelola mahasiswa
         </p>
       </div>
 
       {verifyError && (
-        <div className="mb-4 p-4 bg-red-900/20 border border-red-800/30 rounded-lg text-red-400">
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm font-medium">
           {verifyError}
         </div>
       )}
@@ -233,11 +283,13 @@ export default function MahasiswaPage() {
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 placeholder="Cari berdasarkan nama atau NIM..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                className="pl-10"
               />
             </div>
             <div className="flex gap-2">
@@ -249,7 +301,7 @@ export default function MahasiswaPage() {
               ].map((f) => (
                 <Button
                   key={f.key}
-                  variant={filter === f.key ? "primary" : "ghost"}
+                  variant={filter === f.key ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setFilter(f.key)}
                 >
@@ -275,67 +327,80 @@ export default function MahasiswaPage() {
             <TableBody>
               {filteredMahasiswa.length === 0 ? (
                 <TableRow>
-                  <TableCell className="text-center py-8 text-[#52525B]">
-                    Tidak ada data mahasiswa
+                  <TableCell colSpan={7} className="text-center py-12">
+                    <Users className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
+                    <p className="text-muted-foreground font-medium">
+                      Tidak ada data mahasiswa
+                    </p>
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredMahasiswa.map((m) => (
-                  <TableRow key={m.id}>
-                    <TableCell className="font-medium text-white">{m.nim}</TableCell>
-                    <TableCell className="text-white">{m.nama}</TableCell>
-                    <TableCell>{m.prodi || "-"}</TableCell>
+                  <TableRow key={m.id} className="hover:bg-muted/50">
+                    <TableCell className="font-bold text-foreground">
+                      {m.nim}
+                    </TableCell>
+                    <TableCell className="font-medium text-foreground">
+                      {m.nama}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {m.prodi || "-"}
+                    </TableCell>
                     <TableCell>
                       {m.wallet ? (
-                        <span className="text-xs font-mono text-[#71717A]">
+                        <span className="text-xs font-mono text-muted-foreground">
                           {m.wallet.walletAddress.slice(0, 8)}...
                           {m.wallet.walletAddress.slice(-6)}
                         </span>
                       ) : (
-                        <span className="text-[#52525B]">Belum daftar</span>
+                        <span className="text-muted-foreground">
+                          Belum daftar
+                        </span>
                       )}
                     </TableCell>
                     <TableCell>
                       {m.wallet ? (
                         getStatusBadge(m.wallet.status)
                       ) : (
-                        <Badge>-</Badge>
+                        <Badge variant="outline">-</Badge>
                       )}
                     </TableCell>
-                    <TableCell>
-                      {getCertBadge(m.certificate?.status)}
-                    </TableCell>
+                    <TableCell>{getCertBadge(m.certificate?.status)}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
                         <Button
                           size="sm"
-                          variant="secondary"
+                          variant="outline"
                           onClick={() => openEditModal(m)}
                         >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                          </svg>
+                          <Pencil className="w-3.5 h-3.5 mr-1" />
                           Edit
                         </Button>
+                        <Link href={`/detail-ijazah/${m.nim}`}>
+                          <Button size="sm" variant="outline">
+                            <Eye className="w-3.5 h-3.5 mr-1" />
+                            Detail
+                          </Button>
+                        </Link>
                         {m.wallet?.status === "PENDING" && (
                           <>
                             <Button
                               size="sm"
-                              variant="primary"
                               onClick={() =>
                                 handleVerify(m.wallet!.id, "VERIFIED")
                               }
                             >
+                              <Check className="w-3.5 h-3.5 mr-1" />
                               Setujui
                             </Button>
                             <Button
                               size="sm"
-                              variant="danger"
+                              variant="destructive"
                               onClick={() =>
                                 handleVerify(m.wallet!.id, "REJECTED")
                               }
                             >
+                              <X className="w-3.5 h-3.5 mr-1" />
                               Tolak
                             </Button>
                           </>
@@ -354,70 +419,87 @@ export default function MahasiswaPage() {
       {editModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-neutral-900/40 backdrop-blur-sm"
             onClick={() => setEditModal(null)}
           />
-          <div className="relative bg-[#111118] border border-[#27272A] rounded-xl shadow-2xl max-w-md w-full p-6 animate-fade-in-up">
+          <div className="relative bg-white border border-border rounded-xl shadow-2xl max-w-md w-full p-6 animate-fade-in-up">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-full bg-sky-900/30 border border-sky-600/30 flex items-center justify-center">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" strokeWidth="2">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                </svg>
+              <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
+                <Pencil className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-white">
+                <h3 className="text-lg font-bold text-foreground">
                   Edit Data Mahasiswa
                 </h3>
-                <p className="text-sm text-[#71717A]">
+                <p className="text-sm text-muted-foreground">
                   NIM: {editModal.nim}
                 </p>
               </div>
             </div>
 
             {editError && (
-              <div className="mb-4 p-3 bg-red-900/20 border border-red-600/30 rounded-lg text-sm text-red-400">
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
                 {editError}
               </div>
             )}
 
             <div className="space-y-4 mb-6">
-              <Input
-                label="Nama Lengkap"
-                value={editForm.nama}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, nama: e.target.value }))
-                }
-              />
+              <div className="space-y-2">
+                <Label htmlFor="edit-nama" className="font-semibold">
+                  Nama Lengkap
+                </Label>
+                <Input
+                  id="edit-nama"
+                  value={editForm.nama}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({ ...prev, nama: e.target.value }))
+                  }
+                />
+              </div>
 
-              <Input
-                label="Email"
-                type="email"
-                value={editForm.email}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, email: e.target.value }))
-                }
-              />
+              <div className="space-y-2">
+                <Label htmlFor="edit-email" className="font-semibold">
+                  Email
+                </Label>
+                <Input
+                  id="edit-email"
+                  type="email"
+                  value={editForm.email}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({ ...prev, email: e.target.value }))
+                  }
+                />
+              </div>
 
-              <Input
-                label="Program Studi"
-                value={editForm.prodi}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, prodi: e.target.value }))
-                }
-              />
+              <div className="space-y-2">
+                <Label htmlFor="edit-prodi" className="font-semibold">
+                  Program Studi
+                </Label>
+                <Input
+                  id="edit-prodi"
+                  value={editForm.prodi}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({ ...prev, prodi: e.target.value }))
+                  }
+                />
+              </div>
 
-              <Input
-                label="Angkatan"
-                value={editForm.angkatan}
-                onChange={(e) =>
-                  setEditForm((prev) => ({
-                    ...prev,
-                    angkatan: e.target.value,
-                  }))
-                }
-                maxLength={4}
-              />
+              <div className="space-y-2">
+                <Label htmlFor="edit-angkatan" className="font-semibold">
+                  Angkatan
+                </Label>
+                <Input
+                  id="edit-angkatan"
+                  value={editForm.angkatan}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({
+                      ...prev,
+                      angkatan: e.target.value,
+                    }))
+                  }
+                  maxLength={4}
+                />
+              </div>
             </div>
 
             <div className="flex gap-3">
@@ -429,12 +511,11 @@ export default function MahasiswaPage() {
                 Batal
               </Button>
               <Button
-                variant="primary"
                 className="flex-1"
                 onClick={handleEditSubmit}
-                loading={editLoading}
+                disabled={editLoading}
               >
-                Simpan Perubahan
+                {editLoading ? "Menyimpan..." : "Simpan Perubahan"}
               </Button>
             </div>
           </div>

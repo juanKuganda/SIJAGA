@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Card, { CardContent, CardHeader } from "@/components/ui/Card";
-import Button from "@/components/ui/Button";
-import Input from "@/components/ui/Input";
-import Badge from "@/components/ui/Badge";
+import { Wallet as WalletIcon, CheckCircle2, Clock, XCircle, Info, ArrowRight } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 
 interface Wallet {
   walletAddress: string;
@@ -29,10 +31,21 @@ export default function WalletPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const isValidSolanaAddress = (addr: string): boolean => {
+    // Base58 format, 32-44 characters
+    return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(addr);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccess("");
+
+    if (!isValidSolanaAddress(walletAddress)) {
+      setError("Format wallet address tidak valid. Gunakan alamat Solana (base58, 32-44 karakter).");
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -62,20 +75,34 @@ export default function WalletPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "PENDING":
-        return <Badge variant="warning">Menunggu Verifikasi</Badge>;
+        return <Badge variant="secondary" className="bg-amber-50 text-amber-700 border-amber-200">Menunggu Verifikasi</Badge>;
       case "VERIFIED":
-        return <Badge variant="success">Terverifikasi</Badge>;
+        return <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-200">Terverifikasi</Badge>;
       case "REJECTED":
-        return <Badge variant="danger">Ditolak</Badge>;
+        return <Badge variant="destructive">Ditolak</Badge>;
       default:
-        return <Badge>{status}</Badge>;
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#27272A] border-t-red-600" />
+      <div>
+        <div className="mb-8">
+          <div className="h-8 w-48 bg-muted rounded-lg animate-pulse" />
+          <div className="h-4 w-72 bg-muted rounded-lg animate-pulse mt-2" />
+        </div>
+        <div className="max-w-2xl">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-12 bg-muted rounded-lg animate-pulse" />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -83,116 +110,137 @@ export default function WalletPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white">Wallet Saya</h1>
-        <p className="text-[#71717A] mt-1">
+        <h1 className="text-3xl font-extrabold text-foreground tracking-tight">Wallet Saya</h1>
+        <p className="text-muted-foreground mt-1">
           Daftarkan alamat wallet Phantom Anda untuk menerima ijazah digital
         </p>
       </div>
 
       <div className="max-w-2xl">
-        <Card>
+        <Card className="hover:shadow-md transition-shadow">
           <CardHeader>
-            <h2 className="text-lg font-semibold text-white">
+            <CardTitle className="flex items-center gap-2">
+              <WalletIcon className="w-5 h-5 text-red-600" />
               {wallet ? "Status Wallet" : "Daftarkan Wallet"}
-            </h2>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {wallet ? (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div>
-                  <p className="text-xs text-[#71717A] uppercase tracking-wider">Alamat Wallet</p>
-                  <p className="font-mono text-sm break-all text-[#A1A1AA] bg-[#0A0A0F] p-3 rounded-lg mt-1">
+                  <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 block">Alamat Wallet</span>
+                  <div className="font-mono text-sm break-all text-foreground bg-muted p-4 rounded-lg border border-border shadow-inner">
                     {wallet.walletAddress}
-                  </p>
+                  </div>
                 </div>
                 <div>
-                  <p className="text-xs text-[#71717A] uppercase tracking-wider mb-1">Status</p>
-                  <div className="mt-1">{getStatusBadge(wallet.status)}</div>
+                  <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 block">Status Verifikasi</span>
+                  {getStatusBadge(wallet.status)}
                 </div>
 
                 {wallet.status === "PENDING" && (
-                  <div className="p-4 bg-amber-900/10 border border-amber-600/20 rounded-lg">
-                    <p className="text-amber-400 font-medium text-sm">
-                      Menunggu Verifikasi
-                    </p>
-                    <p className="text-amber-400/70 text-sm mt-1">
-                      Wallet Anda sedang diverifikasi oleh admin. Proses ini
-                      biasanya memakan waktu 1-2 hari kerja.
-                    </p>
+                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg flex gap-3">
+                    <Clock className="w-5 h-5 text-amber-600 shrink-0" />
+                    <div>
+                      <p className="text-amber-800 font-bold text-sm mb-1">
+                        Menunggu Verifikasi
+                      </p>
+                      <p className="text-amber-700 text-sm">
+                        Wallet Anda sedang diverifikasi oleh admin fakultas. Proses ini
+                        biasanya memakan waktu 1-2 hari kerja.
+                      </p>
+                    </div>
                   </div>
                 )}
 
                 {wallet.status === "VERIFIED" && (
-                  <div className="p-4 bg-emerald-900/10 border border-emerald-600/20 rounded-lg">
-                    <p className="text-emerald-400 font-medium text-sm">
-                      Wallet Terverifikasi
-                    </p>
-                    <p className="text-emerald-400/70 text-sm mt-1">
-                      Wallet Anda sudah terverifikasi. Admin dapat menerbitkan
-                      NFT ijazah ke wallet ini.
-                    </p>
+                  <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg flex gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                    <div>
+                      <p className="text-emerald-800 font-bold text-sm mb-1">
+                        Wallet Terverifikasi
+                      </p>
+                      <p className="text-emerald-700 text-sm">
+                        Wallet Anda sudah diverifikasi dan terhubung ke profil Anda. Anda sudah bisa menerima NFT Ijazah.
+                      </p>
+                    </div>
                   </div>
                 )}
 
                 {wallet.status === "REJECTED" && (
-                  <div className="p-4 bg-red-900/10 border border-red-600/20 rounded-lg">
-                    <p className="text-red-400 font-medium text-sm">Wallet Ditolak</p>
-                    <p className="text-red-400/70 text-sm mt-1">
-                      Wallet Anda ditolak oleh admin. Anda bisa mendaftarkan wallet baru.
-                    </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mt-3"
-                      onClick={() => {
-                        setWallet(null);
-                        setWalletAddress("");
-                        setError("");
-                        setSuccess("");
-                      }}
-                    >
-                      Daftarkan Wallet Baru
-                    </Button>
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex gap-3">
+                    <XCircle className="w-5 h-5 text-red-600 shrink-0" />
+                    <div>
+                      <p className="text-red-800 font-bold text-sm mb-1">Wallet Ditolak</p>
+                      <p className="text-red-700 text-sm mb-3">
+                        Wallet Anda ditolak oleh admin. Anda bisa mendaftarkan wallet baru.
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setWallet(null);
+                          setWalletAddress("");
+                          setError("");
+                          setSuccess("");
+                        }}
+                      >
+                        Daftarkan Wallet Baru <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="p-4 bg-sky-900/10 border border-sky-600/20 rounded-lg">
-                  <p className="text-sky-400 font-medium text-sm">
-                    Cara Mendapatkan Alamat Wallet
-                  </p>
-                  <ol className="text-sky-400/70 text-sm mt-2 space-y-1 list-decimal list-inside">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Info className="w-4 h-4 text-blue-600" />
+                    <p className="text-blue-800 font-bold text-sm">
+                      Cara Mendapatkan Alamat Wallet
+                    </p>
+                  </div>
+                  <ol className="text-blue-700 text-sm mt-2 space-y-1.5 list-decimal list-inside font-medium">
                     <li>Install ekstensi Phantom Wallet di browser Anda</li>
                     <li>Buat wallet baru atau import wallet yang sudah ada</li>
-                    <li>Klik ikon wallet dan copy alamat wallet Anda</li>
+                    <li>Klik nama wallet dan copy alamat wallet Solana Anda</li>
                     <li>Paste alamat wallet di form di bawah ini</li>
                   </ol>
                 </div>
 
                 {error && (
-                  <div className="p-3 bg-red-900/20 border border-red-600/30 rounded-lg text-sm text-red-400">
-                    {error}
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex gap-2">
+                    <XCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                    <p className="text-sm text-red-800 font-medium">{error}</p>
                   </div>
                 )}
 
                 {success && (
-                  <div className="p-3 bg-emerald-900/20 border border-emerald-600/30 rounded-lg text-sm text-emerald-400">
-                    {success}
+                  <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg flex gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <p className="text-sm text-emerald-800 font-medium">{success}</p>
                   </div>
                 )}
 
-                <Input
-                  label="Alamat Wallet Phantom"
-                  placeholder="Contoh: 7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-                  value={walletAddress}
-                  onChange={(e) => setWalletAddress(e.target.value)}
-                  required
-                  helperText="Alamat wallet Solana (base58 format, 32-44 karakter)"
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="walletAddress" className="font-semibold text-foreground">
+                    Alamat Wallet Phantom <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="walletAddress"
+                    placeholder="Contoh: 7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+                    value={walletAddress}
+                    onChange={(e) => setWalletAddress(e.target.value)}
+                    required
+                    className="font-mono text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground font-medium">
+                    Alamat wallet Solana (base58 format, 32-44 karakter)
+                  </p>
+                </div>
 
-                <Button type="submit" className="w-full" loading={submitting} size="lg">
-                  Daftarkan Wallet
+                <Button type="submit" className="w-full font-bold" disabled={submitting} size="lg">
+                  {submitting ? "Memproses..." : "Daftarkan Wallet"}
                 </Button>
               </form>
             )}

@@ -3,7 +3,31 @@
 import { ReactNode, useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import Button from "@/components/ui/Button";
+import {
+  LayoutDashboard,
+  Users,
+  FileText,
+  XCircle,
+  LogOut,
+  Shield,
+  Home,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+  SidebarInset,
+  SidebarSeparator,
+} from "@/components/ui/sidebar";
 
 interface User {
   id: string;
@@ -12,13 +36,35 @@ interface User {
   role: string;
 }
 
+const navItems = [
+  {
+    href: "/dashboard",
+    label: "Dashboard",
+    icon: LayoutDashboard,
+  },
+  {
+    href: "/mahasiswa",
+    label: "Mahasiswa",
+    icon: Users,
+  },
+  {
+    href: "/terbitkan",
+    label: "Terbitkan",
+    icon: FileText,
+  },
+  {
+    href: "/revoke",
+    label: "Revoke",
+    icon: XCircle,
+  },
+];
+
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    // Fetch user data
     fetch("/api/auth/me")
       .then((res) => res.json())
       .then((data) => {
@@ -36,96 +82,134 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     router.push("/login");
   };
 
-  const navItems = [
-    {
-      href: "/dashboard",
-      label: "Dashboard",
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
-        </svg>
-      ),
-    },
-    {
-      href: "/mahasiswa",
-      label: "Mahasiswa",
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-        </svg>
-      ),
-    },
-    {
-      href: "/terbitkan",
-      label: "Terbitkan",
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/>
-        </svg>
-      ),
-    },
-    {
-      href: "/revoke",
-      label: "Revoke",
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
-        </svg>
-      ),
-    },
-  ];
-
   return (
-    <div className="min-h-screen bg-[#0A0A0F]">
-      {/* Navbar */}
-      <nav className="sticky top-0 z-50 glass border-b border-[#27272A]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <Link href="/dashboard" className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                  </svg>
-                </div>
-                <span className="text-lg font-bold gradient-text">SIJAGA</span>
-              </Link>
-              <div className="hidden sm:ml-8 sm:flex sm:space-x-1">
-                {navItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
-                      pathname === item.href
-                        ? "bg-red-600/10 text-red-400 border border-red-600/20"
-                        : "text-[#71717A] hover:text-white hover:bg-white/5"
-                    }`}
-                  >
-                    {item.icon}
-                    {item.label}
-                  </Link>
-                ))}
+    <SidebarProvider defaultOpen={true}>
+      <div className="flex min-h-screen w-full bg-slate-50/50 selection:bg-red-100 selection:text-red-900 font-sans">
+        <Sidebar
+          collapsible="icon"
+          className="border-r-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)] bg-white/80 backdrop-blur-2xl"
+        >
+          <SidebarHeader>
+            <div className="flex items-center gap-3 px-2 py-3">
+              <img src="/apple-touch-icon.png" alt="Logo Untad" className="w-10 h-10 object-contain shrink-0 drop-shadow-sm" />
+              <div className="flex flex-col group-data-[collapsible=icon]:hidden">
+                <span className="text-xl font-black text-foreground tracking-tight leading-none">SIJAGA</span>
+                <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest mt-1">Universitas Tadulako</span>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              {user && (
-                <span className="text-sm text-[#71717A]">
-                  <span className="text-[#A1A1AA]">{user.nama}</span>{" "}
-                  <span className="text-red-500">(Admin)</span>
+          </SidebarHeader>
+
+          <SidebarSeparator />
+
+          <SidebarContent>
+            <SidebarGroup>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {navItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <SidebarMenuItem key={item.href}>
+                        <SidebarMenuButton
+                          render={<Link href={item.href} />}
+                          isActive={pathname === item.href}
+                          tooltip={item.label}
+                          className={
+                            pathname === item.href
+                              ? "bg-red-50 text-red-600 font-semibold hover:bg-red-50 hover:text-red-600 rounded-xl transition-all duration-200"
+                              : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 rounded-xl transition-all duration-200"
+                          }
+                        >
+                          <Icon className="w-4 h-4" />
+                          <span>{item.label}</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            <SidebarGroup className="mt-auto">
+              <SidebarGroupContent>
+                <Link href="/" className="px-3 py-3 mt-6 mx-4 bg-zinc-50 hover:bg-zinc-100 transition-colors rounded-xl border border-zinc-200 flex items-center gap-3 group">
+                  <div className="w-8 h-8 rounded-lg bg-white border border-zinc-200 flex items-center justify-center shrink-0 group-hover:border-red-200 transition-colors">
+                    <Home className="w-4 h-4 text-zinc-500 group-hover:text-red-500 transition-colors" />
+                  </div>
+                  <div>
+                    <span className="text-sm font-bold text-zinc-700 block group-hover:text-red-600 transition-colors">Beranda Publik</span>
+                    <span className="text-[10px] text-muted-foreground block leading-tight">Kembali ke landing page</span>
+                  </div>
+                </Link>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </SidebarContent>
+
+          <SidebarSeparator />
+
+          <SidebarFooter>
+            <div className="flex items-center gap-3 px-2 py-2">
+              <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                <span className="text-xs font-bold text-red-600">
+                  {user?.nama?.charAt(0)?.toUpperCase() || "A"}
                 </span>
-              )}
-              <Button variant="ghost" size="sm" onClick={handleLogout}>
-                Logout
+              </div>
+              <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
+                <p className="text-sm font-semibold text-foreground truncate">
+                  {user?.nama || "Admin"}
+                </p>
+                <p className="text-xs text-muted-foreground">Administrator</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleLogout}
+                className="shrink-0 text-muted-foreground hover:text-foreground group-data-[collapsible=icon]:hidden"
+                title="Logout"
+              >
+                <LogOut className="w-4 h-4" />
               </Button>
             </div>
-          </div>
-        </div>
-      </nav>
+          </SidebarFooter>
+        </Sidebar>
 
-      {/* Main content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {children}
-      </main>
-    </div>
+        <SidebarInset className="bg-transparent">
+          <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b border-white/20 bg-white/70 backdrop-blur-xl px-6 shadow-sm">
+            <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
+            
+            <div className="h-4 w-px bg-zinc-200 hidden md:block"></div>
+            <div className="hidden md:flex items-center gap-2 text-sm text-zinc-500 font-medium">
+              <span>SIJAGA Admin</span>
+              <span>/</span>
+              <span className="text-foreground">{navItems.find(i => i.href === pathname)?.label || "Dashboard"}</span>
+            </div>
+
+            <div className="flex-1" />
+            
+            <div className="flex items-center gap-2 md:gap-4">
+              {user && (
+                <div className="hidden sm:flex flex-col items-end mr-2">
+                  <span className="text-sm font-bold text-foreground leading-none">{user.nama}</span>
+                  <span className="text-[10px] text-red-600 font-semibold mt-1">Admin Pusat</span>
+                </div>
+              )}
+              
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleLogout}
+                className="hidden sm:inline-flex rounded-full text-muted-foreground hover:bg-red-50 hover:text-red-600"
+                title="Logout"
+              >
+                <LogOut className="w-4 h-4" />
+              </Button>
+            </div>
+          </header>
+
+          <main className="flex-1 p-4 md:p-6 lg:p-8">
+            {children}
+          </main>
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
   );
 }

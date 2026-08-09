@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Space_Grotesk } from "next/font/google";
+import { Toaster } from "@/components/ui/sonner";
+import { GlobalLoadingWrapper } from "@/components/LoadingContext";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -9,10 +11,64 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "SIJAGA — Sistem Jaminan Autentikasi Gelar Akademik",
-  description:
-    "Verifikasi ijazah anti-pemalsuan berbasis NFT Soulbound pada blockchain Solana. Universitas Tadulako.",
-  keywords: ["SIJAGA", "blockchain", "NFT", "Soulbound", "ijazah", "verifikasi", "Solana", "Universitas Tadulako"],
+  title: {
+    default: "SIJAGA | Sistem Jaminan Autentikasi Gelar Akademik Universitas Tadulako",
+    template: "%s | SIJAGA Universitas Tadulako"
+  },
+  description: "Platform resmi verifikasi ijazah anti-pemalsuan berbasis NFT Soulbound (SBT) pada jaringan Solana untuk alumni Universitas Tadulako.",
+  keywords: [
+    "SIJAGA", 
+    "Universitas Tadulako", 
+    "Untad", 
+    "Blockchain", 
+    "NFT", 
+    "Soulbound Token", 
+    "SBT", 
+    "Ijazah Digital", 
+    "Verifikasi Ijazah", 
+    "Solana"
+  ],
+  authors: [{ name: "Universitas Tadulako" }],
+  creator: "Universitas Tadulako",
+  publisher: "Universitas Tadulako",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/favicon-96x96.png", sizes: "96x96", type: "image/png" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
+  manifest: "/site.webmanifest",
+  openGraph: {
+    title: "SIJAGA | Universitas Tadulako",
+    description: "Sistem Jaminan Autentikasi Gelar Akademik berbasis NFT di jaringan Solana.",
+    url: "https://sijaga.untad.ac.id",
+    siteName: "SIJAGA Untad",
+    images: [
+      {
+        url: "/web-app-manifest-512x512.png",
+        width: 512,
+        height: 512,
+        alt: "Logo SIJAGA Universitas Tadulako",
+      },
+    ],
+    locale: "id_ID",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SIJAGA | Universitas Tadulako",
+    description: "Sistem Jaminan Autentikasi Gelar Akademik berbasis NFT di Solana.",
+    images: ["/web-app-manifest-512x512.png"],
+  },
 };
 
 export default function RootLayout({
@@ -21,8 +77,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" className="dark">
-      <body className={`${spaceGrotesk.className} antialiased`}>{children}</body>
+    <html lang="id">
+      <body className={`${spaceGrotesk.className} antialiased`}>
+        <GlobalLoadingWrapper>
+          {children}
+          <Toaster position="top-right" richColors />
+        </GlobalLoadingWrapper>
+      </body>
     </html>
   );
 }

@@ -1,16 +1,30 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Card, { CardContent, CardHeader } from "@/components/ui/Card";
-import Button from "@/components/ui/Button";
-import Badge from "@/components/ui/Badge";
-import Table, {
+import Link from "next/link";
+import { toast } from "sonner";
+import {
+  Download,
+  XCircle,
+  FileText,
+  Search,
+  ShieldAlert,
+  History,
+  CornerUpLeft,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/Table";
+} from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Label } from "@/components/ui/label";
 
 interface Mahasiswa {
   id: string;
@@ -55,16 +69,18 @@ export default function RevokePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [revoking, setRevoking] = useState<string | null>(null);
-  const [revokeModal, setRevokeModal] = useState<{ userId: string; nama: string } | null>(null);
+  const [revokeModal, setRevokeModal] = useState<{
+    userId: string;
+    nama: string;
+  } | null>(null);
   const [revokeReason, setRevokeReason] = useState("");
   const [backupLoading, setBackupLoading] = useState(false);
   const [restoring, setRestoring] = useState<string | null>(null);
-  const [tab, setTab] = useState<"active" | "revoked" | "backups">("active");
-
-  useEffect(() => {
-    fetchMahasiswa();
-    fetchBackups();
-  }, []);
+  const [restoreModal, setRestoreModal] = useState<{
+    backupId: string;
+    nama: string;
+  } | null>(null);
+  const [tab, setTab] = useState<string>("active");
 
   const fetchMahasiswa = async () => {
     try {
@@ -81,8 +97,8 @@ export default function RevokePage() {
               m.certificate &&
               (m.certificate.status === "MINTED" ||
                 m.certificate.status === "CLAIMED" ||
-                m.certificate.status === "REVOKED")
-          )
+                m.certificate.status === "REVOKED"),
+          ),
         );
       }
     } catch (error) {
@@ -109,6 +125,12 @@ export default function RevokePage() {
     }
   };
 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchMahasiswa();
+    fetchBackups();
+  }, []);
+
   const handleRevoke = async () => {
     if (!revokeModal || !revokeReason.trim()) return;
 
@@ -127,27 +149,25 @@ export default function RevokePage() {
       const data = await response.json();
 
       if (response.ok) {
-        alert(`Sertifikat ${revokeModal.nama} berhasil direvoke`);
+        toast.success(`Sertifikat ${revokeModal.nama} berhasil direvoke`);
         setRevokeModal(null);
         setRevokeReason("");
         fetchMahasiswa();
         fetchBackups();
       } else {
-        alert(`Gagal: ${data.error}`);
+        toast.error("Gagal merevoke sertifikat", {
+          description: data.error,
+        });
       }
     } catch (error) {
       console.error("Error revoking:", error);
-      alert("Terjadi kesalahan saat merevoke sertifikat");
+      toast.error("Terjadi kesalahan saat merevoke sertifikat");
     } finally {
       setRevoking(null);
     }
   };
 
   const handleRestore = async (backupId: string) => {
-    if (!confirm("Yakin ingin me-restore sertifikat dari backup ini? Status sertifikat akan dikembalikan ke sebelum direvoke.")) {
-      return;
-    }
-
     setRestoring(backupId);
 
     try {
@@ -160,15 +180,20 @@ export default function RevokePage() {
       const data = await response.json();
 
       if (response.ok) {
-        alert(`Sertifikat berhasil di-restore: ${data.message}`);
+        toast.success("Sertifikat berhasil di-restore", {
+          description: data.message,
+        });
+        setRestoreModal(null);
         fetchMahasiswa();
         fetchBackups();
       } else {
-        alert(`Gagal restore: ${data.error}`);
+        toast.error("Gagal restore", {
+          description: data.error,
+        });
       }
     } catch (error) {
       console.error("Error restoring:", error);
-      alert("Terjadi kesalahan saat me-restore sertifikat");
+      toast.error("Terjadi kesalahan saat me-restore sertifikat");
     } finally {
       setRestoring(null);
     }
@@ -180,7 +205,6 @@ export default function RevokePage() {
       const response = await fetch("/api/admin/backup");
       const data = await response.json();
 
-      // Download as JSON file
       const blob = new Blob([JSON.stringify(data, null, 2)], {
         type: "application/json",
       });
@@ -190,25 +214,49 @@ export default function RevokePage() {
       a.download = `sijaga-backup-${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       URL.revokeObjectURL(url);
+
+      toast.success("Backup berhasil diunduh");
     } catch (error) {
       console.error("Error backing up:", error);
-      alert("Gagal mengunduh backup");
+      toast.error("Gagal mengunduh backup");
     } finally {
       setBackupLoading(false);
     }
   };
 
   const activeCerts = mahasiswa.filter(
-    (m) => m.certificate?.status === "MINTED" || m.certificate?.status === "CLAIMED"
+    (m) =>
+      m.certificate?.status === "MINTED" || m.certificate?.status === "CLAIMED",
   );
   const revokedCerts = mahasiswa.filter(
-    (m) => m.certificate?.status === "REVOKED"
+    (m) => m.certificate?.status === "REVOKED",
   );
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#27272A] border-t-red-600" />
+      <div>
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <div className="h-8 w-48 bg-muted rounded-lg animate-pulse" />
+            <div className="h-4 w-72 bg-muted rounded-lg animate-pulse mt-2" />
+          </div>
+          <div className="h-10 w-40 bg-muted rounded-lg animate-pulse" />
+        </div>
+        <div className="mb-6">
+          <div className="h-10 w-64 bg-muted rounded-lg animate-pulse" />
+        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="h-12 bg-muted rounded-lg animate-pulse"
+                />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -216,18 +264,20 @@ export default function RevokePage() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-64">
-        <div className="text-red-400 mb-4">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
-        </div>
-        <p className="text-red-400 font-medium">{error}</p>
-        <button
-          onClick={() => { setError(null); setLoading(true); fetchMahasiswa(); fetchBackups(); }}
-          className="mt-4 px-4 py-2 bg-zinc-800 text-white rounded-lg hover:bg-zinc-700 transition-colors"
+        <XCircle className="w-12 h-12 text-red-400 mb-4" />
+        <p className="text-red-600 font-semibold">{error}</p>
+        <Button
+          variant="outline"
+          className="mt-4"
+          onClick={() => {
+            setError(null);
+            setLoading(true);
+            fetchMahasiswa();
+            fetchBackups();
+          }}
         >
           Coba Lagi
-        </button>
+        </Button>
       </div>
     );
   }
@@ -236,331 +286,357 @@ export default function RevokePage() {
     <div>
       <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Revoke & Backup</h1>
-          <p className="text-[#71717A] mt-1">
+          <h1 className="text-3xl font-extrabold text-foreground tracking-tight">
+            Revoke & Backup
+          </h1>
+          <p className="text-muted-foreground mt-1">
             Cabut sertifikat, kelola backup data, dan restore sertifikat
           </p>
         </div>
         <Button
-          variant="secondary"
+          variant="outline"
           onClick={handleBackupAll}
-          loading={backupLoading}
+          disabled={backupLoading}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="7 10 12 15 17 10"/>
-            <line x1="12" y1="15" x2="12" y2="3"/>
-          </svg>
-          Download Backup
+          <Download className="w-4 h-4 mr-2" />
+          {backupLoading ? "Mendownload..." : "Download Backup"}
         </Button>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="flex gap-2 mb-6">
-        <Button
-          variant={tab === "active" ? "primary" : "ghost"}
-          size="sm"
-          onClick={() => setTab("active")}
-        >
-          Aktif ({activeCerts.length})
-        </Button>
-        <Button
-          variant={tab === "revoked" ? "danger" : "ghost"}
-          size="sm"
-          onClick={() => setTab("revoked")}
-        >
-          Direvoke ({revokedCerts.length})
-        </Button>
-        <Button
-          variant={tab === "backups" ? "secondary" : "ghost"}
-          size="sm"
-          onClick={() => setTab("backups")}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polyline points="1 4 1 10 7 10"/>
-            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
-          </svg>
-          Restore ({backups.length})
-        </Button>
-      </div>
+      <Tabs value={tab} onValueChange={setTab} className="space-y-6">
+        <TabsList className="bg-muted">
+          <TabsTrigger
+            value="active"
+            className="data-[state=active]:bg-white data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+          >
+            Aktif{" "}
+            <Badge
+              variant="secondary"
+              className="ml-2 bg-blue-50 text-blue-700"
+            >
+              {activeCerts.length}
+            </Badge>
+          </TabsTrigger>
+          <TabsTrigger
+            value="revoked"
+            className="data-[state=active]:bg-white data-[state=active]:text-red-600 data-[state=active]:shadow-sm"
+          >
+            Direvoke{" "}
+            <Badge variant="destructive" className="ml-2">
+              {revokedCerts.length}
+            </Badge>
+          </TabsTrigger>
+          <TabsTrigger
+            value="backups"
+            className="data-[state=active]:bg-white data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+          >
+            Restore{" "}
+            <Badge
+              variant="secondary"
+              className="ml-2 bg-purple-50 text-purple-700"
+            >
+              {backups.length}
+            </Badge>
+          </TabsTrigger>
+        </TabsList>
 
-      {tab === "active" ? (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white">
-                Sertifikat Aktif
-              </h2>
-              <Badge variant="success">{activeCerts.length} aktif</Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {activeCerts.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 rounded-full bg-[#1A1A24] border border-[#27272A] flex items-center justify-center mx-auto mb-4">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#52525B" strokeWidth="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14 2 14 8 20 8"/>
-                  </svg>
+        <TabsContent value="active" className="m-0">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Sertifikat Aktif</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {activeCerts.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                    <FileText className="w-7 h-7 text-muted-foreground" />
+                  </div>
+                  <p className="text-foreground font-semibold">
+                    Belum ada sertifikat yang diterbitkan
+                  </p>
                 </div>
-                <p className="text-[#71717A]">Belum ada sertifikat yang diterbitkan</p>
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>NIM</TableHead>
-                    <TableHead>Nama</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>NFT Address</TableHead>
-                    <TableHead>Tanggal Terbit</TableHead>
-                    <TableHead>Aksi</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {activeCerts.map((m) => (
-                    <TableRow key={m.id}>
-                      <TableCell className="font-medium text-white">{m.nim}</TableCell>
-                      <TableCell className="text-white">{m.nama}</TableCell>
-                      <TableCell>
-                        <Badge variant={m.certificate?.status === "CLAIMED" ? "success" : "info"}>
-                          {m.certificate?.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-xs font-mono text-[#71717A]">
-                          {m.certificate?.nftAddress?.slice(0, 8)}...
-                          {m.certificate?.nftAddress?.slice(-6)}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        {m.certificate?.issuedAt
-                          ? new Date(m.certificate.issuedAt).toLocaleDateString("id-ID")
-                          : "-"}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          size="sm"
-                          variant="danger"
-                          onClick={() =>
-                            setRevokeModal({
-                              userId: m.id,
-                              nama: m.nama,
-                            })
-                          }
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <circle cx="12" cy="12" r="10"/>
-                            <line x1="15" y1="9" x2="9" y2="15"/>
-                            <line x1="9" y1="9" x2="15" y2="15"/>
-                          </svg>
-                          Revoke
-                        </Button>
-                      </TableCell>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>NIM</TableHead>
+                      <TableHead>Nama</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>NFT Address</TableHead>
+                      <TableHead>Tanggal Terbit</TableHead>
+                      <TableHead>Aksi</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-      ) : tab === "revoked" ? (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white">
-                Sertifikat Direvoke
-              </h2>
-              <Badge variant="danger">{revokedCerts.length} direvoke</Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {revokedCerts.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-[#71717A]">Belum ada sertifikat yang direvoke</p>
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>NIM</TableHead>
-                    <TableHead>Nama</TableHead>
-                    <TableHead>Alasan</TableHead>
-                    <TableHead>Tanggal Revoke</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {revokedCerts.map((m) => (
-                    <TableRow key={m.id}>
-                      <TableCell className="font-medium text-white">{m.nim}</TableCell>
-                      <TableCell className="text-white">{m.nama}</TableCell>
-                      <TableCell className="text-red-400 max-w-xs truncate">
-                        {m.certificate?.revokeReason || "-"}
-                      </TableCell>
-                      <TableCell>
-                        {m.certificate?.revokedAt
-                          ? new Date(m.certificate.revokedAt).toLocaleDateString("id-ID")
-                          : "-"}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="danger">REVOKED</Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-      ) : (
-        /* Backups & Restore Tab */
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-semibold text-white">
-                  Riwayat Backup & Restore
-                </h2>
-                <p className="text-sm text-[#71717A] mt-1">
-                  Pilih backup untuk me-restore sertifikat yang direvoke
-                </p>
-              </div>
-              <Badge variant="info">{backups.length} backup</Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {backups.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 rounded-full bg-[#1A1A24] border border-[#27272A] flex items-center justify-center mx-auto mb-4">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#52525B" strokeWidth="2">
-                    <polyline points="1 4 1 10 7 10"/>
-                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
-                  </svg>
-                </div>
-                <p className="text-[#71717A]">Belum ada data backup</p>
-                <p className="text-sm text-[#52525B] mt-1">
-                  Backup otomatis dibuat setiap kali sertifikat direvoke
-                </p>
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Mahasiswa</TableHead>
-                    <TableHead>NIM</TableHead>
-                    <TableHead>NFT Address</TableHead>
-                    <TableHead>Alasan</TableHead>
-                    <TableHead>Tanggal Backup</TableHead>
-                    <TableHead>Aksi</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {backups.map((b) => (
-                    <TableRow key={b.id}>
-                      <TableCell className="text-white font-medium">
-                        {b.userData?.nama || "-"}
-                      </TableCell>
-                      <TableCell className="text-[#A1A1AA]">
-                        {b.userData?.nim || "-"}
-                      </TableCell>
-                      <TableCell>
-                        {b.nftAddress ? (
-                          <span className="text-xs font-mono text-[#71717A]">
-                            {b.nftAddress.slice(0, 8)}...{b.nftAddress.slice(-6)}
-                          </span>
-                        ) : (
-                          "-"
-                        )}
-                      </TableCell>
-                      <TableCell className="text-[#71717A] max-w-xs truncate">
-                        {b.reason || "-"}
-                      </TableCell>
-                      <TableCell className="text-[#71717A]">
-                        {new Date(b.createdAt).toLocaleDateString("id-ID", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </TableCell>
-                      <TableCell>
-                        {b.usedAt ? (
-                          <span className="text-xs text-[#52525B]">
-                            Sudah digunakan
-                          </span>
-                        ) : (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleRestore(b.id)}
-                            loading={restoring === b.id}
+                  </TableHeader>
+                  <TableBody>
+                    {activeCerts.map((m) => (
+                      <TableRow key={m.id} className="hover:bg-muted/50">
+                        <TableCell className="font-bold text-foreground">
+                          {m.nim}
+                        </TableCell>
+                        <TableCell className="font-medium text-foreground">
+                          {m.nama}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="secondary"
+                            className={
+                              m.certificate?.status === "CLAIMED"
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                : "bg-blue-50 text-blue-700 border-blue-200"
+                            }
                           >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <polyline points="1 4 1 10 7 10"/>
-                              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
-                            </svg>
-                            Restore
-                          </Button>
-                        )}
-                      </TableCell>
+                            {m.certificate?.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-xs font-mono text-muted-foreground">
+                            {m.certificate?.nftAddress?.slice(0, 8)}...
+                            {m.certificate?.nftAddress?.slice(-6)}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {m.certificate?.issuedAt
+                            ? new Date(
+                                m.certificate.issuedAt,
+                              ).toLocaleDateString("id-ID")
+                            : "-"}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() =>
+                                setRevokeModal({
+                                  userId: m.id,
+                                  nama: m.nama,
+                                })
+                              }
+                            >
+                              <ShieldAlert className="w-3.5 h-3.5 mr-1" />
+                              Revoke
+                            </Button>
+                            <Link href={`/detail-ijazah/${m.nim}`}>
+                              <Button size="sm" variant="outline">
+                                Detail
+                              </Button>
+                            </Link>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="revoked" className="m-0">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Sertifikat Direvoke</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {revokedCerts.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground font-medium">
+                    Belum ada sertifikat yang direvoke
+                  </p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>NIM</TableHead>
+                      <TableHead>Nama</TableHead>
+                      <TableHead>Alasan</TableHead>
+                      <TableHead>Tanggal Revoke</TableHead>
+                      <TableHead>Status</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-      )}
+                  </TableHeader>
+                  <TableBody>
+                    {revokedCerts.map((m) => (
+                      <TableRow key={m.id} className="hover:bg-muted/50">
+                        <TableCell className="font-bold text-foreground">
+                          {m.nim}
+                        </TableCell>
+                        <TableCell className="font-medium text-foreground">
+                          {m.nama}
+                        </TableCell>
+                        <TableCell className="text-red-600 max-w-xs truncate font-medium">
+                          {m.certificate?.revokeReason || "-"}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {m.certificate?.revokedAt
+                            ? new Date(
+                                m.certificate.revokedAt,
+                              ).toLocaleDateString("id-ID")
+                            : "-"}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="destructive">REVOKED</Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="backups" className="m-0">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Riwayat Backup & Restore</CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Pilih backup untuk me-restore sertifikat yang direvoke
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {backups.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                    <History className="w-7 h-7 text-muted-foreground" />
+                  </div>
+                  <p className="text-foreground font-semibold">
+                    Belum ada data backup
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Backup otomatis dibuat setiap kali sertifikat direvoke
+                  </p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Mahasiswa</TableHead>
+                      <TableHead>NIM</TableHead>
+                      <TableHead>NFT Address</TableHead>
+                      <TableHead>Alasan</TableHead>
+                      <TableHead>Tanggal Backup</TableHead>
+                      <TableHead>Aksi</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {backups.map((b) => (
+                      <TableRow key={b.id} className="hover:bg-muted/50">
+                        <TableCell className="font-medium text-foreground">
+                          {b.userData?.nama || "-"}
+                        </TableCell>
+                        <TableCell className="font-bold text-foreground">
+                          {b.userData?.nim || "-"}
+                        </TableCell>
+                        <TableCell>
+                          {b.nftAddress ? (
+                            <span className="text-xs font-mono text-muted-foreground">
+                              {b.nftAddress.slice(0, 8)}...
+                              {b.nftAddress.slice(-6)}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground max-w-xs truncate">
+                          {b.reason || "-"}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {new Date(b.createdAt).toLocaleDateString("id-ID", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </TableCell>
+                        <TableCell>
+                          {b.usedAt ? (
+                            <span className="text-xs text-muted-foreground font-medium bg-muted px-2 py-1 rounded-md">
+                              Sudah digunakan
+                            </span>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                setRestoreModal({
+                                  backupId: b.id,
+                                  nama: b.userData?.nama || "mahasiswa ini",
+                                })
+                              }
+                              disabled={restoring === b.id}
+                            >
+                              <CornerUpLeft className="w-3.5 h-3.5 mr-1" />
+                              Restore
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Revoke Modal */}
       {revokeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-neutral-900/40 backdrop-blur-sm"
             onClick={() => {
               setRevokeModal(null);
               setRevokeReason("");
             }}
           />
-          <div className="relative bg-[#111118] border border-[#27272A] rounded-xl shadow-2xl max-w-md w-full p-6 animate-fade-in-up">
+          <div className="relative bg-white border border-border rounded-xl shadow-2xl max-w-md w-full p-6 animate-fade-in-up">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-red-900/30 border border-red-600/30 flex items-center justify-center">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2">
-                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                  <line x1="12" y1="9" x2="12" y2="13"/>
-                  <line x1="12" y1="17" x2="12.01" y2="17"/>
-                </svg>
+              <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center">
+                <ShieldAlert className="w-5 h-5 text-red-600" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-white">
+                <h3 className="text-lg font-bold text-foreground">
                   Revoke Sertifikat
                 </h3>
-                <p className="text-sm text-[#71717A]">
+                <p className="text-sm text-muted-foreground">
                   {revokeModal.nama}
                 </p>
               </div>
             </div>
 
-            <div className="mb-4 p-3 bg-red-900/10 border border-red-600/20 rounded-lg">
-              <p className="text-sm text-red-400">
-                Tindakan ini akan mencabut sertifikat ijazah. Data akan di-backup otomatis sebelum direvoke. Anda dapat me-restore dari tab Restore.
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-700">
+                Tindakan ini akan mencabut sertifikat ijazah. Data akan
+                di-backup otomatis sebelum direvoke. Anda dapat me-restore dari
+                tab Restore.
               </p>
             </div>
 
-            <div className="mb-4 p-3 bg-amber-900/10 border border-amber-600/20 rounded-lg">
-              <p className="text-sm text-amber-400">
-                <strong>Catatan:</strong> NFT di Solana Explorer akan tetap terlihat (soft-revoke), namun verifikasi melalui SIJAGA akan menunjukkan status DIREVOKE.
+            <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-sm text-amber-800">
+                <strong>Catatan:</strong> NFT di Solana Explorer akan tetap
+                terlihat (soft-revoke), namun verifikasi melalui SIJAGA akan
+                menunjukkan status DIREVOKE.
               </p>
             </div>
 
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-[#A1A1AA] mb-1.5">
+            <div className="mb-6 space-y-2">
+              <Label className="font-semibold text-foreground">
                 Alasan Revokasi *
-              </label>
+              </Label>
               <textarea
-                className="w-full px-4 py-2.5 bg-[#0A0A0F] border border-[#27272A] rounded-lg text-white placeholder:text-[#52525B] focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all resize-none"
+                className="w-full px-4 py-2.5 bg-white border border-input rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all resize-none shadow-sm"
                 rows={3}
                 placeholder="Jelaskan alasan revokasi sertifikat ini..."
                 value={revokeReason}
@@ -580,13 +656,67 @@ export default function RevokePage() {
                 Batal
               </Button>
               <Button
-                variant="danger"
+                variant="destructive"
                 className="flex-1"
                 onClick={handleRevoke}
-                loading={revoking === revokeModal.userId}
-                disabled={!revokeReason.trim()}
+                disabled={
+                  !revokeReason.trim() || revoking === revokeModal.userId
+                }
               >
-                Revoke Sertifikat
+                {revoking === revokeModal.userId
+                  ? "Memproses..."
+                  : "Revoke Sertifikat"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Restore Confirmation Modal */}
+      {restoreModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-neutral-900/40 backdrop-blur-sm"
+            onClick={() => setRestoreModal(null)}
+          />
+          <div className="relative bg-white border border-border rounded-xl shadow-2xl max-w-md w-full p-6 animate-fade-in-up">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
+                <CornerUpLeft className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-foreground">
+                  Restore Sertifikat
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {restoreModal.nama}
+                </p>
+              </div>
+            </div>
+
+            <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">
+                Sertifikat akan dikembalikan ke status sebelum direvoke.
+                Mahasiswa dapat kembali menggunakan ijazah digitalnya.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                variant="ghost"
+                className="flex-1"
+                onClick={() => setRestoreModal(null)}
+              >
+                Batal
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={() => handleRestore(restoreModal.backupId)}
+                disabled={restoring === restoreModal.backupId}
+              >
+                {restoring === restoreModal.backupId
+                  ? "Memproses..."
+                  : "Ya, Restore"}
               </Button>
             </div>
           </div>

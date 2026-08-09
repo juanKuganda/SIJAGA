@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Button from "@/components/ui/Button";
-import Input from "@/components/ui/Input";
-import Card, { CardContent, CardHeader } from "@/components/ui/Card";
+import { Shield, ArrowLeft, Eye, EyeOff, Link as LinkIcon, CheckCircle2, XCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const PRODI_OPTIONS = [
   "Informatika",
@@ -43,15 +44,21 @@ export default function RegisterPage() {
     password: "",
     confirmPassword: "",
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
+    let value = e.target.value;
+    if (e.target.name === "nim") {
+      value = value.trim().toUpperCase();
+    }
     setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [e.target.name]: value,
     }));
   };
 
@@ -59,7 +66,6 @@ export default function RegisterPage() {
     e.preventDefault();
     setError("");
 
-    // Validasi password match
     if (formData.password !== formData.confirmPassword) {
       setError("Password dan konfirmasi password tidak cocok");
       return;
@@ -88,7 +94,6 @@ export default function RegisterPage() {
         return;
       }
 
-      // Redirect ke login dengan pesan sukses
       router.push("/login?registered=true");
     } catch {
       setError("Terjadi kesalahan. Silakan coba lagi.");
@@ -98,133 +103,230 @@ export default function RegisterPage() {
   };
 
   return (
-    <Card className="animate-fade-in-up glass-card">
-      <CardHeader>
-        <h2 className="text-xl font-semibold text-white">Daftar Akun</h2>
-        <p className="text-[#71717A] text-sm mt-1">
-          Buat akun untuk masuk ke portal SIJAGA
-        </p>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="min-h-screen flex">
+      {/* Kiri: Ilustrasi / Branding */}
+      <div className="hidden lg:flex flex-col justify-center p-12 bg-neutral-900 text-white w-1/2 relative overflow-hidden">
+        {/* Dekorasi Background */}
+        <div className="absolute inset-0 opacity-10" style={{
+          backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
+          backgroundSize: '32px 32px'
+        }}></div>
+
+        <div className="relative z-10 max-w-md mx-auto">
+          <Link href="/" className="inline-flex items-center gap-3 mb-16">
+            <img src="/apple-touch-icon.png" alt="Logo Untad" className="w-10 h-10 object-contain drop-shadow-sm" />
+            <div className="flex flex-col">
+              <span className="text-2xl font-black tracking-tight text-white leading-none">SIJAGA</span>
+              <span className="text-[10px] font-bold text-white uppercase tracking-widest mt-1">Universitas Tadulako</span>
+            </div>
+          </Link>
+
+          <h1 className="text-4xl lg:text-5xl font-black leading-[1.1] mb-6">
+            Pendaftaran
+            <br />
+            <span className="text-white/90">Akun Mahasiswa</span>
+          </h1>
+          
+          <p className="text-lg text-white/80 leading-relaxed mb-12">
+            Langkah pertama untuk mengklaim dan memverifikasi ijazah digital Anda secara aman di ekosistem SIJAGA.
+          </p>
+
+          <div className="space-y-6">
+            <div className="flex items-center gap-4 text-white/90">
+              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+                <Shield className="w-4 h-4 text-white" />
+              </div>
+              <span className="font-medium">Keamanan Kriptografi Tingkat Lanjut</span>
+            </div>
+            <div className="flex items-center gap-4 text-white/90">
+              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+                <CheckCircle2 className="w-4 h-4 text-white" />
+              </div>
+              <span className="font-medium">Terkoneksi dengan Database Universitas</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Panel - Register Form (White) */}
+      <div className="flex-1 flex items-center justify-center px-6 py-12 bg-white">
+        <div className="w-full max-w-md mx-auto">
+          {/* Mobile Logo */}
+          <div className="flex items-center gap-3 mb-8 lg:hidden">
+            <img src="/apple-touch-icon.png" alt="Logo Untad" className="w-10 h-10 object-contain drop-shadow-sm" />
+            <div className="flex flex-col">
+              <span className="text-xl font-black text-foreground tracking-tight leading-none">SIJAGA</span>
+              <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest mt-1">Universitas Tadulako</span>
+            </div>
+          </div>
+
+          <div className="mb-8">
+            <h2 className="text-3xl font-extrabold text-foreground tracking-tight mb-2">Daftar Akun Baru</h2>
+            <p className="text-muted-foreground">
+              Buat akun untuk masuk ke portal verifikasi SIJAGA
+            </p>
+          </div>
+
           {error && (
-            <div className="p-3 bg-red-900/20 border border-red-600/30 rounded-lg text-sm text-red-400">
-              {error}
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
+              <XCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+              <p className="text-sm font-medium text-red-800 leading-relaxed">{error}</p>
             </div>
           )}
 
-          <Input
-            label="Nama Lengkap"
-            name="nama"
-            type="text"
-            placeholder="Masukkan nama lengkap"
-            value={formData.nama}
-            onChange={handleChange}
-            required
-          />
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="nama" className="font-semibold">Nama Lengkap</Label>
+              <Input
+                id="nama"
+                name="nama"
+                type="text"
+                placeholder="Masukkan nama lengkap"
+                value={formData.nama}
+                onChange={handleChange}
+                required
+                className="h-11"
+              />
+            </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Input
-              label="NIM"
-              name="nim"
-              type="text"
-              placeholder="Contoh: H071211001"
-              value={formData.nim}
-              onChange={handleChange}
-              required
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="nim" className="font-semibold">NIM</Label>
+                <Input
+                  id="nim"
+                  name="nim"
+                  type="text"
+                  placeholder="Contoh: H071211001"
+                  value={formData.nim}
+                  onChange={handleChange}
+                  required
+                  className="h-11"
+                />
+              </div>
 
-            <Input
-              label="Angkatan"
-              name="angkatan"
-              type="text"
-              placeholder="Contoh: 2021"
-              value={formData.angkatan}
-              onChange={handleChange}
-              required
-              maxLength={4}
-            />
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="angkatan" className="font-semibold">Angkatan</Label>
+                <Input
+                  id="angkatan"
+                  name="angkatan"
+                  type="text"
+                  placeholder="Contoh: 2021"
+                  value={formData.angkatan}
+                  onChange={handleChange}
+                  required
+                  maxLength={4}
+                  className="h-11"
+                />
+              </div>
+            </div>
 
-          <Input
-            label="Email"
-            name="email"
-            type="email"
-            placeholder="Masukkan email aktif"
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
+            <div className="space-y-2">
+              <Label htmlFor="email" className="font-semibold">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="Masukkan email aktif"
+                value={formData.email}
+                onChange={handleChange}
+                required
+                className="h-11"
+              />
+            </div>
 
-          <div className="w-full">
-            <label className="block text-sm font-medium text-[#A1A1AA] mb-1.5">
-              Program Studi
-            </label>
-            <select
-              name="prodi"
-              value={formData.prodi}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2.5 bg-[#0A0A0F] border border-[#27272A] rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-red-600 hover:border-[#3F3F46] transition-all duration-200 text-white appearance-none cursor-pointer"
-            >
-              <option value="" disabled className="text-[#52525B]">
-                Pilih program studi
-              </option>
-              {PRODI_OPTIONS.map((prodi) => (
-                <option
-                  key={prodi}
-                  value={prodi}
-                  className="bg-[#0A0A0F] text-white"
-                >
-                  {prodi}
+            <div className="space-y-2 w-full">
+              <Label htmlFor="prodi" className="font-semibold">Program Studi</Label>
+              <select
+                id="prodi"
+                name="prodi"
+                value={formData.prodi}
+                onChange={handleChange}
+                required
+                className="flex h-11 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none cursor-pointer"
+              >
+                <option value="" disabled className="text-muted-foreground">
+                  Pilih program studi
                 </option>
-              ))}
-            </select>
-          </div>
+                {PRODI_OPTIONS.map((prodi) => (
+                  <option key={prodi} value={prodi}>
+                    {prodi}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          <Input
-            label="Password"
-            name="password"
-            type="password"
-            placeholder="Minimal 6 karakter"
-            value={formData.password}
-            onChange={handleChange}
-            required
-          />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="password" className="font-semibold">Password</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Min. 6 karakter"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                    className="h-11 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
 
-          <Input
-            label="Konfirmasi Password"
-            name="confirmPassword"
-            type="password"
-            placeholder="Ulangi password"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            required
-          />
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword" className="font-semibold">Konfirmasi Password</Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Ulangi password"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    required
+                    className="h-11 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+            </div>
 
-          <Button type="submit" className="w-full" loading={loading} size="lg">
-            Daftar
-          </Button>
+            <Button type="submit" className="w-full h-12 font-bold text-base mt-2" disabled={loading}>
+              {loading ? "Memproses..." : "Daftar Sekarang"}
+            </Button>
+          </form>
 
-          <div className="text-center space-y-2">
-            <p className="text-sm text-[#71717A]">
+          <div className="mt-8 text-center space-y-4 pt-4 border-t border-border">
+            <p className="text-sm text-muted-foreground">
               Sudah punya akun?{" "}
               <Link
                 href="/login"
-                className="text-red-400 hover:text-red-300 font-medium transition-colors"
+                className="text-red-600 hover:text-red-700 font-bold hover:underline transition-colors"
               >
                 Login di sini
               </Link>
             </p>
             <Link
               href="/"
-              className="text-sm text-[#71717A] hover:text-red-400 transition-colors inline-block"
+              className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
             >
-              ← Kembali ke beranda
+              <ArrowLeft className="w-4 h-4" /> Kembali ke beranda
             </Link>
           </div>
-        </form>
-      </CardContent>
-    </Card>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -1,4 +1,4 @@
-import { Keypair, Connection, clusterApiUrl, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { Keypair, Connection, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import bs58 from "bs58";
 
 async function main() {

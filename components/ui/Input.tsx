@@ -1,13 +1,19 @@
-import { InputHTMLAttributes, forwardRef } from "react";
+import * as React from "react"
+import { Input as InputPrimitive } from "@base-ui/react/input"
+import { cn } from "@/lib/utils"
+import { Eye, EyeOff } from "lucide-react"
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
-  error?: string;
-  helperText?: string;
+interface InputProps extends React.ComponentProps<"input"> {
+  label?: string
+  error?: string
+  helperText?: string
 }
 
-const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, helperText, className = "", ...props }, ref) => {
+const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ label, error, helperText, className, type, ...props }, ref) => {
+    const [showPassword, setShowPassword] = React.useState(false);
+    const isPassword = type === "password";
+
     return (
       <div className="w-full">
         {label && (
@@ -15,24 +21,46 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             {label}
           </label>
         )}
-        <input
-          ref={ref}
-          className={`w-full px-4 py-2.5 bg-[#0A0A0F] border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-0 transition-all duration-200 text-white placeholder:text-[#52525B] ${
-            error
-              ? "border-red-600/50 focus:ring-red-500 focus:border-red-500"
-              : "border-[#27272A] focus:ring-red-600 focus:border-red-600 hover:border-[#3F3F46]"
-          } ${className}`}
-          {...props}
-        />
+        <div className="relative">
+          <InputPrimitive
+            ref={ref}
+            type={isPassword && showPassword ? "text" : type}
+            data-slot="input"
+            className={cn(
+              "h-9 w-full min-w-0 rounded-lg border bg-[#0A0A0F] px-3 py-1 text-sm transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-[#71717A] focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
+              error
+                ? "border-red-600/50 focus-visible:ring-red-500 focus-visible:border-red-500"
+                : "border-[#27272A] hover:border-[#3F3F46] focus-visible:border-red-600 focus-visible:ring-red-600",
+              isPassword ? "pr-10" : "",
+              className
+            )}
+            {...props}
+          />
+          {isPassword && (
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#71717A] hover:text-white transition-colors focus:outline-none"
+              title={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+            >
+              {showPassword ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+            </button>
+          )}
+        </div>
         {error && <p className="mt-1.5 text-sm text-red-400">{error}</p>}
         {helperText && !error && (
-          <p className="mt-1.5 text-sm text-[#52525B]">{helperText}</p>
+          <p className="mt-1.5 text-sm text-[#71717A]">{helperText}</p>
         )}
       </div>
-    );
+    )
   }
-);
+)
 
-Input.displayName = "Input";
+Input.displayName = "Input"
 
-export default Input;
+export { Input }
+export default Input
