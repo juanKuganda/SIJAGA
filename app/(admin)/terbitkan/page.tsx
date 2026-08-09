@@ -3,16 +3,18 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import Card, { CardContent, CardHeader } from "@/components/ui/Card";
-import Button from "@/components/ui/Button";
-import Badge from "@/components/ui/Badge";
-import Table, {
+import { FileText, Eye, XCircle } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/Table";
+} from "@/components/ui/table";
 
 interface Mahasiswa {
   id: string;
@@ -34,7 +36,11 @@ export default function TerbitkanPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [minting, setMinting] = useState<string | null>(null);
-  const [confirmModal, setConfirmModal] = useState<{ userId: string; nama: string; nim: string } | null>(null);
+  const [confirmModal, setConfirmModal] = useState<{
+    userId: string;
+    nama: string;
+    nim: string;
+  } | null>(null);
 
   const fetchMahasiswa = async () => {
     try {
@@ -49,8 +55,8 @@ export default function TerbitkanPage() {
           data.mahasiswa.filter(
             (m: Mahasiswa) =>
               m.wallet?.status === "VERIFIED" &&
-              (!m.certificate || m.certificate.status === "NOT_ISSUED")
-          )
+              (!m.certificate || m.certificate.status === "NOT_ISSUED"),
+          ),
         );
       }
     } catch (error) {
@@ -102,17 +108,17 @@ export default function TerbitkanPage() {
     return (
       <div>
         <div className="mb-8">
-          <div className="h-8 w-48 bg-[#1A1A24] rounded-lg animate-pulse" />
-          <div className="h-4 w-72 bg-[#1A1A24] rounded-lg animate-pulse mt-2" />
+          <div className="h-8 w-48 bg-muted rounded-lg animate-pulse" />
+          <div className="h-4 w-72 bg-muted rounded-lg animate-pulse mt-2" />
         </div>
         <Card>
-          <CardHeader>
-            <div className="h-6 w-40 bg-[#1A1A24] rounded animate-pulse" />
-          </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-12 bg-[#1A1A24] rounded-lg animate-pulse" />
+                <div
+                  key={i}
+                  className="h-12 bg-muted rounded-lg animate-pulse"
+                />
               ))}
             </div>
           </CardContent>
@@ -124,16 +130,16 @@ export default function TerbitkanPage() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-64">
-        <div className="text-red-400 mb-4">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
-        </div>
-        <p className="text-red-400 font-medium">{error}</p>
+        <XCircle className="w-12 h-12 text-red-400 mb-4" />
+        <p className="text-red-600 font-semibold">{error}</p>
         <Button
-          variant="secondary"
+          variant="outline"
           className="mt-4"
-          onClick={() => { setError(null); setLoading(true); fetchMahasiswa(); }}
+          onClick={() => {
+            setError(null);
+            setLoading(true);
+            fetchMahasiswa();
+          }}
         >
           Coba Lagi
         </Button>
@@ -144,10 +150,10 @@ export default function TerbitkanPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white">
+        <h1 className="text-3xl font-extrabold text-foreground tracking-tight">
           Terbitkan Ijazah
         </h1>
-        <p className="text-[#A1A1AA] mt-1">
+        <p className="text-muted-foreground mt-1">
           Mint NFT Soulbound untuk mahasiswa yang wallet-nya sudah terverifikasi
         </p>
       </div>
@@ -155,25 +161,25 @@ export default function TerbitkanPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white">
-              Mahasiswa Siap Terbit
-            </h2>
-            <Badge variant="info">{mahasiswa.length} mahasiswa</Badge>
+            <CardTitle>Mahasiswa Siap Terbit</CardTitle>
+            <Badge
+              variant="secondary"
+              className="bg-blue-50 text-blue-700 border-blue-200"
+            >
+              {mahasiswa.length} mahasiswa
+            </Badge>
           </div>
         </CardHeader>
         <CardContent>
           {mahasiswa.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 rounded-full bg-[#1A1A24] border border-[#27272A] flex items-center justify-center mx-auto mb-4">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#52525B" strokeWidth="2">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <polyline points="14 2 14 8 20 8"/>
-                </svg>
+            <div className="text-center py-16">
+              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                <FileText className="w-7 h-7 text-muted-foreground" />
               </div>
-              <p className="text-[#A1A1AA]">
+              <p className="text-foreground font-semibold">
                 Tidak ada mahasiswa yang siap untuk diterbitkan ijazahnya.
               </p>
-              <p className="text-sm text-[#71717A] mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 Pastikan wallet mahasiswa sudah terverifikasi.
               </p>
             </div>
@@ -190,12 +196,18 @@ export default function TerbitkanPage() {
               </TableHeader>
               <TableBody>
                 {mahasiswa.map((m) => (
-                  <TableRow key={m.id}>
-                    <TableCell className="font-medium text-white">{m.nim}</TableCell>
-                    <TableCell className="text-white">{m.nama}</TableCell>
-                    <TableCell>{m.prodi || "Informatika"}</TableCell>
+                  <TableRow key={m.id} className="hover:bg-muted/50">
+                    <TableCell className="font-bold text-foreground">
+                      {m.nim}
+                    </TableCell>
+                    <TableCell className="font-medium text-foreground">
+                      {m.nama}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {m.prodi || "Informatika"}
+                    </TableCell>
                     <TableCell>
-                      <span className="text-xs font-mono text-[#71717A]">
+                      <span className="text-xs font-mono text-muted-foreground">
                         {m.wallet?.walletAddress.slice(0, 8)}...
                         {m.wallet?.walletAddress.slice(-6)}
                       </span>
@@ -204,7 +216,7 @@ export default function TerbitkanPage() {
                       <div className="flex gap-2">
                         <Button
                           size="sm"
-                          loading={minting === m.id}
+                          disabled={minting === m.id}
                           onClick={() =>
                             setConfirmModal({
                               userId: m.id,
@@ -213,10 +225,11 @@ export default function TerbitkanPage() {
                             })
                           }
                         >
-                          Terbitkan
+                          {minting === m.id ? "Minting..." : "Terbitkan"}
                         </Button>
                         <Link href={`/detail-ijazah/${m.nim}`}>
-                          <Button size="sm" variant="secondary">
+                          <Button size="sm" variant="outline">
+                            <Eye className="w-3.5 h-3.5 mr-1" />
                             Detail
                           </Button>
                         </Link>
@@ -234,40 +247,37 @@ export default function TerbitkanPage() {
       {confirmModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-neutral-900/40 backdrop-blur-sm"
             onClick={() => setConfirmModal(null)}
           />
-          <div className="relative bg-[#111118] border border-[#27272A] rounded-xl shadow-2xl max-w-md w-full p-6 animate-fade-in-up">
+          <div className="relative bg-white border border-border rounded-xl shadow-2xl max-w-md w-full p-6 animate-fade-in-up">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-emerald-900/30 border border-emerald-600/30 flex items-center justify-center">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <polyline points="14 2 14 8 20 8"/>
-                  <line x1="12" y1="18" x2="12" y2="12"/>
-                  <line x1="9" y1="15" x2="15" y2="15"/>
-                </svg>
+              <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center">
+                <FileText className="w-5 h-5 text-emerald-600" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-white">
+                <h3 className="text-lg font-bold text-foreground">
                   Terbitkan Ijazah
                 </h3>
-                <p className="text-sm text-[#71717A]">
+                <p className="text-sm text-muted-foreground">
                   {confirmModal.nama} ({confirmModal.nim})
                 </p>
               </div>
             </div>
 
-            <div className="mb-4 p-3 bg-emerald-900/10 border border-emerald-600/20 rounded-lg">
-              <p className="text-sm text-emerald-400">
-                Tindakan ini akan <strong>mint NFT Soulbound</strong> ke wallet mahasiswa. Transaksi ini <strong>tidak dapat dibatalkan</strong> setelah dikonfirmasi di blockchain.
+            <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+              <p className="text-sm text-emerald-700">
+                Tindakan ini akan <strong>mint NFT Soulbound</strong> ke wallet
+                mahasiswa. Transaksi ini <strong>tidak dapat dibatalkan</strong>{" "}
+                setelah dikonfirmasi di blockchain.
               </p>
             </div>
 
-            <div className="mb-6 p-3 bg-amber-900/10 border border-amber-600/20 rounded-lg">
-              <p className="text-sm text-amber-400">
-                <strong>Yang akan terjadi:</strong>
+            <div className="mb-6 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-sm text-amber-800 font-semibold">
+                Yang akan terjadi:
               </p>
-              <ol className="text-sm text-amber-400/70 mt-2 space-y-1 list-decimal list-inside">
+              <ol className="text-sm text-amber-700 mt-2 space-y-1 list-decimal list-inside">
                 <li>Metadata ijazah di-upload ke IPFS (Pinata)</li>
                 <li>NFT Soulbound di-mint ke wallet mahasiswa</li>
                 <li>Status berubah menjadi MINTED</li>
@@ -286,9 +296,11 @@ export default function TerbitkanPage() {
               <Button
                 className="flex-1"
                 onClick={() => handleMint(confirmModal.userId)}
-                loading={minting === confirmModal.userId}
+                disabled={minting === confirmModal.userId}
               >
-                Ya, Terbitkan
+                {minting === confirmModal.userId
+                  ? "Minting..."
+                  : "Ya, Terbitkan"}
               </Button>
             </div>
           </div>

@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Card, { CardContent, CardHeader } from "@/components/ui/Card";
-import Badge from "@/components/ui/Badge";
+import Link from "next/link";
+import { User, Wallet as WalletIcon, FileText, CheckCircle2, Clock, XCircle, AlertTriangle, ExternalLink, ArrowRight, ShieldCheck, Zap } from "lucide-react";
 
-interface User {
+interface UserProfile {
   id: string;
   nama: string;
   nim: string;
@@ -29,7 +29,7 @@ interface Certificate {
 }
 
 export default function ProfilPage() {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [certificate, setCertificate] = useState<Certificate | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,244 +52,256 @@ export default function ProfilPage() {
   const getWalletStatusBadge = (status: string) => {
     switch (status) {
       case "PENDING":
-        return <Badge variant="warning">Menunggu Verifikasi</Badge>;
+        return <div className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 font-semibold text-xs px-2.5 py-1 rounded-full border border-amber-200">Menunggu Verifikasi</div>;
       case "VERIFIED":
-        return <Badge variant="success">Terverifikasi</Badge>;
+        return <div className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 font-semibold text-xs px-2.5 py-1 rounded-full border border-emerald-200">Terverifikasi</div>;
       case "REJECTED":
-        return <Badge variant="danger">Ditolak</Badge>;
+        return <div className="inline-flex items-center gap-1.5 bg-red-50 text-red-700 font-semibold text-xs px-2.5 py-1 rounded-full border border-red-200">Ditolak</div>;
       default:
-        return <Badge>{status}</Badge>;
+        return <div className="inline-flex items-center gap-1.5 bg-zinc-100 text-zinc-700 font-semibold text-xs px-2.5 py-1 rounded-full border border-zinc-200">{status}</div>;
     }
   };
 
   const getCertStatusBadge = (status: string) => {
     switch (status) {
       case "NOT_ISSUED":
-        return <Badge variant="default">Belum Diterbitkan</Badge>;
+        return <div className="inline-flex items-center gap-1.5 bg-zinc-100 text-zinc-700 font-semibold text-xs px-3 py-1.5 rounded-full border border-zinc-200">Belum Diterbitkan</div>;
       case "MINTED":
-        return <Badge variant="info">Sudah Diterbitkan</Badge>;
+        return <div className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 font-semibold text-xs px-3 py-1.5 rounded-full border border-blue-200">Sudah Diterbitkan</div>;
       case "CLAIMED":
-        return <Badge variant="success">Sudah Diklaim</Badge>;
+        return <div className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 font-semibold text-xs px-3 py-1.5 rounded-full border border-emerald-200">Sudah Diklaim</div>;
       case "REVOKED":
-        return <Badge variant="danger">DIREVOKE</Badge>;
+        return <div className="inline-flex items-center gap-1.5 bg-red-50 text-red-700 font-semibold text-xs px-3 py-1.5 rounded-full border border-red-200">DIREVOKE</div>;
       default:
-        return <Badge>{status}</Badge>;
+        return <div className="inline-flex items-center gap-1.5 bg-zinc-100 text-zinc-700 font-semibold text-xs px-3 py-1.5 rounded-full border border-zinc-200">{status}</div>;
     }
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#27272A] border-t-red-600" />
+      <div className="p-6 md:p-10">
+        <div className="h-10 w-48 bg-zinc-200/50 rounded-xl mb-3 animate-pulse"></div>
+        <div className="h-5 w-72 bg-zinc-200/50 rounded-lg mb-12 animate-pulse"></div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+           <div className="h-80 bg-white rounded-3xl border border-zinc-100 shadow-sm animate-pulse"></div>
+           <div className="h-80 bg-white rounded-3xl border border-zinc-100 shadow-sm animate-pulse"></div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white">Profil Saya</h1>
-        <p className="text-[#71717A] mt-1">
-          Data diri dan status ijazah digital Anda
+    <div className="p-6 md:p-10 max-w-7xl mx-auto font-sans selection:bg-red-100 selection:text-red-900">
+      <div className="mb-10">
+        <h1 className="text-3xl md:text-4xl font-extrabold text-foreground tracking-tight">Profil Digital</h1>
+        <p className="text-base text-muted-foreground mt-2 font-medium">
+          Kelola identitas dan dompet kripto Anda dengan aman.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Data Diri */}
-        <Card>
-          <CardHeader>
-            <h2 className="text-lg font-semibold text-white">Data Diri</h2>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {[
-                { label: "Nama", value: user?.nama },
-                { label: "NIM", value: user?.nim },
-                { label: "Email", value: user?.email },
-                { label: "Program Studi", value: user?.prodi || "-" },
-                { label: "Angkatan", value: user?.angkatan || "-" },
-              ].map((item) => (
-                <div key={item.label}>
-                  <p className="text-xs text-[#71717A] uppercase tracking-wider">{item.label}</p>
-                  <p className="font-medium text-white">{item.value}</p>
-                </div>
-              ))}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
+        {/* Data Diri - Clean Card */}
+        <div className="lg:col-span-7 bg-white rounded-[2rem] border border-zinc-100/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden relative transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
+          <div className="absolute top-0 right-0 p-8 opacity-[0.03]">
+             <img src="/apple-touch-icon.png" alt="Watermark Untad" className="w-64 h-64 object-contain grayscale" />
+          </div>
+          <div className="px-8 pt-8 pb-6 border-b border-zinc-50 flex justify-between items-center relative z-10">
+            <h2 className="text-xl font-bold tracking-tight flex items-center gap-2">
+              <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center">
+                <User className="w-5 h-5" />
+              </div>
+              Identitas Resmi
+            </h2>
+            <div className="px-3 py-1.5 bg-zinc-50 text-zinc-500 font-semibold text-xs rounded-lg border border-zinc-100">
+              ID: {user?.id.split('-')[0].toUpperCase()}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+          <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-12 relative z-10">
+            {[
+              { label: "NAMA LENGKAP", value: user?.nama },
+              { label: "NIM", value: user?.nim },
+              { label: "PROGRAM STUDI", value: user?.prodi || "-" },
+              { label: "ANGKATAN", value: user?.angkatan || "-" },
+              { label: "EMAIL INSTITUSI", value: user?.email },
+            ].map((item, idx) => (
+              <div key={idx} className={item.label === "NAMA LENGKAP" ? "md:col-span-2" : ""}>
+                <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block mb-1.5">{item.label}</span>
+                <span className={`font-semibold tracking-tight text-foreground ${item.label === "NAMA LENGKAP" ? "text-2xl" : "text-lg"}`}>
+                  {item.value}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* Status Wallet */}
-        <Card>
-          <CardHeader>
-            <h2 className="text-lg font-semibold text-white">
-              Status Wallet
+        <div className="lg:col-span-5 bg-white rounded-[2rem] border border-zinc-100/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] flex flex-col">
+          <div className="px-8 pt-8 pb-6 border-b border-zinc-50 flex justify-between items-center">
+            <h2 className="text-xl font-bold tracking-tight flex items-center gap-2">
+              <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                <WalletIcon className="w-5 h-5" />
+              </div>
+              Koneksi Dompet
             </h2>
-          </CardHeader>
-          <CardContent>
+          </div>
+          <div className="p-8 flex flex-col h-full">
             {wallet ? (
-              <div className="space-y-4">
+              <div className="space-y-6 flex-1">
                 <div>
-                  <p className="text-xs text-[#71717A] uppercase tracking-wider">Alamat Wallet</p>
-                  <p className="font-mono text-sm break-all text-[#A1A1AA] bg-[#0A0A0F] p-3 rounded-lg mt-1">
-                    {wallet.walletAddress}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-[#71717A] uppercase tracking-wider mb-1">Status</p>
+                  <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-2 block">STATUS VERIFIKASI</span>
                   {getWalletStatusBadge(wallet.status)}
                 </div>
+                <div>
+                  <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-2 block">ALAMAT WALLET</span>
+                  <div className="font-mono text-sm break-all bg-zinc-50 p-4 rounded-xl border border-zinc-100 text-zinc-700">
+                    {wallet.walletAddress}
+                  </div>
+                </div>
+                
                 {wallet.status === "PENDING" && (
-                  <div className="p-4 bg-amber-900/10 border border-amber-600/20 rounded-lg">
-                    <p className="text-amber-400 font-medium text-sm">
-                      Wallet Anda sedang menunggu verifikasi oleh admin.
+                  <div className="p-4 bg-amber-50/50 border border-amber-100/50 rounded-2xl flex gap-3 mt-auto">
+                    <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                    <p className="font-medium text-sm text-amber-800 leading-relaxed">
+                      Wallet Anda sedang dalam antrean verifikasi oleh administrator.
                     </p>
                   </div>
                 )}
                 {wallet.status === "REJECTED" && (
-                  <div className="p-4 bg-red-900/10 border border-red-600/20 rounded-lg">
-                    <p className="text-red-400 font-medium text-sm">
-                      Wallet Anda ditolak. Silakan daftarkan wallet baru.
+                  <div className="p-4 bg-red-50/50 border border-red-100/50 rounded-2xl flex gap-3 mt-auto">
+                    <XCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+                    <p className="font-medium text-sm text-red-800 leading-relaxed">
+                      Wallet Anda ditolak. Silakan mendaftar ulang menggunakan wallet yang valid.
                     </p>
                   </div>
                 )}
               </div>
             ) : (
-              <div className="text-center py-6">
-                <div className="w-12 h-12 rounded-full bg-[#1A1A24] border border-[#27272A] flex items-center justify-center mx-auto mb-3">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#52525B" strokeWidth="2">
-                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-                    <line x1="1" y1="10" x2="23" y2="10"/>
-                  </svg>
+              <div className="text-center py-10 flex flex-col items-center justify-center flex-1">
+                <div className="w-20 h-20 rounded-full bg-zinc-50 flex items-center justify-center mb-6 border border-zinc-100">
+                  <WalletIcon className="w-8 h-8 text-zinc-300" />
                 </div>
-                <p className="text-[#71717A] mb-3">
-                  Anda belum mendaftarkan wallet
+                <p className="font-semibold text-lg mb-2 text-foreground">
+                  Dompet Belum Terhubung
                 </p>
-                <a
+                <p className="text-sm text-muted-foreground mb-6 max-w-[200px]">
+                  Hubungkan wallet kripto Anda untuk mulai menerima ijazah.
+                </p>
+                <Link
                   href="/wallet"
-                  className="text-red-400 hover:text-red-300 font-medium text-sm transition-colors"
+                  className="px-6 py-2.5 bg-foreground text-background font-semibold rounded-xl hover:bg-zinc-800 transition-colors flex items-center gap-2 shadow-sm"
                 >
-                  Daftarkan Wallet →
+                  Hubungkan Sekarang <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Status Ijazah */}
+      <div className="w-full bg-white rounded-[2rem] border border-zinc-100/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
+        <div className="px-8 py-8 border-b border-zinc-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gradient-to-r from-transparent to-zinc-50/50">
+          <h2 className="text-xl font-bold tracking-tight flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-sm border border-emerald-100/50">
+              <FileText className="w-6 h-6" />
+            </div>
+            Sertifikat Ijazah Digital
+          </h2>
+          {certificate ? getCertStatusBadge(certificate.status) : getCertStatusBadge("NOT_ISSUED")}
+        </div>
+        
+        <div className="p-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            {certificate?.nftAddress && (
+              <div className="bg-zinc-50 rounded-2xl p-5 border border-zinc-100">
+                <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block mb-2">NFT Address (Soulbound)</span>
+                <div className="font-mono text-sm font-semibold break-all text-zinc-700">
+                  {certificate.nftAddress}
+                </div>
+              </div>
+            )}
+            {certificate?.txSignature && (
+              <div className="bg-zinc-50 rounded-2xl p-5 border border-zinc-100">
+                <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block mb-2">Transaction Hash</span>
+                <a
+                  href={`https://explorer.solana.com/tx/${certificate.txSignature}?cluster=devnet`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-mono text-sm font-semibold break-all text-blue-600 hover:text-blue-700 transition-colors inline-flex items-center gap-1"
+                >
+                  {certificate.txSignature.slice(0, 24)}... <ExternalLink className="w-3 h-3" />
                 </a>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Status Ijazah */}
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <h2 className="text-lg font-semibold text-white">
-              Status Ijazah Digital
-            </h2>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <p className="text-xs text-[#71717A] uppercase tracking-wider mb-1">Status</p>
-                {certificate ? (
-                  getCertStatusBadge(certificate.status)
-                ) : (
-                  <Badge variant="default">Belum Diterbitkan</Badge>
-                )}
-              </div>
-              {certificate?.nftAddress && (
+          {/* Action Blocks based on status */}
+          {certificate?.status === "MINTED" && (
+            <div className="p-6 bg-blue-50/50 border border-blue-100/50 rounded-2xl flex flex-col md:flex-row items-center gap-6 justify-between">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                  <Zap className="w-6 h-6" />
+                </div>
                 <div>
-                  <p className="text-xs text-[#71717A] uppercase tracking-wider">NFT Address</p>
-                  <p className="font-mono text-sm break-all text-[#A1A1AA]">
-                    {certificate.nftAddress}
+                  <h3 className="text-lg font-bold text-blue-900 mb-1">Ijazah Siap Diklaim!</h3>
+                  <p className="text-sm font-medium text-blue-800/80 max-w-lg leading-relaxed">
+                    Aset digital Anda telah diterbitkan oleh fakultas. Segera klaim NFT ini ke dompet Anda untuk verifikasi publik seumur hidup.
                   </p>
                 </div>
-              )}
-              {certificate?.txSignature && (
-                <div>
-                  <p className="text-xs text-[#71717A] uppercase tracking-wider">Transaction</p>
-                  <a
-                    href={`https://explorer.solana.com/tx/${certificate.txSignature}?cluster=devnet`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-red-400 hover:text-red-300 font-mono text-sm break-all transition-colors"
-                  >
-                    {certificate.txSignature.slice(0, 16)}...
-                  </a>
-                </div>
-              )}
+              </div>
+              <Link
+                href={`/ijazah/${user?.nim}`}
+                className="shrink-0 px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm shadow-blue-600/20"
+              >
+                Klaim Sekarang
+              </Link>
             </div>
+          )}
 
-            {certificate?.status === "MINTED" && (
-              <div className="mt-6 p-4 bg-sky-900/10 border border-sky-600/20 rounded-lg">
-                <p className="text-sky-400 font-medium text-sm">
-                  Ijazah Anda sudah diterbitkan!
-                </p>
-                <p className="text-sky-400/70 text-sm mt-1">
-                  Silakan klaim ijazah Anda melalui link yang dikirimkan oleh admin.
-                </p>
-                <a
-                  href={`/ijazah/${user?.nim}`}
-                  className="inline-flex items-center gap-2 mt-3 text-sm font-medium text-sky-400 hover:text-sky-300 transition-colors"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                    <circle cx="12" cy="12" r="3"/>
-                  </svg>
-                  Lihat Preview Ijazah →
-                </a>
+          {certificate?.status === "CLAIMED" && (
+            <div className="p-6 bg-emerald-50/50 border border-emerald-100/50 rounded-2xl flex flex-col md:flex-row items-center gap-6 justify-between">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                  <CheckCircle2 className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-emerald-900 mb-1">Aset Telah Dimiliki</h3>
+                  <p className="text-sm font-medium text-emerald-800/80 max-w-lg leading-relaxed">
+                    NFT Ijazah ini telah tersimpan aman di dompet Anda sebagai Soulbound Token. Bukti akademik Anda abadi di jaringan Solana.
+                  </p>
+                </div>
               </div>
-            )}
-
-            {certificate?.status === "CLAIMED" && (
-              <div className="mt-6 p-4 bg-emerald-900/10 border border-emerald-600/20 rounded-lg">
-                <p className="text-emerald-400 font-medium text-sm">
-                  Ijazah sudah Anda klaim!
-                </p>
-                <p className="text-emerald-400/70 text-sm mt-1">
-                  NFT ijazah sudah ada di wallet Anda. Verifikasi di{" "}
-                  <a
-                    href={`https://explorer.solana.com/address/${certificate.nftAddress}?cluster=devnet`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline hover:text-emerald-300"
-                  >
-                    Solana Explorer
-                  </a>
-                  .
-                </p>
-                <a
+              <div className="flex gap-3">
+                <Link
                   href={`/ijazah/${user?.nim}`}
-                  className="inline-flex items-center gap-2 mt-3 text-sm font-medium text-emerald-400 hover:text-emerald-300 transition-colors"
+                  className="shrink-0 px-5 py-2.5 bg-white text-emerald-700 border border-emerald-200 font-semibold rounded-xl hover:bg-emerald-50 transition-colors shadow-sm"
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                    <circle cx="12" cy="12" r="3"/>
-                  </svg>
-                  Lihat Preview Ijazah →
-                </a>
+                  Lihat Publik
+                </Link>
               </div>
-            )}
+            </div>
+          )}
 
-            {certificate?.status === "REVOKED" && (
-              <div className="mt-6 p-4 bg-red-900/10 border border-red-600/20 rounded-lg">
-                <p className="text-red-400 font-medium text-sm">
-                  ⚠ Ijazah Anda Telah Direvoke
-                </p>
-                <p className="text-red-400/70 text-sm mt-1">
-                  Sertifikat ijazah Anda telah dicabut oleh pihak universitas.
+          {certificate?.status === "REVOKED" && (
+            <div className="p-6 bg-red-50/50 border border-red-100/50 rounded-2xl flex flex-col md:flex-row items-start gap-5">
+              <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-red-900 mb-1">Akses Dicabut</h3>
+                <p className="text-sm font-medium text-red-800/80 mb-4 leading-relaxed">
+                  Sertifikat ijazah Anda telah ditarik kembali oleh universitas dan tidak lagi valid secara kriptografis.
                 </p>
                 {certificate.revokeReason && (
-                  <p className="text-red-400/50 text-sm mt-2">
-                    Alasan: {certificate.revokeReason}
-                  </p>
-                )}
-                {certificate.revokedAt && (
-                  <p className="text-red-400/50 text-xs mt-1">
-                    Tanggal: {new Date(certificate.revokedAt).toLocaleDateString("id-ID", {
-                      day: "numeric", month: "long", year: "numeric",
-                    })}
-                  </p>
+                  <div className="bg-white p-4 rounded-xl border border-red-100">
+                    <span className="text-[10px] font-bold uppercase tracking-wider block text-red-400 mb-1">ALASAN PENCABUTAN</span>
+                    <p className="text-sm text-red-900 font-medium">{certificate.revokeReason}</p>
+                  </div>
                 )}
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

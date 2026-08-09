@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Card, { CardContent, CardHeader } from "@/components/ui/Card";
-import Badge from "@/components/ui/Badge";
-import Button from "@/components/ui/Button";
+import { FileText, CheckCircle2, Clock, XCircle, User, Info, ExternalLink, ShieldAlert, Award } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 interface User {
   id: string;
@@ -27,29 +28,6 @@ interface Certificate {
   claimedAt: string;
   revokedAt: string;
   revokeReason: string;
-}
-
-function Skeleton({ className = "" }: { className?: string }) {
-  return (
-    <div className={`animate-pulse bg-[#27272A] rounded ${className}`} />
-  );
-}
-
-function SkeletonCard() {
-  return (
-    <Card>
-      <CardHeader>
-        <Skeleton className="h-5 w-40" />
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
-        </div>
-      </CardContent>
-    </Card>
-  );
 }
 
 export default function IjazahPage() {
@@ -77,15 +55,15 @@ export default function IjazahPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "NOT_ISSUED":
-        return <Badge variant="default">Belum Diterbitkan</Badge>;
+        return <Badge variant="secondary" className="bg-slate-100 text-slate-700">Belum Diterbitkan</Badge>;
       case "MINTED":
-        return <Badge variant="info">Sudah Diterbitkan</Badge>;
+        return <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">Sudah Diterbitkan</Badge>;
       case "CLAIMED":
-        return <Badge variant="success">Sudah Diklaim</Badge>;
+        return <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-200">Sudah Diklaim</Badge>;
       case "REVOKED":
-        return <Badge variant="danger">DIREVOKE</Badge>;
+        return <Badge variant="destructive">DIREVOKE</Badge>;
       default:
-        return <Badge>{status}</Badge>;
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
@@ -108,14 +86,26 @@ export default function IjazahPage() {
     return (
       <div>
         <div className="mb-8">
-          <Skeleton className="h-8 w-64 mb-2" />
-          <Skeleton className="h-4 w-96" />
+          <div className="h-8 w-48 bg-muted rounded-lg animate-pulse" />
+          <div className="h-4 w-72 bg-muted rounded-lg animate-pulse mt-2" />
         </div>
         <div className="space-y-6">
-          <SkeletonCard />
+          <Card>
+            <CardContent className="pt-6">
+              <div className="h-24 bg-muted rounded-lg animate-pulse" />
+            </CardContent>
+          </Card>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <SkeletonCard />
-            <SkeletonCard />
+            <Card>
+              <CardContent className="pt-6">
+                <div className="h-32 bg-muted rounded-lg animate-pulse" />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="h-32 bg-muted rounded-lg animate-pulse" />
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
@@ -124,13 +114,12 @@ export default function IjazahPage() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <p className="text-red-400 mb-4">{error}</p>
-          <Button variant="outline" onClick={() => window.location.reload()}>
-            Coba Lagi
-          </Button>
-        </div>
+      <div className="flex flex-col items-center justify-center h-64">
+        <XCircle className="w-12 h-12 text-red-600 mb-4" />
+        <p className="text-red-600 font-semibold mb-4">{error}</p>
+        <Button variant="outline" onClick={() => window.location.reload()}>
+          Coba Lagi
+        </Button>
       </div>
     );
   }
@@ -144,49 +133,34 @@ export default function IjazahPage() {
     <div>
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white">Detail Ijazah</h1>
-        <p className="text-[#71717A] mt-1">
+        <h1 className="text-3xl font-extrabold text-foreground tracking-tight">Detail Ijazah</h1>
+        <p className="text-muted-foreground mt-1">
           Informasi lengkap ijazah digital dan status klaim NFT Anda
         </p>
       </div>
 
       <div className="space-y-6">
         {/* Status Card */}
-        <Card
-          glow={
-            status === "MINTED" || status === "CLAIMED"
-          }
-        >
+        <Card className={`hover:shadow-md transition-shadow ${status === "MINTED" || status === "CLAIMED" ? "border-emerald-200" : ""}`}>
           <CardHeader>
             <div className="flex items-center justify-between flex-wrap gap-3">
-              <h2 className="text-lg font-semibold text-white">
+              <CardTitle className="flex items-center gap-2">
+                <Award className={`w-5 h-5 ${status === "MINTED" || status === "CLAIMED" ? "text-emerald-600" : "text-foreground"}`} />
                 Status Ijazah
-              </h2>
+              </CardTitle>
               {getStatusBadge(status)}
             </div>
           </CardHeader>
           <CardContent>
             {status === "NOT_ISSUED" && (
-              <div className="text-center py-8">
-                <div className="w-14 h-14 rounded-full bg-[#1A1A24] border border-[#27272A] flex items-center justify-center mx-auto mb-4">
-                  <svg
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#52525B"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                    <polyline points="14 2 14 8 20 8" />
-                  </svg>
+              <div className="text-center py-10">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                  <FileText className="w-8 h-8 text-muted-foreground" />
                 </div>
-                <p className="text-[#A1A1AA] font-medium">
+                <p className="text-foreground font-bold">
                   Ijazah Belum Diterbitkan
                 </p>
-                <p className="text-[#71717A] text-sm mt-1">
+                <p className="text-muted-foreground text-sm mt-1 max-w-md mx-auto">
                   Ijazah digital Anda belum diterbitkan oleh admin. Silakan
                   hubungi bagian akademik untuk informasi lebih lanjut.
                 </p>
@@ -195,36 +169,26 @@ export default function IjazahPage() {
 
             {status === "MINTED" && (
               <div>
-                <div className="p-4 bg-sky-900/10 border border-sky-600/20 rounded-lg mb-6">
-                  <p className="text-sky-400 font-medium text-sm">
-                    Ijazah Anda Sudah Diterbitkan
-                  </p>
-                  <p className="text-sky-400/70 text-sm mt-1">
-                    Ijazah digital sudah siap diklaim. Klik tombol di bawah
-                    untuk mengklaim NFT ijazah ke wallet Anda melalui Solana
-                    Blinks.
-                  </p>
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg mb-6 flex gap-3">
+                  <Info className="w-5 h-5 text-blue-600 shrink-0" />
+                  <div>
+                    <p className="text-blue-900 font-bold text-sm mb-1">
+                      Ijazah Anda Sudah Diterbitkan
+                    </p>
+                    <p className="text-blue-800 text-sm">
+                      Ijazah digital sudah siap diklaim. Klik tombol di bawah
+                      untuk mengklaim NFT ijazah ke wallet Anda melalui Solana
+                      Blinks.
+                    </p>
+                  </div>
                 </div>
                 <a
                   href={blinksClaimUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors"
+                  className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-colors shadow-sm"
                 >
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="17 8 12 3 7 8" />
-                    <line x1="12" y1="3" x2="12" y2="15" />
-                  </svg>
+                  <Award className="w-5 h-5" />
                   Klaim Ijazah
                 </a>
               </div>
@@ -232,36 +196,26 @@ export default function IjazahPage() {
 
             {status === "CLAIMED" && (
               <div>
-                <div className="p-4 bg-emerald-900/10 border border-emerald-600/20 rounded-lg mb-6">
-                  <p className="text-emerald-400 font-medium text-sm">
-                    Ijazah Sudah Diklaim
-                  </p>
-                  <p className="text-emerald-400/70 text-sm mt-1">
-                    NFT ijazah sudah berhasil diklaim ke wallet Anda. Anda dapat
-                    melihat detailnya di Solana Explorer.
-                  </p>
+                <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg mb-6 flex gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                  <div>
+                    <p className="text-emerald-900 font-bold text-sm mb-1">
+                      Ijazah Sudah Diklaim
+                    </p>
+                    <p className="text-emerald-800 text-sm">
+                      NFT ijazah sudah berhasil diklaim ke wallet Anda. Anda dapat
+                      melihat detailnya di Solana Explorer.
+                    </p>
+                  </div>
                 </div>
                 {certificate?.nftAddress && (
                   <a
                     href={`https://explorer.solana.com/address/${certificate.nftAddress}?cluster=devnet`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#1A1A24] border border-[#27272A] hover:border-red-600/30 text-white font-medium rounded-lg transition-colors text-sm"
+                    className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white border border-border hover:border-red-600 hover:text-red-600 font-bold rounded-lg transition-colors text-sm shadow-sm"
                   >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                      <polyline points="15 3 21 3 21 9" />
-                      <line x1="10" y1="14" x2="21" y2="3" />
-                    </svg>
+                    <ExternalLink className="w-4 h-4" />
                     Lihat di Solana Explorer
                   </a>
                 )}
@@ -269,28 +223,31 @@ export default function IjazahPage() {
             )}
 
             {status === "REVOKED" && (
-              <div className="p-4 bg-red-900/10 border border-red-600/20 rounded-lg">
-                <p className="text-red-400 font-medium text-sm">
-                  Ijazah Telah Direvoke
-                </p>
-                <p className="text-red-400/70 text-sm mt-1">
-                  Sertifikat ijazah Anda telah dicabut oleh pihak universitas.
-                </p>
-                {certificate?.revokeReason && (
-                  <div className="mt-3 pt-3 border-t border-red-600/20">
-                    <p className="text-xs text-red-400/50 uppercase tracking-wider">
-                      Alasan
-                    </p>
-                    <p className="text-red-400 text-sm mt-1">
-                      {certificate.revokeReason}
-                    </p>
-                  </div>
-                )}
-                {certificate?.revokedAt && (
-                  <p className="text-red-400/50 text-xs mt-2">
-                    Tanggal Revoke: {formatDate(certificate.revokedAt)}
+              <div className="p-5 bg-red-50 border border-red-200 rounded-lg flex gap-3">
+                <ShieldAlert className="w-6 h-6 text-red-600 shrink-0" />
+                <div>
+                  <p className="text-red-900 font-bold text-base mb-1">
+                    Ijazah Telah Direvoke
                   </p>
-                )}
+                  <p className="text-red-800 text-sm mb-3">
+                    Sertifikat ijazah Anda telah dicabut oleh pihak universitas.
+                  </p>
+                  {certificate?.revokeReason && (
+                    <div className="mt-3 p-3 bg-white/50 border border-red-100 rounded">
+                      <p className="text-xs font-bold text-red-900/60 uppercase tracking-wider mb-1">
+                        Alasan
+                      </p>
+                      <p className="text-red-900 font-medium text-sm">
+                        {certificate.revokeReason}
+                      </p>
+                    </div>
+                  )}
+                  {certificate?.revokedAt && (
+                    <p className="text-red-800/60 font-medium text-xs mt-3">
+                      Tanggal Revoke: {formatDate(certificate.revokedAt)}
+                    </p>
+                  )}
+                </div>
               </div>
             )}
           </CardContent>
@@ -298,25 +255,26 @@ export default function IjazahPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Student Info Card */}
-          <Card>
+          <Card className="hover:shadow-md transition-shadow">
             <CardHeader>
-              <h2 className="text-lg font-semibold text-white">
+              <CardTitle className="flex items-center gap-2">
+                <User className="w-5 h-5 text-blue-600" />
                 Informasi Mahasiswa
-              </h2>
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-5">
                 {[
-                  { label: "Nama", value: user?.nama },
+                  { label: "Nama Lengkap", value: user?.nama },
                   { label: "NIM", value: user?.nim },
                   { label: "Program Studi", value: user?.prodi || "-" },
                   { label: "Angkatan", value: user?.angkatan || "-" },
                 ].map((item) => (
                   <div key={item.label}>
-                    <p className="text-xs text-[#71717A] uppercase tracking-wider">
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">
                       {item.label}
                     </p>
-                    <p className="font-medium text-white mt-0.5">
+                    <p className="font-semibold text-foreground text-base">
                       {item.value}
                     </p>
                   </div>
@@ -326,25 +284,26 @@ export default function IjazahPage() {
           </Card>
 
           {/* Blockchain Details Card */}
-          <Card>
+          <Card className="hover:shadow-md transition-shadow">
             <CardHeader>
-              <h2 className="text-lg font-semibold text-white">
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-purple-600" />
                 Detail Blockchain
-              </h2>
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-5">
                 {/* Wallet Address */}
                 <div>
-                  <p className="text-xs text-[#71717A] uppercase tracking-wider">
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
                     Alamat Wallet
                   </p>
                   {wallet?.walletAddress ? (
-                    <p className="font-mono text-sm break-all text-[#A1A1AA] bg-[#0A0A0F] p-3 rounded-lg mt-1">
+                    <div className="font-mono text-sm break-all text-foreground bg-muted p-3 rounded-lg border border-border shadow-inner">
                       {wallet.walletAddress}
-                    </p>
+                    </div>
                   ) : (
-                    <p className="text-[#71717A] text-sm mt-0.5">
+                    <p className="text-muted-foreground text-sm font-medium">
                       Belum terdaftar
                     </p>
                   )}
@@ -352,7 +311,7 @@ export default function IjazahPage() {
 
                 {/* NFT Address */}
                 <div>
-                  <p className="text-xs text-[#71717A] uppercase tracking-wider">
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
                     NFT Address
                   </p>
                   {certificate?.nftAddress ? (
@@ -360,18 +319,18 @@ export default function IjazahPage() {
                       href={`https://explorer.solana.com/address/${certificate.nftAddress}?cluster=devnet`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="font-mono text-sm break-all text-red-400 hover:text-red-300 transition-colors mt-0.5 inline-block"
+                      className="font-mono text-sm break-all text-red-600 hover:text-red-700 hover:underline transition-colors inline-flex items-center gap-1"
                     >
-                      {truncateAddress(certificate.nftAddress, 12)}
+                      {truncateAddress(certificate.nftAddress, 12)} <ExternalLink className="w-3 h-3" />
                     </a>
                   ) : (
-                    <p className="text-[#71717A] text-sm mt-0.5">-</p>
+                    <p className="text-muted-foreground text-sm font-medium">-</p>
                   )}
                 </div>
 
                 {/* Transaction Signature */}
                 <div>
-                  <p className="text-xs text-[#71717A] uppercase tracking-wider">
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
                     Transaction Signature
                   </p>
                   {certificate?.txSignature ? (
@@ -379,12 +338,12 @@ export default function IjazahPage() {
                       href={`https://explorer.solana.com/tx/${certificate.txSignature}?cluster=devnet`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="font-mono text-sm break-all text-red-400 hover:text-red-300 transition-colors mt-0.5 inline-block"
+                      className="font-mono text-sm break-all text-red-600 hover:text-red-700 hover:underline transition-colors inline-flex items-center gap-1"
                     >
-                      {truncateAddress(certificate.txSignature, 12)}
+                      {truncateAddress(certificate.txSignature, 12)} <ExternalLink className="w-3 h-3" />
                     </a>
                   ) : (
-                    <p className="text-[#71717A] text-sm mt-0.5">-</p>
+                    <p className="text-muted-foreground text-sm font-medium">-</p>
                   )}
                 </div>
               </div>
@@ -393,41 +352,42 @@ export default function IjazahPage() {
         </div>
 
         {/* Certificate Metadata Card */}
-        <Card>
+        <Card className="hover:shadow-md transition-shadow">
           <CardHeader>
-            <h2 className="text-lg font-semibold text-white">
+            <CardTitle className="flex items-center gap-2">
+              <Info className="w-5 h-5 text-emerald-600" />
               Metadata Sertifikat
-            </h2>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               <div>
-                <p className="text-xs text-[#71717A] uppercase tracking-wider">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
                   Tanggal Diterbitkan
                 </p>
-                <p className="text-white font-medium mt-0.5">
+                <p className="text-foreground font-semibold">
                   {certificate?.issuedAt
                     ? formatDate(certificate.issuedAt)
                     : "-"}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-[#71717A] uppercase tracking-wider">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
                   Tanggal Diklaim
                 </p>
-                <p className="text-white font-medium mt-0.5">
+                <p className="text-foreground font-semibold">
                   {certificate?.claimedAt
                     ? formatDate(certificate.claimedAt)
                     : "-"}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-[#71717A] uppercase tracking-wider">
-                  NFT Address
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                  NFT Address Lengkap
                 </p>
-                <p className="font-mono text-sm text-[#A1A1AA] mt-0.5">
+                <p className="font-mono text-xs break-all text-muted-foreground bg-muted p-2 rounded border border-border shadow-inner">
                   {certificate?.nftAddress
-                    ? truncateAddress(certificate.nftAddress, 12)
+                    ? certificate.nftAddress
                     : "-"}
                 </p>
               </div>

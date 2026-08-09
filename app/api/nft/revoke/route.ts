@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyToken } from "@/lib/auth";
 import { revokeNftSchema } from "@/lib/validation";
+import { generateRevokedMetadata, uploadMetadataToPinata } from "@/lib/pinata";
+import { revokeSoulboundNFT } from "@/lib/metaplex";
+
 
 export async function POST(request: NextRequest) {
   try {
@@ -98,7 +101,33 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Update status certificate ke REVOKED
+    // 1. Generate Revoked Metadata
+    const revokedMetadata = generateRevokedMetadata({
+      nama: user.nama,
+      nim: user.nim,
+      prodi: user.prodi || "Informatika",
+      tahunLulus: user.angkatan || "2026",
+    });
+
+    // 2. Upload Revoked Metadata to IPFS via Pinata
+    const { uri: newMetadataUri } = await uploadMetadataToPinata(revokedMetadata);
+
+    // 3. Eksekusi On-Chain Revoke (Update URI)
+    if (user.certificate.nftAddress) {
+      const revokeResult = await revokeSoulboundNFT({
+        mintAddress: user.certificate.nftAddress,
+        metadataUri: newMetadataUri,
+      });
+
+      if (!revokeResult.success) {
+        return NextResponse.json(
+          { error: `Gagal revoke on-chain: ${revokeResult.error}` },
+          { status: 500 }
+        );
+      }
+    }
+
+    // 4. Update status certificate ke REVOKED di Database
     const revokedCert = await prisma.certificate.update({
       where: { id: user.certificate.id },
       data: {
@@ -106,6 +135,8 @@ export async function POST(request: NextRequest) {
         revokedAt: new Date(),
         revokedBy: payload.userId,
         revokeReason: reason,
+        // Menyimpan metadata baru yang direvoke
+        metadataUri: newMetadataUri,
       },
     });
 

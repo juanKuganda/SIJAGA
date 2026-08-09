@@ -2,6 +2,8 @@ import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import {
   createNft,
   mplTokenMetadata,
+  updateV1,
+  fetchMetadataFromSeeds,
 } from "@metaplex-foundation/mpl-token-metadata";
 import {
   keypairIdentity,
@@ -173,7 +175,7 @@ export async function mintSoulboundNFT(data: {
       uri: data.metadataUri,
       sellerFeeBasisPoints: percentAmount(0), // Tidak ada royalti (Soulbound)
       tokenOwner: recipient,
-      isMutable: false, // Metadata tidak bisa diubah setelah mint (Soulbound)
+      isMutable: true, // Metadata bisa diubah setelah mint (Visual Revoke)
     }).sendAndConfirm(umi, {
       send: { commitment: "finalized" },
       confirm: { commitment: "finalized" },
@@ -214,6 +216,62 @@ export async function mintSoulboundNFT(data: {
     return {
       success: false,
       error: errorMessage,
+    };
+  }
+}
+
+/**
+ * Revoke NFT Soulbound (Visual Revoke)
+ * Mengubah metadata URI NFT menjadi metadata 'DIBATALKAN'
+ */
+export async function revokeSoulboundNFT(data: {
+  mintAddress: string;
+  metadataUri: string;
+}) {
+  try {
+    console.log("[Metaplex] Starting NFT revoke for:", data.mintAddress);
+
+    const umi = createUmiInstance();
+    const adminKeypair = getAdminKeypair();
+
+    // Convert keypair ke format Umi dan set sebagai identity
+    const umiKeypair = umi.eddsa.createKeypairFromSecretKey(
+      adminKeypair.secretKey
+    );
+    umi.use(keypairIdentity(umiKeypair));
+
+    const mint = publicKey(data.mintAddress);
+    
+    // Ambil data metadata awal
+    const initialMetadata = await fetchMetadataFromSeeds(umi, { mint });
+
+    // Update NFT
+    const result = await updateV1(umi, {
+      mint,
+      authority: umi.identity,
+      data: {
+        ...initialMetadata,
+        uri: data.metadataUri,
+        // Kita tidak mengubah 'name' on-chain karena batas maksimal Metaplex adalah 32 bytes.
+        // Penanda DIBATALKAN sudah ada di dalam JSON metadata (URI).
+      },
+    }).sendAndConfirm(umi, {
+      send: { commitment: "finalized" },
+      confirm: { commitment: "finalized" },
+    });
+
+    const signatureBase58 = bs58.encode(result.signature);
+    console.log("[Metaplex] NFT revoked successfully!");
+    
+    return {
+      success: true,
+      signature: signatureBase58,
+    };
+  } catch (error) {
+    console.error("[Metaplex] Error revoking NFT:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Gagal revoke NFT",
     };
   }
 }

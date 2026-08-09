@@ -88,3 +88,28 @@ export function generateCertificateMetadata(data: {
     ],
   };
 }
+
+/**
+ * Generate metadata JSON untuk NFT ijazah yang dibatalkan
+ */
+export function generateRevokedMetadata(data: {
+  nama: string;
+  nim: string;
+  prodi: string;
+  tahunLulus: string;
+}) {
+  return {
+    name: `[DIBATALKAN] Ijazah S1 - ${data.nama}`,
+    symbol: "REVOKED",
+    description: `Ijazah Sarjana ${data.prodi}, Universitas Tadulako ini telah DIBATALKAN / DICABUT.`,
+    // Gunakan gambar generic untuk dicabut, atau kosong
+    image: "https://placehold.co/600x400/red/white?text=IJAZAH+DIBATALKAN",
+    attributes: [
+      { trait_type: "NIM", value: data.nim },
+      { trait_type: "Program Studi", value: data.prodi },
+      { trait_type: "Tahun Lulus", value: data.tahunLulus },
+      { trait_type: "Status", value: "Dibatalkan" },
+      { trait_type: "Penerbit", value: "Universitas Tadulako" },
+    ],
+  };
+}
