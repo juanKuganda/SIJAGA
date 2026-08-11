@@ -45,21 +45,31 @@ export default function LoadingScreen({ onComplete }: LoadingScreenProps) {
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 z-[100] bg-neutral-900 flex flex-col justify-between px-8 py-12 md:px-16 md:py-16"
+      className="fixed inset-0 z-[100] bg-white flex flex-col justify-center items-center px-8 py-12"
     >
-      <div className="flex-grow flex items-center justify-center">
-        <h2 className="text-[15vw] md:text-[12vw] font-black text-white leading-none tracking-tighter uppercase mix-blend-difference select-none">
-          SIJAGA
-        </h2>
-      </div>
-
-      <div className="flex justify-between items-end border-b-8 border-white pb-2 md:pb-4">
-        <span className="text-3xl md:text-5xl font-black text-white tracking-tighter uppercase">
-          LOADING
-        </span>
-        <span className="text-6xl md:text-8xl font-black text-white tracking-tighter tabular-nums leading-none">
-          {progress}%
-        </span>
+      <div className="flex flex-col items-center gap-8">
+        <div className="flex flex-col items-center gap-4">
+          <img 
+            src="/apple-touch-icon.png" 
+            alt="Logo Untad" 
+            className="w-20 h-20 md:w-28 md:h-28 object-contain"
+          />
+          <h2 className="text-4xl md:text-6xl font-black text-neutral-900 tracking-[0.2em] uppercase select-none">
+            SIJAGA
+          </h2>
+        </div>
+        <div className="flex flex-col items-center gap-2 w-48 md:w-64">
+          <div className="w-full h-[2px] bg-neutral-200 overflow-hidden relative">
+            <div 
+              className="absolute top-0 left-0 h-full bg-neutral-900 transition-all duration-75 ease-out"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <div className="flex justify-between w-full text-xs text-neutral-700 font-bold tracking-widest uppercase mt-2">
+            <span>Loading</span>
+            <span className="tabular-nums">{progress}%</span>
+          </div>
+        </div>
       </div>
     </div>
   );
