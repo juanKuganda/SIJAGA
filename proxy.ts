@@ -18,7 +18,7 @@ async function verifyToken(token: string) {
   }
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // Jika JWT_SECRET tidak diset, tolak semua request
   if (!JWT_SECRET) {
     console.error("JWT_SECRET tidak ditemukan di environment variables");

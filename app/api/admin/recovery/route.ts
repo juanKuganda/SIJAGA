@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyToken } from "@/lib/auth";
 import { CertStatus } from "@prisma/client";
+import { restoreSoulboundNFT } from "@/lib/metaplex";
+import { generateCertificateImageBuffer } from "@/lib/certificate-image";
+import { uploadImageToPinata, generateCertificateMetadata, uploadMetadataToPinata } from "@/lib/pinata";
 
 /**
  * POST — Recovery sertifikat dari backup
@@ -86,11 +89,63 @@ export async function POST(request: NextRequest) {
     // (Jangan restore ke CLAIMED karena NFT mungkin tidak ada di wallet mahasiswa)
     const restoredStatus: CertStatus = "MINTED";
 
+    // Kembalikan NFT ke metadata lama di Solana jika memungkinkan
+    // PERBAIKAN: Alih-alih memakai metadata usang dari backup, kita "Re-Generate" metadata & gambar
+    // menggunakan data `user` (database) terbaru. Ini menjamin jika ada perbaikan nama,
+    // ijazah hasil restore akan ikut ter-update.
+    let updatedMetadataUri = certData.metadataUri;
+
+    if (certData.nftAddress) {
+      try {
+        // 1. Generate Image baru (berdasarkan data User saat ini)
+        const imageBuffer = await generateCertificateImageBuffer({
+          nama: user.nama,
+          nim: user.nim,
+          prodi: user.prodi || "Informatika",
+          tahunLulus: user.angkatan || "2026",
+          status: "MINTED",
+        });
+        const imageBlob = new Blob([imageBuffer], { type: "image/png" });
+        const imageFile = new File([imageBlob], `ijazah-${user.nim}.png`, { type: "image/png" });
+        
+        // 2. Upload ke Pinata
+        const { gatewayUrl: imageUrl } = await uploadImageToPinata(imageFile);
+
+        // 3. Generate Metadata baru
+        const metadata = generateCertificateMetadata({
+          nama: user.nama,
+          nim: user.nim,
+          prodi: user.prodi || "Informatika",
+          tahunLulus: user.angkatan || "2026",
+          imageUri: imageUrl,
+        });
+
+        // 4. Upload Metadata
+        const { uri: newMetadataUri } = await uploadMetadataToPinata(metadata);
+        updatedMetadataUri = newMetadataUri;
+
+        // 5. Update NFT Solana
+        await restoreSoulboundNFT({
+          mintAddress: certData.nftAddress,
+          metadataUri: newMetadataUri,
+        });
+      } catch (genError) {
+        console.error("Gagal re-generate metadata saat restore:", genError);
+        // Fallback: Jika IPFS gagal, update NFT tetap menggunakan metadata lama dari backup
+        if (certData.metadataUri) {
+          await restoreSoulboundNFT({
+            mintAddress: certData.nftAddress,
+            metadataUri: certData.metadataUri,
+          });
+        }
+      }
+    }
+
     const restoredCert = await prisma.certificate.upsert({
       where: { userId: backup.userId },
       update: {
         nftAddress: certData.nftAddress,
-        metadataUri: certData.metadataUri,
+        metadataUri: updatedMetadataUri, // Gunakan metadata yang baru
         txSignature: certData.txSignature,
         status: restoredStatus,
         issuedAt: certData.issuedAt ? new Date(certData.issuedAt) : null,
@@ -103,7 +158,7 @@ export async function POST(request: NextRequest) {
       create: {
         userId: backup.userId,
         nftAddress: certData.nftAddress,
-        metadataUri: certData.metadataUri,
+        metadataUri: updatedMetadataUri,
         txSignature: certData.txSignature,
         status: restoredStatus,
         issuedAt: certData.issuedAt ? new Date(certData.issuedAt) : null,

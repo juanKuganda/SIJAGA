@@ -4,7 +4,7 @@ import { verifyToken } from "@/lib/auth";
 import { revokeNftSchema } from "@/lib/validation";
 import { generateRevokedMetadata, uploadMetadataToPinata, uploadImageToPinata } from "@/lib/pinata";
 import { revokeSoulboundNFT } from "@/lib/metaplex";
-import { generateCertificateSVG } from "@/lib/certificate-image";
+import { generateCertificateImageBuffer } from "@/lib/certificate-image";
 
 
 export async function POST(request: NextRequest) {
@@ -102,17 +102,17 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // 1. Generate Revoked SVG Image
-    const revokedSvg = generateCertificateSVG({
+    // 1. Generate Revoked PNG Image
+    const revokedImageBuffer = await generateCertificateImageBuffer({
       nama: user.nama,
       nim: user.nim,
       prodi: user.prodi || "Informatika",
       tahunLulus: user.angkatan || "2026",
       status: "REVOKED",
     });
-    const svgBlob = new Blob([revokedSvg], { type: "image/svg+xml" });
-    const svgFile = new File([svgBlob], `ijazah-revoked-${user.nim}.svg`, { type: "image/svg+xml" });
-    const { gatewayUrl: revokedImageUrl } = await uploadImageToPinata(svgFile);
+    const imageBlob = new Blob([revokedImageBuffer], { type: "image/png" });
+    const imageFile = new File([imageBlob], `ijazah-revoked-${user.nim}.png`, { type: "image/png" });
+    const { gatewayUrl: revokedImageUrl } = await uploadImageToPinata(imageFile);
 
     // 2. Generate Revoked Metadata with image
     const revokedMetadata = generateRevokedMetadata({

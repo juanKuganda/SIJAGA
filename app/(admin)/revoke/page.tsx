@@ -293,14 +293,20 @@ export default function RevokePage() {
             Cabut sertifikat, kelola backup data, dan restore sertifikat
           </p>
         </div>
-        <Button
-          variant="outline"
-          onClick={handleBackupAll}
-          disabled={backupLoading}
-        >
-          <Download className="w-4 h-4 mr-2" />
-          {backupLoading ? "Mendownload..." : "Download Backup"}
-        </Button>
+        <div className="flex flex-col items-end gap-1">
+          <Button
+            variant="outline"
+            onClick={handleBackupAll}
+            disabled={backupLoading}
+            className="w-full sm:w-auto"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            {backupLoading ? "Mendownload..." : "Unduh Backup Database"}
+          </Button>
+          <p className="text-[10px] text-muted-foreground/80 max-w-xs text-right">
+            File JSON ini berfungsi sebagai cadangan lokal _(off-chain)_ data ijazah mahasiswa untuk berjaga-jaga jika database utama rusak.
+          </p>
+        </div>
       </div>
 
       <Tabs value={tab} onValueChange={setTab} className="space-y-6">

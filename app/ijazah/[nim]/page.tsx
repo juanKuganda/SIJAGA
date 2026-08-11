@@ -186,18 +186,14 @@ export default function IjazahPreviewPage({
               </div>
             </div>
             
-            {/* Watermark / Seal status */}
-            <div className="absolute bottom-8 right-8 z-10 opacity-80">
-              <div className={`w-24 h-24 rounded-full border-4 flex items-center justify-center transform -rotate-12 ${
-                cert.status === 'CLAIMED' ? 'border-emerald-500 text-emerald-600 bg-emerald-50/50' : 
-                cert.status === 'REVOKED' ? 'border-red-500 text-red-600 bg-red-50/50' :
-                cert.status === 'MINTED' ? 'border-blue-500 text-blue-600 bg-blue-50/50' : 'border-gray-400 text-gray-400 bg-gray-50'
-              }`}>
-                <span className="text-sm font-black uppercase tracking-tighter shadow-sm">
-                  {cert.status}
-                </span>
+            {/* Watermark REVOKED / DIBATALKAN */}
+            {isRevoked && (
+              <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none overflow-hidden">
+                <div className="text-red-500/25 text-5xl sm:text-7xl md:text-[140px] font-black uppercase tracking-[0.2em] -rotate-[30deg] border-[8px] md:border-[12px] border-red-500/25 px-8 py-4 md:px-16 md:py-6 rounded-3xl select-none">
+                  DIBATALKAN
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Modern Detail Block */}

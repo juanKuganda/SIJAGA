@@ -302,3 +302,70 @@ export async function revokeSoulboundNFT(data: {
     };
   }
 }
+
+export async function restoreSoulboundNFT(data: {
+  mintAddress: string;
+  metadataUri: string;
+}) {
+  try {
+    console.log("[Metaplex] Starting NFT restore for:", data.mintAddress);
+
+    const umi = createUmiInstance();
+    const adminKeypair = getAdminKeypair();
+
+    const umiKeypair = umi.eddsa.createKeypairFromSecretKey(
+      adminKeypair.secretKey
+    );
+    umi.use(keypairIdentity(umiKeypair));
+
+    const mint = publicKey(data.mintAddress);
+    
+    const initialMetadata = await fetchMetadataFromSeeds(umi, { mint });
+
+    if (!initialMetadata.isMutable) {
+      console.warn("[Metaplex] NFT is immutable. Skipping on-chain update.");
+      return {
+        success: true,
+        signature: null,
+        warning: "NFT immutable — restore hanya dilakukan di database. Metadata on-chain tidak diubah.",
+      };
+    }
+
+    const result = await updateV1(umi, {
+      mint,
+      authority: umi.identity,
+      data: {
+        ...initialMetadata,
+        uri: data.metadataUri,
+      },
+    }).sendAndConfirm(umi, {
+      send: { commitment: "finalized" },
+      confirm: { commitment: "finalized" },
+    });
+
+    const signatureBase58 = bs58.encode(result.signature);
+    console.log("[Metaplex] NFT restored successfully!");
+    
+    return {
+      success: true,
+      signature: signatureBase58,
+    };
+  } catch (error) {
+    console.error("[Metaplex] Error restoring NFT:", error);
+    
+    const errorMsg = error instanceof Error ? error.message : "Gagal restore NFT";
+    
+    if (errorMsg.includes("immutable") || errorMsg.includes("0x3b")) {
+      return {
+        success: true,
+        signature: null,
+        warning: "NFT immutable — metadata on-chain tidak dapat diubah (sudah di-lock).",
+      };
+    }
+
+    return {
+      success: false,
+      error: errorMsg,
+    };
+  }
+}
