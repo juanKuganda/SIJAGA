@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyToken } from "@/lib/auth";
 import { mintNftSchema } from "@/lib/validation";
-import { uploadMetadataToPinata, generateCertificateMetadata } from "@/lib/pinata";
+import { uploadMetadataToPinata, generateCertificateMetadata, uploadImageToPinata } from "@/lib/pinata";
 import { mintSoulboundNFT } from "@/lib/metaplex";
+import { generateCertificateSVG } from "@/lib/certificate-image";
 
 export async function POST(request: NextRequest) {
   try {
@@ -74,12 +75,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate metadata
+    // Generate & upload SVG certificate image to IPFS
+    const svgContent = generateCertificateSVG({
+      nama: user.nama,
+      nim: user.nim,
+      prodi: user.prodi || "Informatika",
+      tahunLulus: user.angkatan || "2026",
+    });
+    const svgBlob = new Blob([svgContent], { type: "image/svg+xml" });
+    const svgFile = new File([svgBlob], `ijazah-${user.nim}.svg`, { type: "image/svg+xml" });
+    const { gatewayUrl: imageUrl } = await uploadImageToPinata(svgFile);
+
+    // Generate metadata with image
     const metadata = generateCertificateMetadata({
       nama: user.nama,
       nim: user.nim,
       prodi: user.prodi || "Informatika",
       tahunLulus: user.angkatan || "2026",
+      imageUri: imageUrl,
     });
 
     // Upload metadata ke Pinata

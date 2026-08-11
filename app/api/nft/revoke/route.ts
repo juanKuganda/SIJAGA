@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyToken } from "@/lib/auth";
 import { revokeNftSchema } from "@/lib/validation";
-import { generateRevokedMetadata, uploadMetadataToPinata } from "@/lib/pinata";
+import { generateRevokedMetadata, uploadMetadataToPinata, uploadImageToPinata } from "@/lib/pinata";
 import { revokeSoulboundNFT } from "@/lib/metaplex";
+import { generateCertificateSVG } from "@/lib/certificate-image";
 
 
 export async function POST(request: NextRequest) {
@@ -101,18 +102,33 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // 1. Generate Revoked Metadata
+    // 1. Generate Revoked SVG Image
+    const revokedSvg = generateCertificateSVG({
+      nama: user.nama,
+      nim: user.nim,
+      prodi: user.prodi || "Informatika",
+      tahunLulus: user.angkatan || "2026",
+      status: "REVOKED",
+    });
+    const svgBlob = new Blob([revokedSvg], { type: "image/svg+xml" });
+    const svgFile = new File([svgBlob], `ijazah-revoked-${user.nim}.svg`, { type: "image/svg+xml" });
+    const { gatewayUrl: revokedImageUrl } = await uploadImageToPinata(svgFile);
+
+    // 2. Generate Revoked Metadata with image
     const revokedMetadata = generateRevokedMetadata({
       nama: user.nama,
       nim: user.nim,
       prodi: user.prodi || "Informatika",
       tahunLulus: user.angkatan || "2026",
     });
+    // Override image with IPFS-hosted revoked SVG
+    revokedMetadata.image = revokedImageUrl;
 
-    // 2. Upload Revoked Metadata to IPFS via Pinata
+    // 3. Upload Revoked Metadata to IPFS via Pinata
     const { uri: newMetadataUri } = await uploadMetadataToPinata(revokedMetadata);
 
-    // 3. Eksekusi On-Chain Revoke (Update URI)
+    // 4. Eksekusi On-Chain Revoke (Update URI)
+    let onChainWarning: string | null = null;
     if (user.certificate.nftAddress) {
       const revokeResult = await revokeSoulboundNFT({
         mintAddress: user.certificate.nftAddress,
@@ -125,9 +141,13 @@ export async function POST(request: NextRequest) {
           { status: 500 }
         );
       }
+      
+      if ('warning' in revokeResult && revokeResult.warning) {
+        onChainWarning = revokeResult.warning as string;
+      }
     }
 
-    // 4. Update status certificate ke REVOKED di Database
+    // 5. Update status certificate ke REVOKED di Database
     const revokedCert = await prisma.certificate.update({
       where: { id: user.certificate.id },
       data: {
@@ -152,7 +172,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `Sertifikat ${user.nama} berhasil direvoke`,
+      message: `Sertifikat ${user.nama} berhasil direvoke${onChainWarning ? " (Catatan: " + onChainWarning + ")" : ""}`,
+      warning: onChainWarning,
       certificate: {
         id: revokedCert.id,
         status: revokedCert.status,

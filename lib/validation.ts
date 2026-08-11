@@ -116,8 +116,7 @@ export const backupSchema = z.object({
  * Schema validasi untuk verifikasi publik
  */
 export const verifySchema = z.object({
-  wallet: z
+  query: z
     .string()
-    .min(1, "Alamat wallet wajib diisi")
-    .regex(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/, "Format alamat wallet tidak valid"),
+    .min(1, "Input wajib diisi")
 });

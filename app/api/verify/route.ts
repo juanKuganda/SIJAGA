@@ -6,10 +6,10 @@ import { isValidSolanaAddress } from "@/lib/solana";
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const wallet = searchParams.get("wallet");
+    const queryParam = searchParams.get("query") || searchParams.get("wallet");
 
     // Validasi input
-    const result = verifySchema.safeParse({ wallet });
+    const result = verifySchema.safeParse({ query: queryParam });
     if (!result.success) {
       const errorMessage = result.error.issues[0]?.message || "Validasi gagal";
       return NextResponse.json(
@@ -18,41 +18,55 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { wallet: walletAddress } = result.data;
+    const { query } = result.data;
+    const isSolanaAddress = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(query);
 
-    // Validasi format wallet address
-    if (!isValidSolanaAddress(walletAddress)) {
-      return NextResponse.json(
-        { error: "Format alamat wallet tidak valid" },
-        { status: 400 }
-      );
-    }
+    // Cari di database
+    let userWithWallet = null;
 
-    // Cari wallet di database
-    const walletData = await prisma.wallet.findUnique({
-      where: { walletAddress },
-      include: {
-        user: {
-          select: {
-            nama: true,
-            nim: true,
-            prodi: true,
-            angkatan: true,
+    if (isSolanaAddress) {
+      // Cari by wallet address
+      const walletData = await prisma.wallet.findUnique({
+        where: { walletAddress: query },
+        include: {
+          user: {
+            select: { nama: true, nim: true, prodi: true, angkatan: true },
           },
         },
-      },
-    });
+      });
+      if (walletData) {
+        userWithWallet = {
+          ...walletData.user,
+          userId: walletData.userId,
+        };
+      }
+    } else {
+      // Cari by NIM
+      const user = await prisma.user.findUnique({
+        where: { nim: query },
+        include: { wallet: true },
+      });
+      if (user) {
+        userWithWallet = {
+          nama: user.nama,
+          nim: user.nim,
+          prodi: user.prodi,
+          angkatan: user.angkatan,
+          userId: user.id,
+        };
+      }
+    }
 
-    if (!walletData) {
+    if (!userWithWallet) {
       return NextResponse.json(
-        { error: "Wallet tidak ditemukan" },
+        { error: isSolanaAddress ? "Wallet tidak ditemukan" : "NIM tidak ditemukan" },
         { status: 404 }
       );
     }
 
     // Cari certificate
     const certificate = await prisma.certificate.findUnique({
-      where: { userId: walletData.userId },
+      where: { userId: userWithWallet.userId },
     });
 
     if (!certificate || certificate.status === "NOT_ISSUED") {
@@ -71,10 +85,10 @@ export async function GET(request: NextRequest) {
         revokeReason: certificate.revokeReason || "Tidak ada alasan yang diberikan",
         revokedAt: certificate.revokedAt,
         data: {
-          nama: walletData.user.nama,
-          nim: walletData.user.nim,
-          prodi: walletData.user.prodi,
-          tahunLulus: walletData.user.angkatan,
+          nama: userWithWallet.nama,
+          nim: userWithWallet.nim,
+          prodi: userWithWallet.prodi,
+          tahunLulus: userWithWallet.angkatan,
           nftAddress: certificate.nftAddress,
         },
       });
@@ -83,10 +97,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       verified: true,
       data: {
-        nama: walletData.user.nama,
-        nim: walletData.user.nim,
-        prodi: walletData.user.prodi,
-        tahunLulus: walletData.user.angkatan,
+        nama: userWithWallet.nama,
+        nim: userWithWallet.nim,
+        prodi: userWithWallet.prodi,
+        tahunLulus: userWithWallet.angkatan,
         status: certificate.status,
         nftAddress: certificate.nftAddress,
         issuedAt: certificate.issuedAt,

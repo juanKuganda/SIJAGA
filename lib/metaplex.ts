@@ -223,6 +223,10 @@ export async function mintSoulboundNFT(data: {
 /**
  * Revoke NFT Soulbound (Visual Revoke)
  * Mengubah metadata URI NFT menjadi metadata 'DIBATALKAN'
+ * 
+ * Jika NFT immutable (tidak bisa diubah on-chain), 
+ * fungsi ini akan mengembalikan partial success agar 
+ * proses revoke di database tetap berjalan.
  */
 export async function revokeSoulboundNFT(data: {
   mintAddress: string;
@@ -244,6 +248,16 @@ export async function revokeSoulboundNFT(data: {
     
     // Ambil data metadata awal
     const initialMetadata = await fetchMetadataFromSeeds(umi, { mint });
+
+    // Cek apakah metadata bisa diubah (mutable)
+    if (!initialMetadata.isMutable) {
+      console.warn("[Metaplex] NFT is immutable. Skipping on-chain update, proceeding with database-only revoke.");
+      return {
+        success: true,
+        signature: null,
+        warning: "NFT immutable — revoke hanya dilakukan di database. Metadata on-chain tidak diubah.",
+      };
+    }
 
     // Update NFT
     const result = await updateV1(umi, {
@@ -269,9 +283,22 @@ export async function revokeSoulboundNFT(data: {
     };
   } catch (error) {
     console.error("[Metaplex] Error revoking NFT:", error);
+    
+    const errorMsg = error instanceof Error ? error.message : "Gagal revoke NFT";
+    
+    // Jika error karena immutable, tetap lanjutkan (revoke di DB saja)
+    if (errorMsg.includes("immutable") || errorMsg.includes("0x3b")) {
+      console.warn("[Metaplex] NFT immutable detected from error. Proceeding with database-only revoke.");
+      return {
+        success: true,
+        signature: null,
+        warning: "NFT immutable — revoke hanya dilakukan di database. Metadata on-chain tidak diubah.",
+      };
+    }
+    
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Gagal revoke NFT",
+      error: errorMsg,
     };
   }
 }

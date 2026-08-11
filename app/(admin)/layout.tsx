@@ -90,8 +90,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           className="border-r-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)] bg-white/80 backdrop-blur-2xl"
         >
           <SidebarHeader>
-            <div className="flex items-center gap-3 px-2 py-3">
-              <img src="/apple-touch-icon.png" alt="Logo Untad" className="w-10 h-10 object-contain shrink-0 drop-shadow-sm" />
+            <div className="flex items-center gap-3 px-2 py-3 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
+              <img src="/apple-touch-icon.png" alt="Logo Untad" className="w-10 h-10 group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8 object-contain shrink-0 drop-shadow-sm transition-all" />
               <div className="flex flex-col group-data-[collapsible=icon]:hidden">
                 <span className="text-xl font-black text-foreground tracking-tight leading-none">SIJAGA</span>
                 <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest mt-1">Universitas Tadulako</span>
@@ -131,11 +131,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
             <SidebarGroup className="mt-auto">
               <SidebarGroupContent>
-                <Link href="/" className="px-3 py-3 mt-6 mx-4 bg-zinc-50 hover:bg-zinc-100 transition-colors rounded-xl border border-zinc-200 flex items-center gap-3 group">
+                <Link href="/" className="px-3 py-3 mt-6 mx-4 group-data-[collapsible=icon]:mx-0 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center bg-zinc-50 group-data-[collapsible=icon]:bg-transparent hover:bg-zinc-100 transition-colors rounded-xl border border-zinc-200 group-data-[collapsible=icon]:border-transparent flex items-center gap-3 group">
                   <div className="w-8 h-8 rounded-lg bg-white border border-zinc-200 flex items-center justify-center shrink-0 group-hover:border-red-200 transition-colors">
                     <Home className="w-4 h-4 text-zinc-500 group-hover:text-red-500 transition-colors" />
                   </div>
-                  <div>
+                  <div className="group-data-[collapsible=icon]:hidden">
                     <span className="text-sm font-bold text-zinc-700 block group-hover:text-red-600 transition-colors">Beranda Publik</span>
                     <span className="text-[10px] text-muted-foreground block leading-tight">Kembali ke landing page</span>
                   </div>
@@ -147,7 +147,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           <SidebarSeparator />
 
           <SidebarFooter>
-            <div className="flex items-center gap-3 px-2 py-2">
+            <div className="flex items-center gap-3 px-2 py-2 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
               <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center shrink-0">
                 <span className="text-xs font-bold text-red-600">
                   {user?.nama?.charAt(0)?.toUpperCase() || "A"}
@@ -187,21 +187,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             
             <div className="flex items-center gap-2 md:gap-4">
               {user && (
-                <div className="hidden sm:flex flex-col items-end mr-2">
+                <div className="hidden sm:flex flex-col items-end">
                   <span className="text-sm font-bold text-foreground leading-none">{user.nama}</span>
                   <span className="text-[10px] text-red-600 font-semibold mt-1">Admin Pusat</span>
                 </div>
               )}
-              
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleLogout}
-                className="hidden sm:inline-flex rounded-full text-muted-foreground hover:bg-red-50 hover:text-red-600"
-                title="Logout"
-              >
-                <LogOut className="w-4 h-4" />
-              </Button>
             </div>
           </header>
 

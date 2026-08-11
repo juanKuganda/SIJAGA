@@ -368,14 +368,6 @@ export default function MahasiswaPage() {
                     <TableCell>{getCertBadge(m.certificate?.status)}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => openEditModal(m)}
-                        >
-                          <Pencil className="w-3.5 h-3.5 mr-1" />
-                          Edit
-                        </Button>
                         <Link href={`/detail-ijazah/${m.nim}`}>
                           <Button size="sm" variant="outline">
                             <Eye className="w-3.5 h-3.5 mr-1" />

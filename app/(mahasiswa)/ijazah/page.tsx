@@ -125,8 +125,10 @@ export default function IjazahPage() {
   }
 
   const status = certificate?.status || "NOT_ISSUED";
+  const appUrl = typeof window !== 'undefined' ? window.location.origin : "http://localhost:3000";
+  const actionUrl = `${appUrl}/api/actions/claim?nim=${user?.nim}`;
   const blinksClaimUrl = user?.nim
-    ? `/api/actions/claim?nim=${user.nim}`
+    ? `https://dial.to/?action=solana-action:${encodeURIComponent(actionUrl)}`
     : "#";
 
   return (

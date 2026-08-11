@@ -74,11 +74,13 @@ export function generateCertificateMetadata(data: {
   tahunLulus: string;
   imageUri?: string;
 }) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   return {
     name: `Ijazah S1 - ${data.nama}`,
     symbol: "SIJAGA",
-    description: `Ijazah Sarjana ${data.prodi}, Universitas Tadulako`,
+    description: `Ijazah Sarjana ${data.prodi}, Universitas Tadulako. Diverifikasi melalui blockchain Solana sebagai NFT Soulbound.`,
     image: data.imageUri || "",
+    external_url: `${appUrl}/ijazah/${data.nim}`,
     attributes: [
       { trait_type: "NIM", value: data.nim },
       { trait_type: "Program Studi", value: data.prodi },
@@ -98,12 +100,13 @@ export function generateRevokedMetadata(data: {
   prodi: string;
   tahunLulus: string;
 }) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   return {
     name: `[DIBATALKAN] Ijazah S1 - ${data.nama}`,
     symbol: "REVOKED",
     description: `Ijazah Sarjana ${data.prodi}, Universitas Tadulako ini telah DIBATALKAN / DICABUT.`,
-    // Gunakan gambar generic untuk dicabut, atau kosong
-    image: "https://placehold.co/600x400/red/white?text=IJAZAH+DIBATALKAN",
+    image: "",
+    external_url: `${appUrl}/ijazah/${data.nim}`,
     attributes: [
       { trait_type: "NIM", value: data.nim },
       { trait_type: "Program Studi", value: data.prodi },

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { User, Wallet as WalletIcon, FileText, CheckCircle2, Clock, XCircle, AlertTriangle, ExternalLink, ArrowRight, ShieldCheck, Zap } from "lucide-react";
+import { User, Wallet as WalletIcon, FileText, CheckCircle2, Clock, XCircle, AlertTriangle, ExternalLink, ArrowRight, ShieldCheck, Zap, Check } from "lucide-react";
 
 interface UserProfile {
   id: string;
@@ -77,6 +77,26 @@ export default function ProfilPage() {
     }
   };
 
+  const getProgress = () => {
+    let currentStep = 1;
+    if (wallet?.status === "PENDING") currentStep = 1;
+    else if (wallet?.status === "VERIFIED") {
+      currentStep = 2;
+      if (certificate?.status === "MINTED") currentStep = 3;
+      if (certificate?.status === "CLAIMED") currentStep = 4;
+    }
+    return currentStep;
+  };
+
+  const currentStep = getProgress();
+
+  const steps = [
+    { title: "Registrasi", description: "Akun dibuat", active: currentStep >= 1, done: true },
+    { title: "Verifikasi Wallet", description: wallet?.status === "REJECTED" ? "Ditolak" : "Pengecekan Admin", active: currentStep >= 1, done: currentStep > 1 || wallet?.status === "VERIFIED", error: wallet?.status === "REJECTED" },
+    { title: "Penerbitan Ijazah", description: "Proses Minting", active: currentStep >= 2, done: currentStep > 2 },
+    { title: "Klaim Aset", description: "Soulbound Token", active: currentStep >= 3, done: currentStep >= 4 },
+  ];
+
   if (loading) {
     return (
       <div className="p-6 md:p-10">
@@ -97,6 +117,60 @@ export default function ProfilPage() {
         <p className="text-base text-muted-foreground mt-2 font-medium">
           Kelola identitas dan dompet kripto Anda dengan aman.
         </p>
+      </div>
+
+      {/* Progress Stepper */}
+      <div className="bg-white rounded-[2rem] border border-zinc-100/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 mb-8 overflow-hidden relative">
+        <div className="absolute top-0 right-0 p-8 opacity-[0.02]">
+           <ShieldCheck className="w-64 h-64 text-zinc-900" />
+        </div>
+        <h2 className="text-lg font-bold tracking-tight mb-8 flex items-center gap-2 relative z-10">
+          <Clock className="w-5 h-5 text-blue-500" />
+          Proses Penerbitan Ijazah
+        </h2>
+        
+        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 md:gap-0">
+          {/* Progress Background Line */}
+          <div className="hidden md:block absolute top-6 left-10 right-10 h-1 bg-zinc-100 rounded-full -z-10"></div>
+          
+          {/* Dynamic Progress Line */}
+          <div className="hidden md:block absolute top-6 left-10 h-1 bg-blue-600 rounded-full -z-10 transition-all duration-700 ease-in-out" style={{ width: `calc(${(Math.min(currentStep, 4) - 1) / 3 * 100}% - 2rem)` }}></div>
+
+          {steps.map((step, index) => {
+            const isLast = index === steps.length - 1;
+            const isError = step.error;
+            const isDone = step.done;
+            const isActive = step.active;
+
+            return (
+              <div key={index} className="flex md:flex-col items-center gap-4 md:gap-3 w-full md:w-32 relative">
+                {/* Mobile Line */}
+                {!isLast && (
+                  <div className={`md:hidden absolute left-5 top-12 bottom-[-1rem] w-0.5 ${isDone ? 'bg-blue-600' : 'bg-zinc-100'}`}></div>
+                )}
+                
+                <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full border-4 flex items-center justify-center shrink-0 z-10 transition-all duration-300 ${
+                  isError ? 'bg-red-50 border-red-100 text-red-600 shadow-[0_0_15px_rgba(220,38,38,0.3)]' :
+                  isDone ? 'bg-blue-600 border-blue-50 text-white shadow-[0_0_20px_rgba(37,99,235,0.4)] scale-110' :
+                  isActive ? 'bg-white border-blue-200 text-blue-600 ring-4 ring-blue-50 animate-pulse' :
+                  'bg-white border-zinc-100 text-zinc-300'
+                }`}>
+                  {isError ? <XCircle className="w-5 h-5" /> : 
+                   isDone ? <Check className="w-5 h-5 md:w-6 md:h-6" strokeWidth={3} /> : 
+                   <span className="font-bold">{index + 1}</span>}
+                </div>
+                <div className="md:text-center pt-1 md:pt-0">
+                  <p className={`font-bold text-sm tracking-tight ${isError ? 'text-red-600' : isDone ? 'text-foreground' : isActive ? 'text-foreground' : 'text-zinc-400'}`}>
+                    {step.title}
+                  </p>
+                  <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest mt-0.5">
+                    {step.description}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">

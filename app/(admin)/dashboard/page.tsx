@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Users, Clock, CheckCircle2, FileText, Award, XCircle, ArrowRight, ExternalLink, Activity } from "lucide-react";
+import { DashboardCharts } from "@/components/DashboardCharts";
 
 interface Stats {
   totalMahasiswa: number;
@@ -50,55 +51,61 @@ export default function DashboardPage() {
       title: "Total Mahasiswa",
       value: stats.totalMahasiswa,
       icon: Users,
-      bg: "bg-blue-50/50",
-      iconBg: "bg-blue-100",
-      textColor: "text-blue-600",
-      borderColor: "border-blue-100/50"
+      bg: "bg-gradient-to-br from-blue-50 to-white",
+      iconBg: "bg-blue-600 shadow-blue-500/30",
+      iconColor: "text-white",
+      textColor: "text-blue-950",
+      borderColor: "border-blue-100"
     },
     {
       title: "Wallet Pending",
       value: stats.walletPending,
       icon: Clock,
-      bg: "bg-amber-50/50",
-      iconBg: "bg-amber-100",
-      textColor: "text-amber-600",
-      borderColor: "border-amber-100/50"
+      bg: "bg-gradient-to-br from-amber-50 to-white",
+      iconBg: "bg-amber-500 shadow-amber-500/30",
+      iconColor: "text-white",
+      textColor: "text-amber-950",
+      borderColor: "border-amber-100"
     },
     {
       title: "Wallet Terverifikasi",
       value: stats.walletVerified,
       icon: CheckCircle2,
-      bg: "bg-emerald-50/50",
-      iconBg: "bg-emerald-100",
-      textColor: "text-emerald-600",
-      borderColor: "border-emerald-100/50"
+      bg: "bg-gradient-to-br from-emerald-50 to-white",
+      iconBg: "bg-emerald-500 shadow-emerald-500/30",
+      iconColor: "text-white",
+      textColor: "text-emerald-950",
+      borderColor: "border-emerald-100"
     },
     {
       title: "Ijazah Diterbitkan",
       value: stats.ijazahMinted,
       icon: FileText,
-      bg: "bg-indigo-50/50",
-      iconBg: "bg-indigo-100",
-      textColor: "text-indigo-600",
-      borderColor: "border-indigo-100/50"
+      bg: "bg-gradient-to-br from-indigo-50 to-white",
+      iconBg: "bg-indigo-600 shadow-indigo-500/30",
+      iconColor: "text-white",
+      textColor: "text-indigo-950",
+      borderColor: "border-indigo-100"
     },
     {
       title: "Ijazah Diklaim",
       value: stats.ijazahClaimed,
       icon: Award,
-      bg: "bg-purple-50/50",
-      iconBg: "bg-purple-100",
-      textColor: "text-purple-600",
-      borderColor: "border-purple-100/50"
+      bg: "bg-gradient-to-br from-purple-50 to-white",
+      iconBg: "bg-purple-600 shadow-purple-500/30",
+      iconColor: "text-white",
+      textColor: "text-purple-950",
+      borderColor: "border-purple-100"
     },
     {
       title: "Ijazah Direvoke",
       value: stats.ijazahRevoked,
       icon: XCircle,
-      bg: "bg-red-50/50",
-      iconBg: "bg-red-100",
-      textColor: "text-red-600",
-      borderColor: "border-red-100/50"
+      bg: "bg-gradient-to-br from-red-50 to-white",
+      iconBg: "bg-red-600 shadow-red-500/30",
+      iconColor: "text-white",
+      textColor: "text-red-950",
+      borderColor: "border-red-100"
     },
   ];
 
@@ -155,73 +162,77 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Grid Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
         {statCards.map((stat) => {
           const Icon = stat.icon;
           return (
-            <div key={stat.title} className={`${stat.bg} border ${stat.borderColor} rounded-3xl p-6 flex flex-col transition-all hover:shadow-md hover:scale-[1.02] cursor-default`}>
-              <div className="flex justify-between items-start mb-6">
-                <div className={`w-12 h-12 rounded-2xl ${stat.iconBg} ${stat.textColor} flex items-center justify-center`}>
-                  <Icon className="w-6 h-6" />
+            <div key={stat.title} className={`${stat.bg} border ${stat.borderColor} rounded-[2rem] p-7 flex flex-col transition-all duration-300 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] hover:-translate-y-1 cursor-default relative overflow-hidden group`}>
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/40 rounded-bl-full -mr-10 -mt-10 transition-transform duration-500 group-hover:scale-110 blur-xl"></div>
+              
+              <div className="flex justify-between items-start mb-8 relative z-10">
+                <div className={`w-14 h-14 rounded-2xl ${stat.iconBg} ${stat.iconColor} flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3`}>
+                  <Icon className="w-7 h-7" />
                 </div>
               </div>
-              <div>
-                <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">{stat.title}</p>
-                <p className="text-4xl font-extrabold text-foreground tracking-tight">{stat.value}</p>
+              <div className="relative z-10 mt-auto">
+                <p className="text-sm font-bold text-zinc-500/80 uppercase tracking-widest mb-1.5">{stat.title}</p>
+                <p className={`text-5xl font-black ${stat.textColor} tracking-tighter`}>{stat.value}</p>
               </div>
             </div>
           );
         })}
       </div>
 
+      {/* Visualisasi Data (Charts) */}
+      <DashboardCharts stats={stats} />
+
       {/* Quick Actions + System Info */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
         {/* Quick Actions */}
         <div>
-          <h2 className="text-lg font-bold tracking-tight mb-5 text-foreground flex items-center gap-2">
-            <Activity className="w-5 h-5 text-zinc-400" />
+          <h2 className="text-xl font-bold tracking-tight mb-6 text-foreground flex items-center gap-2">
+            <Activity className="w-5 h-5 text-red-500" />
             Aksi Cepat
           </h2>
           <div className="flex flex-col gap-4">
             
-            <Link href="/mahasiswa" className="block bg-white border border-zinc-100 rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all group">
+            <Link href="/mahasiswa" className="block bg-white border border-zinc-100 rounded-[2rem] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 group">
               <div className="flex justify-between items-center mb-3">
-                <h3 className="text-lg font-bold group-hover:text-blue-600 transition-colors flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
-                    <Users className="w-4 h-4" />
+                <h3 className="text-lg font-bold group-hover:text-blue-600 transition-colors flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300 shadow-sm">
+                    <Users className="w-5 h-5" />
                   </div>
                   Kelola Mahasiswa
                 </h3>
-                <div className="bg-amber-50 text-amber-700 px-3 py-1 text-xs font-semibold rounded-full border border-amber-200/50">{stats.walletPending} pending</div>
+                <div className="bg-amber-50 text-amber-700 px-3 py-1.5 text-xs font-bold tracking-wide rounded-full border border-amber-200/50 shadow-sm">{stats.walletPending} pending</div>
               </div>
-              <p className="text-sm text-muted-foreground font-medium pl-10">Verifikasi dan kelola pengajuan wallet mahasiswa baru.</p>
+              <p className="text-sm text-muted-foreground font-medium pl-[3.25rem]">Verifikasi dan kelola pengajuan wallet mahasiswa baru.</p>
             </Link>
 
-            <Link href="/terbitkan" className="block bg-white border border-zinc-100 rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all group">
+            <Link href="/terbitkan" className="block bg-white border border-zinc-100 rounded-[2rem] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 group">
               <div className="flex justify-between items-center mb-3">
-                <h3 className="text-lg font-bold group-hover:text-emerald-600 transition-colors flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                    <FileText className="w-4 h-4" />
+                <h3 className="text-lg font-bold group-hover:text-emerald-600 transition-colors flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-300 shadow-sm">
+                    <FileText className="w-5 h-5" />
                   </div>
                   Terbitkan Ijazah
                 </h3>
-                <div className="bg-emerald-50 text-emerald-700 px-3 py-1 text-xs font-semibold rounded-full border border-emerald-200/50">{stats.walletVerified} siap</div>
+                <div className="bg-emerald-50 text-emerald-700 px-3 py-1.5 text-xs font-bold tracking-wide rounded-full border border-emerald-200/50 shadow-sm">{stats.walletVerified} siap</div>
               </div>
-              <p className="text-sm text-muted-foreground font-medium pl-10">Mint NFT ijazah (Soulbound) untuk mahasiswa yang terverifikasi.</p>
+              <p className="text-sm text-muted-foreground font-medium pl-[3.25rem]">Mint NFT ijazah (Soulbound) untuk mahasiswa yang terverifikasi.</p>
             </Link>
 
-            <Link href="/revoke" className="block bg-white border border-zinc-100 rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all group">
+            <Link href="/revoke" className="block bg-white border border-zinc-100 rounded-[2rem] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 group">
               <div className="flex justify-between items-center mb-3">
-                <h3 className="text-lg font-bold group-hover:text-red-600 transition-colors flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-red-50 text-red-600 flex items-center justify-center">
-                    <XCircle className="w-4 h-4" />
+                <h3 className="text-lg font-bold group-hover:text-red-600 transition-colors flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center group-hover:bg-red-600 group-hover:text-white transition-colors duration-300 shadow-sm">
+                    <XCircle className="w-5 h-5" />
                   </div>
                   Revoke & Backup
                 </h3>
               </div>
-              <p className="text-sm text-muted-foreground font-medium pl-10">Cabut validitas ijazah secara kriptografis jika terdapat anomali.</p>
+              <p className="text-sm text-muted-foreground font-medium pl-[3.25rem]">Cabut validitas ijazah secara kriptografis jika terdapat anomali.</p>
             </Link>
 
           </div>

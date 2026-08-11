@@ -286,7 +286,7 @@ export default function HomePage() {
     setLoading(true);
 
     try {
-      const response = await fetch(`/api/verify?wallet=${wallet}`);
+      const response = await fetch(`/api/verify?query=${wallet}`);
       const data = await response.json();
 
       if (!response.ok) {

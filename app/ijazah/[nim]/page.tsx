@@ -2,8 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
-import Badge from "@/components/ui/Badge";
-import Button from "@/components/ui/Button";
+import { ArrowLeft, Printer, ExternalLink, ShieldCheck, XCircle, FileText } from "lucide-react";
 
 interface CertificateData {
   nama: string;
@@ -51,41 +50,30 @@ export default function IjazahPreviewPage({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-2 border-[#27272A] border-t-red-600" />
+      <div className="min-h-screen bg-zinc-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-4 border-zinc-200 border-t-red-600" />
       </div>
     );
   }
 
   if (error || !cert) {
     return (
-      <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center p-4">
-        <div className="text-center">
-          <div className="w-20 h-20 rounded-full bg-red-900/20 border border-red-600/30 flex items-center justify-center mx-auto mb-6">
-            <svg
-              width="32"
-              height="32"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#EF4444"
-              strokeWidth="2"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12.01" y2="16" />
-            </svg>
+      <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-4">
+        <div className="text-center bg-white p-10 rounded-[2rem] shadow-sm border border-zinc-100 max-w-md w-full">
+          <div className="w-20 h-20 rounded-full bg-red-50 text-red-600 flex items-center justify-center mx-auto mb-6">
+            <XCircle className="w-10 h-10" />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">
+          <h1 className="text-2xl font-bold text-foreground mb-2">
             Ijazah Tidak Ditemukan
           </h1>
-          <p className="text-[#71717A] mb-6">
-            {error || "Data ijazah tidak tersedia"}
+          <p className="text-muted-foreground mb-8">
+            {error || "Data ijazah tidak tersedia atau belum diterbitkan."}
           </p>
           <Link
-            href="/verifikasi"
-            className="text-red-400 hover:text-red-300 font-medium transition-colors"
+            href="/"
+            className="inline-flex items-center justify-center h-12 px-6 rounded-full bg-foreground text-white font-semibold hover:bg-foreground/90 transition-colors"
           >
-            ← Kembali ke verifikasi
+            Kembali ke Beranda
           </Link>
         </div>
       </div>
@@ -95,315 +83,181 @@ export default function IjazahPreviewPage({
   const isRevoked = cert.status === "REVOKED";
 
   return (
-    <div className="min-h-screen bg-[#0A0A0F] relative">
-      {/* Background */}
-      <div className="absolute inset-0 gradient-bg-hero" />
-      <div className="absolute inset-0 grid-pattern opacity-20" />
+    <div className="min-h-screen bg-zinc-50/50 relative selection:bg-red-100 selection:text-red-900 font-sans">
+      <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:24px_24px] opacity-40 z-0 pointer-events-none"></div>
 
-      <div className="relative max-w-5xl mx-auto px-4 py-8">
+      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-8 md:py-12">
         {/* Header Navigation — hidden on print */}
-        <div className="flex items-center justify-between mb-8 print:hidden">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10 print:hidden">
           <Link
-            href="/verifikasi"
-            className="inline-flex items-center gap-2 text-[#71717A] hover:text-red-400 transition-colors text-sm"
+            href="/"
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm font-semibold bg-white px-4 py-2.5 rounded-xl border border-zinc-200 shadow-sm w-fit"
           >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <line x1="19" y1="12" x2="5" y2="12" />
-              <polyline points="12 19 5 12 12 5" />
-            </svg>
+            <ArrowLeft className="w-4 h-4" />
             Kembali
           </Link>
-          <div className="flex gap-3">
-            <Button variant="secondary" size="sm" onClick={handlePrint}>
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <polyline points="6 9 6 2 18 2 18 9" />
-                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-                <rect x="6" y="14" width="12" height="8" />
-              </svg>
-              Cetak
-            </Button>
+          <div className="flex flex-wrap gap-3">
             {cert.nftAddress && (
               <a
                 href={`https://explorer.solana.com/address/${cert.nftAddress}?cluster=devnet`}
                 target="_blank"
                 rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-white text-zinc-700 hover:text-foreground font-semibold text-sm px-4 py-2.5 rounded-xl border border-zinc-200 shadow-sm transition-colors"
               >
-                <Button variant="outline" size="sm">
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                    <polyline points="15 3 21 3 21 9" />
-                    <line x1="10" y1="14" x2="21" y2="3" />
-                  </svg>
-                  Solana Explorer
-                </Button>
+                <ExternalLink className="w-4 h-4" />
+                Solana Explorer
               </a>
             )}
+            <button 
+              onClick={handlePrint}
+              className="inline-flex items-center gap-2 bg-foreground text-white font-semibold text-sm px-6 py-2.5 rounded-xl shadow-md hover:bg-foreground/90 transition-colors"
+            >
+              <Printer className="w-4 h-4" />
+              Cetak Dokumen
+            </button>
           </div>
         </div>
 
         {/* Revoke Banner */}
         {isRevoked && (
-          <div className="mb-6 p-4 bg-red-900/20 border border-red-600/30 rounded-xl flex items-center gap-4 print:bg-red-50 print:border-red-400">
-            <div className="w-10 h-10 rounded-full bg-red-600/20 flex items-center justify-center flex-shrink-0">
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#EF4444"
-                strokeWidth="2.5"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <line x1="15" y1="9" x2="9" y2="15" />
-                <line x1="9" y1="9" x2="15" y2="15" />
-              </svg>
+          <div className="mb-8 p-5 bg-red-50 border border-red-200 rounded-2xl flex items-start gap-4">
+            <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center flex-shrink-0">
+              <XCircle className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-red-400 font-semibold print:text-red-700">
+              <p className="text-red-900 font-bold text-lg">
                 IJAZAH INI TELAH DIREVOKE / DICABUT
               </p>
-              <p className="text-red-400/70 text-sm print:text-red-600">
+              <p className="text-red-800/80 font-medium mt-1">
                 Alasan: {cert.revokeReason || "Tidak tersedia"}
               </p>
             </div>
           </div>
         )}
 
-        {/* Certificate Card */}
-        <div
-          className={`relative bg-[#111118] border-2 rounded-2xl overflow-hidden shadow-2xl print:bg-white print:text-black print:shadow-none ${
-            isRevoked
-              ? "border-red-600/40"
-              : "border-[#27272A] hover:border-red-600/20"
-          }`}
-        >
-          {/* Decorative Top Border */}
-          <div
-            className={`h-2 w-full ${
-              isRevoked
-                ? "bg-gradient-to-r from-red-900 via-red-600 to-red-900"
-                : "bg-gradient-to-r from-red-800 via-red-600 to-red-800"
-            }`}
-          />
-
-          <div className="p-8 md:p-12">
-            {/* Certificate Header */}
-            <div className="text-center mb-10">
-              {/* University Logo/Emblem */}
-              <div className="flex items-center justify-center gap-4 mb-6">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center shadow-lg shadow-red-900/30 print:shadow-none">
-                  <svg
-                    width="32"
-                    height="32"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="white"
-                    strokeWidth="2"
-                  >
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                  </svg>
-                </div>
-              </div>
-
-              <p className="text-[#71717A] text-sm uppercase tracking-[0.3em] mb-2 print:text-gray-500">
-                Kementerian Pendidikan, Kebudayaan, Riset, dan Teknologi
-              </p>
-              <h1 className="text-2xl md:text-3xl font-bold text-white mb-1 print:text-black">
-                UNIVERSITAS TADULAKO
-              </h1>
-              <div className="w-32 h-0.5 bg-gradient-to-r from-transparent via-red-600 to-transparent mx-auto my-4" />
-              <h2 className="text-lg md:text-xl font-semibold text-[#A1A1AA] uppercase tracking-wider print:text-gray-700">
-                Ijazah Sarjana (S1)
-              </h2>
-              <p className="text-[#52525B] text-sm mt-2 print:text-gray-500">
-                Sertifikat Digital Blockchain — NFT Soulbound
-              </p>
+        {/* Main Certificate View */}
+        <div className="bg-white rounded-[2rem] border border-zinc-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 md:p-12 print:border-none print:shadow-none print:p-0">
+          
+          {/* Certificate CSS-based Preview (Copied from Dashboard Detail) */}
+          <div className={`w-full aspect-[1.414] bg-[#F8F9FA] rounded-md border-[8px] ${isRevoked ? 'border-red-200' : 'border-[#D1D5DB]'} p-4 sm:p-8 flex flex-col items-center justify-center text-center shadow-inner relative overflow-hidden print:aspect-auto print:h-screen print:border-none print:shadow-none`}>
+            {/* Ornamen / Latar Belakang Garis */}
+            <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'repeating-linear-gradient(45deg, #000 0, #000 1px, transparent 1px, transparent 10px)' }}></div>
+            <div className={`absolute inset-4 border-2 ${isRevoked ? 'border-red-200' : 'border-[#E5E7EB]'} rounded pointer-events-none`}></div>
+            
+            {/* Logo Untad */}
+            <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center mb-8 z-10 drop-shadow-lg">
+              <img
+                src="/web-app-manifest-512x512.png"
+                alt="Logo Universitas Tadulako"
+                className="w-full h-full object-contain"
+              />
             </div>
 
-            {/* Certificate Body */}
-            <div className="max-w-2xl mx-auto">
-              <div className="text-center mb-8">
-                <p className="text-[#71717A] text-sm print:text-gray-500">
-                  Diberikan kepada:
+            <div className="space-y-6 z-10 w-full max-w-2xl mx-auto">
+              <div>
+                <h3 className="text-gray-900 font-serif text-2xl sm:text-3xl font-bold uppercase tracking-[0.2em]">
+                  Universitas Tadulako
+                </h3>
+                <p className="text-gray-500 text-sm sm:text-base font-medium mt-2 uppercase tracking-widest">
+                  Sertifikat Ijazah Kelulusan
                 </p>
-                <h2 className="text-3xl md:text-4xl font-bold text-white mt-2 mb-1 print:text-black">
+              </div>
+
+              <div className="py-6 border-y border-zinc-200 border-dashed">
+                <p className="text-gray-500 text-sm italic mb-4">Diberikan Kepada</p>
+                <h2 className="text-3xl sm:text-5xl font-serif text-gray-900 font-bold tracking-tight">
                   {cert.nama}
                 </h2>
-                <div className="w-48 h-px bg-gradient-to-r from-transparent via-[#52525B] to-transparent mx-auto mt-3" />
-              </div>
-
-              {/* Info Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10 p-6 bg-[#0A0A0F]/50 rounded-xl border border-[#27272A] print:bg-gray-50 print:border-gray-200">
-                <div className="text-center">
-                  <p className="text-xs text-[#52525B] uppercase tracking-wider mb-1 print:text-gray-500">
-                    NIM
-                  </p>
-                  <p className="text-white font-semibold print:text-black">
-                    {cert.nim}
-                  </p>
-                </div>
-                <div className="text-center">
-                  <p className="text-xs text-[#52525B] uppercase tracking-wider mb-1 print:text-gray-500">
-                    Program Studi
-                  </p>
-                  <p className="text-white font-semibold print:text-black">
-                    {cert.prodi}
-                  </p>
-                </div>
-                <div className="text-center">
-                  <p className="text-xs text-[#52525B] uppercase tracking-wider mb-1 print:text-gray-500">
-                    Angkatan
-                  </p>
-                  <p className="text-white font-semibold print:text-black">
-                    {cert.angkatan}
-                  </p>
-                </div>
-                <div className="text-center">
-                  <p className="text-xs text-[#52525B] uppercase tracking-wider mb-1 print:text-gray-500">
-                    Status
-                  </p>
-                  <Badge
-                    variant={
-                      isRevoked
-                        ? "danger"
-                        : cert.status === "CLAIMED"
-                          ? "success"
-                          : "info"
-                    }
-                  >
-                    {cert.status}
-                  </Badge>
-                </div>
-              </div>
-
-              {/* Blockchain Details */}
-              <div className="space-y-4 mb-10">
-                <h3 className="text-sm font-semibold text-[#71717A] uppercase tracking-wider">
-                  Detail Blockchain
-                </h3>
-                <div className="space-y-3">
-                  {cert.nftAddress && (
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-[#0A0A0F] rounded-lg border border-[#1A1A24] print:bg-gray-50 print:border-gray-200">
-                      <span className="text-xs text-[#52525B] uppercase tracking-wider print:text-gray-500">
-                        NFT Address
-                      </span>
-                      <span className="font-mono text-xs text-[#A1A1AA] break-all print:text-gray-700">
-                        {cert.nftAddress}
-                      </span>
-                    </div>
-                  )}
-                  {cert.txSignature && (
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-[#0A0A0F] rounded-lg border border-[#1A1A24] print:bg-gray-50 print:border-gray-200">
-                      <span className="text-xs text-[#52525B] uppercase tracking-wider print:text-gray-500">
-                        Transaction
-                      </span>
-                      <a
-                        href={`https://explorer.solana.com/tx/${cert.txSignature}?cluster=devnet`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-mono text-xs text-red-400 hover:text-red-300 break-all transition-colors print:text-blue-700"
-                      >
-                        {cert.txSignature}
-                      </a>
-                    </div>
-                  )}
-                  {cert.walletAddress && (
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-[#0A0A0F] rounded-lg border border-[#1A1A24] print:bg-gray-50 print:border-gray-200">
-                      <span className="text-xs text-[#52525B] uppercase tracking-wider print:text-gray-500">
-                        Wallet Pemilik
-                      </span>
-                      <span className="font-mono text-xs text-[#A1A1AA] break-all print:text-gray-700">
-                        {cert.walletAddress}
-                      </span>
-                    </div>
-                  )}
-                  {cert.issuedAt && (
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-[#0A0A0F] rounded-lg border border-[#1A1A24] print:bg-gray-50 print:border-gray-200">
-                      <span className="text-xs text-[#52525B] uppercase tracking-wider print:text-gray-500">
-                        Tanggal Terbit
-                      </span>
-                      <span className="text-sm text-[#A1A1AA] print:text-gray-700">
-                        {new Date(cert.issuedAt).toLocaleDateString("id-ID", {
-                          day: "numeric",
-                          month: "long",
-                          year: "numeric",
-                        })}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Footer */}
-              <div className="text-center pt-8 border-t border-[#27272A] print:border-gray-200">
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <div className="w-6 h-6 rounded-md bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center">
-                    <svg
-                      width="12"
-                      height="12"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="white"
-                      strokeWidth="2.5"
-                    >
-                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                    </svg>
-                  </div>
-                  <span className="text-sm font-bold gradient-text print:text-red-700">
-                    SIJAGA
-                  </span>
-                </div>
-                <p className="text-xs text-[#52525B] print:text-gray-500">
-                  Sistem Jaminan Autentikasi Gelar Akademik
+                <p className="text-gray-600 font-mono mt-3 text-base font-medium">
+                  NIM: {cert.nim}
                 </p>
-                <p className="text-xs text-[#3F3F46] mt-1 print:text-gray-400">
-                  Diverifikasi melalui blockchain Solana • NFT Soulbound (Non-transferable)
-                </p>
+              </div>
 
-                {/* Verification Link */}
-                <div className="mt-4 p-3 bg-[#0A0A0F] rounded-lg border border-[#1A1A24] inline-block print:bg-gray-50 print:border-gray-200">
-                  <p className="text-xs text-[#52525B] print:text-gray-500">
-                    Verifikasi di:{" "}
-                    <span className="text-red-400 print:text-blue-700">
-                      {process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/verifikasi
-                    </span>
-                  </p>
-                </div>
+              <div>
+                <p className="text-gray-500 text-sm mb-2">
+                  Telah menyelesaikan semua persyaratan akademik<br/>pada Program Studi:
+                </p>
+                <p className="text-gray-900 font-bold uppercase tracking-[0.15em] text-lg sm:text-xl">
+                  {cert.prodi || "INFORMATIKA"}
+                </p>
+                <p className="text-gray-500 text-sm mt-3 font-medium">
+                  Tahun Kelulusan: {cert.angkatan || "2024"}
+                </p>
+              </div>
+            </div>
+            
+            {/* Watermark / Seal status */}
+            <div className="absolute bottom-8 right-8 z-10 opacity-80">
+              <div className={`w-24 h-24 rounded-full border-4 flex items-center justify-center transform -rotate-12 ${
+                cert.status === 'CLAIMED' ? 'border-emerald-500 text-emerald-600 bg-emerald-50/50' : 
+                cert.status === 'REVOKED' ? 'border-red-500 text-red-600 bg-red-50/50' :
+                cert.status === 'MINTED' ? 'border-blue-500 text-blue-600 bg-blue-50/50' : 'border-gray-400 text-gray-400 bg-gray-50'
+              }`}>
+                <span className="text-sm font-black uppercase tracking-tighter shadow-sm">
+                  {cert.status}
+                </span>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Bottom Info — hidden on print */}
-        <div className="mt-8 text-center text-[#52525B] text-sm print:hidden">
-          <p>
-            Ijazah ini diverifikasi melalui teknologi blockchain Solana.
-          </p>
-          <p className="mt-1">
-            Data on-chain tidak dapat dimanipulasi dan bisa dicek secara
-            independen.
-          </p>
+          {/* Modern Detail Block */}
+          <div className="mt-12 bg-zinc-50 rounded-2xl p-6 md:p-8 border border-zinc-100 print:hidden">
+            <h3 className="text-base font-bold text-foreground mb-6 flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5 text-emerald-600" />
+              Verifikasi Kriptografis
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+              {cert.nftAddress && (
+                <div>
+                  <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block mb-1.5">NFT Address (Soulbound)</span>
+                  <div className="font-mono text-sm font-semibold break-all text-zinc-700 bg-white p-3 rounded-xl border border-zinc-100">
+                    {cert.nftAddress}
+                  </div>
+                </div>
+              )}
+              {cert.txSignature && (
+                <div>
+                  <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block mb-1.5">Transaction Hash</span>
+                  <div className="font-mono text-sm font-semibold break-all text-zinc-700 bg-white p-3 rounded-xl border border-zinc-100">
+                    {cert.txSignature}
+                  </div>
+                </div>
+              )}
+              {cert.walletAddress && (
+                <div>
+                  <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block mb-1.5">Wallet Pemilik</span>
+                  <div className="font-mono text-sm font-semibold break-all text-zinc-700 bg-white p-3 rounded-xl border border-zinc-100">
+                    {cert.walletAddress}
+                  </div>
+                </div>
+              )}
+              {cert.issuedAt && (
+                <div>
+                  <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block mb-1.5">Tanggal Terbit</span>
+                  <div className="text-sm font-semibold text-zinc-700 bg-white p-3 rounded-xl border border-zinc-100">
+                    {new Date(cert.issuedAt).toLocaleDateString("id-ID", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-8 pt-6 border-t border-zinc-200 flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <FileText className="w-4 h-4 text-zinc-400" />
+                <span className="text-xs font-semibold text-zinc-500">
+                  Sistem Jaminan Autentikasi Gelar Akademik
+                </span>
+              </div>
+              <p className="text-xs font-medium text-zinc-500">
+                Verifikasi real-time di <span className="font-bold text-foreground">{(typeof window !== 'undefined' && window.location.host) || "sijaga.untad.ac.id"}</span>
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

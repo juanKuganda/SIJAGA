@@ -1,9 +1,10 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import Card, { CardContent, CardHeader } from "@/components/ui/Card";
-import Badge from "@/components/ui/Badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import Badge from "@/components/ui/status-badge";
 import CopyBlinkLink from "./CopyBlinkLink";
+import EditButton from "./EditButton";
 
 export default async function DetailIjazahPage({
   params,
@@ -59,22 +60,25 @@ export default async function DetailIjazahPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3 mb-8">
-        <Link
-          href="/mahasiswa"
-          className="p-2 rounded-lg bg-[#111118] border border-[#27272A] text-[#71717A] hover:text-white hover:border-[#3F3F46] transition-colors"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="19" y1="12" x2="5" y2="12" />
-            <polyline points="12 19 5 12 12 5" />
-          </svg>
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-white">Detail Ijazah</h1>
-          <p className="text-[#A1A1AA] mt-1 text-sm">
-            NIM: {user.nim}
-          </p>
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <Link
+            href="/mahasiswa"
+            className="p-2.5 rounded-xl bg-white border border-border text-muted-foreground hover:text-foreground hover:bg-zinc-50 transition-colors shadow-sm"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12" />
+              <polyline points="12 19 5 12 12 5" />
+            </svg>
+          </Link>
+          <div>
+            <h1 className="text-3xl font-extrabold text-foreground tracking-tight">Detail Ijazah</h1>
+            <p className="text-muted-foreground mt-1">
+              Data ijazah untuk NIM: {user.nim}
+            </p>
+          </div>
         </div>
+        <EditButton user={user} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -82,57 +86,57 @@ export default async function DetailIjazahPage({
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <h2 className="text-lg font-semibold text-white">Data Mahasiswa</h2>
+              <h2 className="text-lg font-semibold text-foreground">Data Mahasiswa</h2>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4 border-b border-[#27272A] pb-4">
+                <div className="grid grid-cols-2 gap-4 border-b border-border pb-4">
                   <div>
-                    <p className="text-sm text-[#71717A] mb-1">Nama Lengkap</p>
-                    <p className="text-white font-medium">{user.nama}</p>
+                    <p className="text-sm text-muted-foreground mb-1">Nama Lengkap</p>
+                    <p className="text-foreground font-medium">{user.nama}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-[#71717A] mb-1">Program Studi</p>
-                    <p className="text-white font-medium">{user.prodi || "-"}</p>
+                    <p className="text-sm text-muted-foreground mb-1">Program Studi</p>
+                    <p className="text-foreground font-medium">{user.prodi || "-"}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-[#71717A] mb-1">Angkatan</p>
-                    <p className="text-white font-medium">{user.angkatan || "-"}</p>
+                    <p className="text-sm text-muted-foreground mb-1">Angkatan</p>
+                    <p className="text-foreground font-medium">{user.angkatan || "-"}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-[#71717A] mb-1">Email</p>
-                    <p className="text-white font-medium">{user.email}</p>
+                    <p className="text-sm text-muted-foreground mb-1">Email</p>
+                    <p className="text-foreground font-medium">{user.email}</p>
                   </div>
                 </div>
 
                 <div className="pt-2">
-                  <h3 className="text-sm font-semibold text-white mb-3">Informasi Wallet & NFT</h3>
+                  <h3 className="text-sm font-semibold text-foreground mb-3">Informasi Wallet & NFT</h3>
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-[#71717A]">Status Wallet</span>
+                      <span className="text-sm text-muted-foreground">Status Wallet</span>
                       {getStatusBadge(user.wallet?.status)}
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-[#71717A]">Wallet Address</span>
+                      <span className="text-sm text-muted-foreground">Wallet Address</span>
                       {user.wallet ? (
-                        <span className="text-xs font-mono text-[#A1A1AA]">
+                        <span className="text-xs font-mono text-muted-foreground">
                           {user.wallet.walletAddress.slice(0, 8)}...
                           {user.wallet.walletAddress.slice(-6)}
                         </span>
                       ) : (
-                        <span className="text-sm text-[#52525B]">Belum daftar</span>
+                        <span className="text-sm text-muted-foreground">Belum daftar</span>
                       )}
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-[#71717A]">Status Ijazah</span>
+                      <span className="text-sm text-muted-foreground">Status Ijazah</span>
                       {getCertBadge(user.certificate?.status)}
                     </div>
                     
                     {user.certificate && user.certificate.status !== "NOT_ISSUED" && (
                       <>
                         <div className="flex justify-between items-center">
-                          <span className="text-sm text-[#71717A]">Tanggal Terbit</span>
-                          <span className="text-sm text-white">
+                          <span className="text-sm text-muted-foreground">Tanggal Terbit</span>
+                          <span className="text-sm text-foreground">
                             {user.certificate.issuedAt
                               ? new Date(user.certificate.issuedAt).toLocaleDateString("id-ID")
                               : "-"}
@@ -140,12 +144,12 @@ export default async function DetailIjazahPage({
                         </div>
                         {user.certificate.nftAddress && (
                           <div className="flex justify-between items-center">
-                            <span className="text-sm text-[#71717A]">NFT Address</span>
+                            <span className="text-sm text-muted-foreground">NFT Address</span>
                             <a
                               href={`https://explorer.solana.com/address/${user.certificate.nftAddress}?cluster=devnet`}
                               target="_blank"
                               rel="noreferrer"
-                              className="text-xs font-mono text-red-400 hover:text-red-300 transition-colors truncate max-w-[150px] sm:max-w-xs"
+                              className="text-xs font-mono text-red-600 hover:text-red-500 transition-colors truncate max-w-[150px] sm:max-w-xs"
                             >
                               {user.certificate.nftAddress}
                             </a>
@@ -153,12 +157,12 @@ export default async function DetailIjazahPage({
                         )}
                         {user.certificate.txSignature && (
                           <div className="flex justify-between items-center">
-                            <span className="text-sm text-[#71717A]">Tx Hash</span>
+                            <span className="text-sm text-muted-foreground">Tx Hash</span>
                             <a
                               href={`https://explorer.solana.com/tx/${user.certificate.txSignature}?cluster=devnet`}
                               target="_blank"
                               rel="noreferrer"
-                              className="text-xs font-mono text-red-400 hover:text-red-300 transition-colors truncate max-w-[150px] sm:max-w-xs"
+                              className="text-xs font-mono text-red-600 hover:text-red-500 transition-colors truncate max-w-[150px] sm:max-w-xs"
                             >
                               {user.certificate.txSignature.slice(0, 16)}...
                             </a>
@@ -176,17 +180,17 @@ export default async function DetailIjazahPage({
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-sky-900/30 border border-sky-600/30 flex items-center justify-center">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <div className="w-8 h-8 rounded-lg bg-sky-50 border border-sky-200 flex items-center justify-center">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0284C7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
                       <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
                     </svg>
                   </div>
-                  <h2 className="text-lg font-semibold text-white">Solana Blinks Link</h2>
+                  <h2 className="text-lg font-semibold text-foreground">Solana Blinks Link</h2>
                 </div>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-[#71717A] mb-4">
+                <p className="text-sm text-muted-foreground mb-4">
                   Bagikan link di bawah ini kepada mahasiswa. Mereka bisa mengklaim Ijazah NFT secara langsung melalui aplikasi yang mendukung Blinks (X/Twitter, Dial.to, Phantom, dll).
                 </p>
                 <CopyBlinkLink blinkUrl={blinkLink} />
@@ -199,8 +203,8 @@ export default async function DetailIjazahPage({
         <div>
           <Card className="h-full">
             <CardHeader>
-              <h2 className="text-lg font-semibold text-white">Preview Ijazah</h2>
-              <p className="text-sm text-[#71717A]">
+              <h2 className="text-lg font-semibold text-foreground">Preview Ijazah</h2>
+              <p className="text-sm text-muted-foreground">
                 Visualisasi desain Ijazah Digital
               </p>
             </CardHeader>
@@ -211,11 +215,13 @@ export default async function DetailIjazahPage({
                 <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'repeating-linear-gradient(45deg, #000 0, #000 1px, transparent 1px, transparent 10px)' }}></div>
                 <div className="absolute inset-4 border-2 border-[#E5E7EB] rounded pointer-events-none"></div>
                 
-                {/* Logo Untad (Placeholder Seal) */}
-                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-red-600 rounded-full flex items-center justify-center shadow-md mb-6 z-10">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 border-2 border-white/50 rounded-full flex items-center justify-center">
-                    <span className="text-white font-serif font-bold text-lg sm:text-xl">UT</span>
-                  </div>
+                {/* Logo Untad */}
+                <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center mb-6 z-10 drop-shadow-lg">
+                  <img
+                    src="/web-app-manifest-512x512.png"
+                    alt="Logo Universitas Tadulako"
+                    className="w-full h-full object-contain"
+                  />
                 </div>
 
                 <div className="space-y-4 z-10">
@@ -266,7 +272,7 @@ export default async function DetailIjazahPage({
               </div>
               
               <div className="mt-4 text-center">
-                <p className="text-xs text-[#71717A]">
+                <p className="text-xs text-muted-foreground">
                   Ini adalah representasi visual Ijazah. Metadata asli tersimpan di jaringan IPFS dan NFT Soulbound di blockchain Solana.
                 </p>
               </div>
