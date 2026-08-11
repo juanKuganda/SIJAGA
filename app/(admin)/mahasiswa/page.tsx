@@ -16,6 +16,14 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface Mahasiswa {
   id: string;
@@ -42,6 +50,7 @@ interface Mahasiswa {
 
 interface EditForm {
   nama: string;
+  nim: string;
   email: string;
   prodi: string;
   angkatan: string;
@@ -59,6 +68,7 @@ export default function MahasiswaPage() {
   const [editModal, setEditModal] = useState<Mahasiswa | null>(null);
   const [editForm, setEditForm] = useState<EditForm>({
     nama: "",
+    nim: "",
     email: "",
     prodi: "",
     angkatan: "",
@@ -117,6 +127,7 @@ export default function MahasiswaPage() {
     setEditModal(m);
     setEditForm({
       nama: m.nama,
+      nim: m.nim,
       email: m.email,
       prodi: m.prodi || "",
       angkatan: m.angkatan || "",
@@ -169,6 +180,15 @@ export default function MahasiswaPage() {
 
     return matchesSearch;
   });
+
+  // Pagination Logic
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 5;
+  const totalPages = Math.ceil(filteredMahasiswa.length / ITEMS_PER_PAGE);
+  const paginatedMahasiswa = filteredMahasiswa.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -288,7 +308,10 @@ export default function MahasiswaPage() {
               <Input
                 placeholder="Cari berdasarkan nama atau NIM..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setCurrentPage(1); // Reset to page 1 on search
+                }}
                 className="pl-10"
               />
             </div>
@@ -303,7 +326,10 @@ export default function MahasiswaPage() {
                   key={f.key}
                   variant={filter === f.key ? "default" : "ghost"}
                   size="sm"
-                  onClick={() => setFilter(f.key)}
+                  onClick={() => {
+                    setFilter(f.key);
+                    setCurrentPage(1); // Reset to page 1 on filter
+                  }}
                 >
                   {f.label}
                 </Button>
@@ -335,7 +361,7 @@ export default function MahasiswaPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredMahasiswa.map((m) => (
+                paginatedMahasiswa.map((m) => (
                   <TableRow key={m.id} className="hover:bg-muted/50">
                     <TableCell className="font-bold text-foreground">
                       {m.nim}
@@ -404,6 +430,40 @@ export default function MahasiswaPage() {
               )}
             </TableBody>
           </Table>
+
+          {totalPages > 1 && (
+            <div className="mt-6">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                  
+                  {Array.from({ length: totalPages }).map((_, i) => (
+                    <PaginationItem key={i}>
+                      <PaginationLink
+                        onClick={() => setCurrentPage(i + 1)}
+                        isActive={currentPage === i + 1}
+                        className="cursor-pointer"
+                      >
+                        {i + 1}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -435,6 +495,10 @@ export default function MahasiswaPage() {
               </div>
             )}
 
+            <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700">
+              <strong>Peringatan:</strong> Mengubah NIM jika sertifikat sudah aktif dapat menyebabkan ketidakkonsistenan data. Lakukan hanya jika ijazah belum diterbitkan atau telah di-revoke.
+            </div>
+
             <div className="space-y-4 mb-6">
               <div className="space-y-2">
                 <Label htmlFor="edit-nama" className="font-semibold">
@@ -445,6 +509,19 @@ export default function MahasiswaPage() {
                   value={editForm.nama}
                   onChange={(e) =>
                     setEditForm((prev) => ({ ...prev, nama: e.target.value }))
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-nim" className="font-semibold">
+                  Nomor Induk Mahasiswa (NIM)
+                </Label>
+                <Input
+                  id="edit-nim"
+                  value={editForm.nim}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({ ...prev, nim: e.target.value }))
                   }
                 />
               </div>
@@ -469,11 +546,20 @@ export default function MahasiswaPage() {
                 </Label>
                 <Input
                   id="edit-prodi"
+                  list="prodi-options"
                   value={editForm.prodi}
                   onChange={(e) =>
                     setEditForm((prev) => ({ ...prev, prodi: e.target.value }))
                   }
+                  placeholder="Ketik atau pilih program studi..."
                 />
+                <datalist id="prodi-options">
+                  <option value="Informatika" />
+                  <option value="Sistem Informasi" />
+                  <option value="Teknik Komputer" />
+                  <option value="Teknologi Informasi" />
+                  <option value="Ilmu Komputer" />
+                </datalist>
               </div>
 
               <div className="space-y-2">

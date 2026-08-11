@@ -23,6 +23,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 
@@ -131,6 +139,13 @@ export default function RevokePage() {
     fetchBackups();
   }, []);
 
+  // Pagination Logic
+  const [currentPageActive, setCurrentPageActive] = useState(1);
+  const [currentPageRevoked, setCurrentPageRevoked] = useState(1);
+  const [currentPageBackups, setCurrentPageBackups] = useState(1);
+  const ITEMS_PER_PAGE = 5;
+
+
   const handleRevoke = async () => {
     if (!revokeModal || !revokeReason.trim()) return;
 
@@ -231,6 +246,14 @@ export default function RevokePage() {
   const revokedCerts = mahasiswa.filter(
     (m) => m.certificate?.status === "REVOKED",
   );
+
+  const totalPagesActive = Math.ceil(activeCerts.length / ITEMS_PER_PAGE);
+  const totalPagesRevoked = Math.ceil(revokedCerts.length / ITEMS_PER_PAGE);
+  const totalPagesBackups = Math.ceil(backups.length / ITEMS_PER_PAGE);
+
+  const paginatedActive = activeCerts.slice((currentPageActive - 1) * ITEMS_PER_PAGE, currentPageActive * ITEMS_PER_PAGE);
+  const paginatedRevoked = revokedCerts.slice((currentPageRevoked - 1) * ITEMS_PER_PAGE, currentPageRevoked * ITEMS_PER_PAGE);
+  const paginatedBackups = backups.slice((currentPageBackups - 1) * ITEMS_PER_PAGE, currentPageBackups * ITEMS_PER_PAGE);
 
   if (loading) {
     return (
@@ -376,7 +399,7 @@ export default function RevokePage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {activeCerts.map((m) => (
+                    {paginatedActive.map((m) => (
                       <TableRow key={m.id} className="hover:bg-muted/50">
                         <TableCell className="font-bold text-foreground">
                           {m.nim}
@@ -436,6 +459,38 @@ export default function RevokePage() {
                   </TableBody>
                 </Table>
               )}
+
+              {totalPagesActive > 1 && (
+                <div className="mt-6">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() => setCurrentPageActive((p) => Math.max(1, p - 1))}
+                          className={currentPageActive === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                      {Array.from({ length: totalPagesActive }).map((_, i) => (
+                        <PaginationItem key={i}>
+                          <PaginationLink
+                            onClick={() => setCurrentPageActive(i + 1)}
+                            isActive={currentPageActive === i + 1}
+                            className="cursor-pointer"
+                          >
+                            {i + 1}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ))}
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() => setCurrentPageActive((p) => Math.min(totalPagesActive, p + 1))}
+                          className={currentPageActive === totalPagesActive ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -466,7 +521,7 @@ export default function RevokePage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {revokedCerts.map((m) => (
+                    {paginatedRevoked.map((m) => (
                       <TableRow key={m.id} className="hover:bg-muted/50">
                         <TableCell className="font-bold text-foreground">
                           {m.nim}
@@ -491,6 +546,38 @@ export default function RevokePage() {
                     ))}
                   </TableBody>
                 </Table>
+              )}
+
+              {totalPagesRevoked > 1 && (
+                <div className="mt-6">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() => setCurrentPageRevoked((p) => Math.max(1, p - 1))}
+                          className={currentPageRevoked === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                      {Array.from({ length: totalPagesRevoked }).map((_, i) => (
+                        <PaginationItem key={i}>
+                          <PaginationLink
+                            onClick={() => setCurrentPageRevoked(i + 1)}
+                            isActive={currentPageRevoked === i + 1}
+                            className="cursor-pointer"
+                          >
+                            {i + 1}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ))}
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() => setCurrentPageRevoked((p) => Math.min(totalPagesRevoked, p + 1))}
+                          className={currentPageRevoked === totalPagesRevoked ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -534,7 +621,7 @@ export default function RevokePage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {backups.map((b) => (
+                    {paginatedBackups.map((b) => (
                       <TableRow key={b.id} className="hover:bg-muted/50">
                         <TableCell className="font-medium text-foreground">
                           {b.userData?.nama || "-"}
@@ -590,6 +677,38 @@ export default function RevokePage() {
                     ))}
                   </TableBody>
                 </Table>
+              )}
+
+              {totalPagesBackups > 1 && (
+                <div className="mt-6">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() => setCurrentPageBackups((p) => Math.max(1, p - 1))}
+                          className={currentPageBackups === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                      {Array.from({ length: totalPagesBackups }).map((_, i) => (
+                        <PaginationItem key={i}>
+                          <PaginationLink
+                            onClick={() => setCurrentPageBackups(i + 1)}
+                            isActive={currentPageBackups === i + 1}
+                            className="cursor-pointer"
+                          >
+                            {i + 1}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ))}
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() => setCurrentPageBackups((p) => Math.min(totalPagesBackups, p + 1))}
+                          className={currentPageBackups === totalPagesBackups ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
               )}
             </CardContent>
           </Card>

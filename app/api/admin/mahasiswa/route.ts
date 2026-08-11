@@ -84,7 +84,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const { userId, nama, email, prodi, angkatan } = result.data;
+    const { userId, nama, email, nim, prodi, angkatan } = result.data;
 
     // Cek apakah user ada
     const existingUser = await prisma.user.findUnique({
@@ -120,10 +120,25 @@ export async function PUT(request: NextRequest) {
       }
     }
 
+    // Cek duplikasi NIM jika diubah
+    if (nim && nim !== existingUser.nim) {
+      const nimExists = await prisma.user.findUnique({
+        where: { nim },
+      });
+
+      if (nimExists) {
+        return NextResponse.json(
+          { error: "NIM sudah terdaftar pada mahasiswa lain" },
+          { status: 400 }
+        );
+      }
+    }
+
     // Build update data
     const updateData: Record<string, string> = {};
     if (nama) updateData.nama = nama;
     if (email) updateData.email = email;
+    if (nim) updateData.nim = nim;
     if (prodi) updateData.prodi = prodi;
     if (angkatan) updateData.angkatan = angkatan;
 

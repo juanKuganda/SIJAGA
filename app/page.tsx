@@ -437,7 +437,7 @@ export default function HomePage() {
                 New
               </Badge>
               <span className="text-xs font-semibold text-red-900 pr-1">
-                SIJAGA Enterprise 2.0 is live
+                SIJAGA Beta 1.0 is live
               </span>
               <ArrowRight className="w-3 h-3 text-red-600" />
             </div>
@@ -969,7 +969,7 @@ export default function HomePage() {
 
         <div className="max-w-7xl mx-auto px-6 md:px-12 w-full flex flex-col md:flex-row justify-between items-center gap-4 relative z-10 pt-8 border-t border-zinc-700">
           <p className="text-sm font-bold text-zinc-600 uppercase tracking-widest">
-            © 2024 SIJAGA Enterprise • Universitas Tadulako
+            © 2024 SIJAGA Beta • Universitas Tadulako
           </p>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>

@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
       ijazahMinted,
       ijazahClaimed,
       ijazahRevoked,
+      readyToMint,
     ] = await Promise.all([
       prisma.user.count({ where: { role: "MAHASISWA" } }),
       prisma.wallet.count({ where: { status: "PENDING" } }),
@@ -29,6 +30,16 @@ export async function GET(request: NextRequest) {
       prisma.certificate.count({ where: { status: "MINTED" } }),
       prisma.certificate.count({ where: { status: "CLAIMED" } }),
       prisma.certificate.count({ where: { status: "REVOKED" } }),
+      prisma.user.count({
+        where: {
+          role: "MAHASISWA",
+          wallet: { status: "VERIFIED" },
+          OR: [
+            { certificate: null },
+            { certificate: { status: "NOT_ISSUED" } },
+          ],
+        },
+      }),
     ]);
 
     return NextResponse.json({
@@ -39,6 +50,7 @@ export async function GET(request: NextRequest) {
         ijazahMinted,
         ijazahClaimed,
         ijazahRevoked,
+        readyToMint,
       },
     });
   } catch (error) {

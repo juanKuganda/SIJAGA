@@ -63,6 +63,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
+  const [stats, setStats] = useState<any>(null);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -75,6 +76,15 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         }
       })
       .catch(() => router.push("/login"));
+
+    fetch("/api/admin/stats")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.stats) {
+          setStats(data.stats);
+        }
+      })
+      .catch(console.error);
   }, [router]);
 
   const handleLogout = async () => {
@@ -107,6 +117,13 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 <SidebarMenu>
                   {navItems.map((item) => {
                     const Icon = item.icon;
+                    let badgeCount = 0;
+                    if (stats) {
+                      if (item.label === "Mahasiswa") badgeCount = stats.walletPending;
+                      if (item.label === "Terbitkan") badgeCount = stats.readyToMint;
+                      if (item.label === "Revoke") badgeCount = stats.ijazahRevoked;
+                    }
+
                     return (
                       <SidebarMenuItem key={item.href}>
                         <SidebarMenuButton
@@ -119,8 +136,19 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                               : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 rounded-xl transition-all duration-200"
                           }
                         >
-                          <Icon className="w-4 h-4" />
-                          <span>{item.label}</span>
+                          <Icon className="w-4 h-4 shrink-0" />
+                          <span className="flex-1">{item.label}</span>
+                          {badgeCount > 0 && (
+                            <span
+                              className={`ml-auto shrink-0 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${
+                                pathname === item.href
+                                  ? "bg-red-200 text-red-700"
+                                  : "bg-red-100 text-red-600"
+                              }`}
+                            >
+                              {badgeCount}
+                            </span>
+                          )}
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     );

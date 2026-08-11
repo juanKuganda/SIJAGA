@@ -90,6 +90,11 @@ export const updateMahasiswaSchema = z.object({
     .min(1, "Email wajib diisi")
     .email("Format email tidak valid")
     .optional(),
+  nim: z
+    .string()
+    .min(1, "NIM wajib diisi")
+    .max(20, "NIM maksimal 20 karakter")
+    .optional(),
   prodi: z
     .string()
     .min(1, "Program studi wajib diisi")
