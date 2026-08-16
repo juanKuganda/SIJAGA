@@ -5,6 +5,7 @@ import { CertStatus } from "@prisma/client";
 import { restoreSoulboundNFT } from "@/lib/metaplex";
 import { generateCertificateImageBuffer } from "@/lib/certificate-image";
 import { uploadImageToPinata, generateCertificateMetadata, uploadMetadataToPinata } from "@/lib/pinata";
+import { generateDataHash } from "@/lib/crypto";
 
 /**
  * POST — Recovery sertifikat dari backup
@@ -94,6 +95,8 @@ export async function POST(request: NextRequest) {
     // menggunakan data `user` (database) terbaru. Ini menjamin jika ada perbaikan nama,
     // ijazah hasil restore akan ikut ter-update.
     let updatedMetadataUri = certData.metadataUri;
+    let recoveryDataHash: string | null = null;
+    let recoveryDataSalt: string | null = null;
 
     if (certData.nftAddress) {
       try {
@@ -111,20 +114,28 @@ export async function POST(request: NextRequest) {
         // 2. Upload ke Pinata
         const { gatewayUrl: imageUrl } = await uploadImageToPinata(imageFile);
 
-        // 3. Generate Metadata baru
+        // 3. Generate dataHash baru untuk recovery
+        const { hash, salt } = generateDataHash(
+          user.nama,
+          user.nim,
+          user.prodi || "Informatika"
+        );
+        recoveryDataHash = hash;
+        recoveryDataSalt = salt;
+
+        // 4. Generate Metadata baru (PRIVACY: tanpa PII)
         const metadata = generateCertificateMetadata({
-          nama: user.nama,
-          nim: user.nim,
           prodi: user.prodi || "Informatika",
           tahunLulus: user.angkatan || "2026",
+          dataHash: hash,
           imageUri: imageUrl,
         });
 
-        // 4. Upload Metadata
+        // 5. Upload Metadata
         const { uri: newMetadataUri } = await uploadMetadataToPinata(metadata);
         updatedMetadataUri = newMetadataUri;
 
-        // 5. Update NFT Solana
+        // 6. Update NFT Solana
         await restoreSoulboundNFT({
           mintAddress: certData.nftAddress,
           metadataUri: newMetadataUri,
@@ -154,6 +165,8 @@ export async function POST(request: NextRequest) {
         revokedAt: null,
         revokedBy: null,
         revokeReason: null,
+        dataHash: recoveryDataHash,
+        dataSalt: recoveryDataSalt,
       },
       create: {
         userId: backup.userId,
@@ -164,6 +177,8 @@ export async function POST(request: NextRequest) {
         issuedAt: certData.issuedAt ? new Date(certData.issuedAt) : null,
         issuedBy: certData.issuedBy,
         claimedAt: null, // Reset karena status MINTED = siap diklaim ulang
+        dataHash: recoveryDataHash,
+        dataSalt: recoveryDataSalt,
       },
     });
 

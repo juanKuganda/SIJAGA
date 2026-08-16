@@ -111,7 +111,7 @@ export default function ProfilPage() {
   }
 
   return (
-    <div className="p-6 md:p-10 max-w-7xl mx-auto font-sans selection:bg-red-100 selection:text-red-900">
+    <div className="font-sans">
       <div className="mb-10">
         <h1 className="text-3xl md:text-4xl font-extrabold text-foreground tracking-tight">Profil Digital</h1>
         <p className="text-base text-muted-foreground mt-2 font-medium">

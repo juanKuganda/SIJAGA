@@ -5,6 +5,7 @@ import { mintNftSchema } from "@/lib/validation";
 import { uploadMetadataToPinata, generateCertificateMetadata, uploadImageToPinata } from "@/lib/pinata";
 import { mintSoulboundNFT } from "@/lib/metaplex";
 import { generateCertificateImageBuffer } from "@/lib/certificate-image";
+import { generateDataHash } from "@/lib/crypto";
 
 export async function POST(request: NextRequest) {
   try {
@@ -56,6 +57,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // GATE BARU: cek consent sebelum apapun (UU PDP compliance)
+    if (!user.dataConsent) {
+      return NextResponse.json({
+        error: "CONSENT_REQUIRED",
+        message: "Mahasiswa belum memberikan persetujuan publikasi data. Minting tidak dapat dilakukan."
+      }, { status: 403 });
+    }
+
     if (!user.wallet || user.wallet.status !== "VERIFIED") {
       return NextResponse.json(
         { error: "Wallet belum terverifikasi" },
@@ -75,6 +84,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Generate dataHash dan salt untuk 2-tier verification
+    const { hash: dataHash, salt: dataSalt } = generateDataHash(
+      user.nama,
+      user.nim,
+      user.prodi || "Informatika"
+    );
+
     // Generate & upload PNG certificate image to IPFS
     const imageBuffer = await generateCertificateImageBuffer({
       nama: user.nama,
@@ -86,12 +102,11 @@ export async function POST(request: NextRequest) {
     const imageFile = new File([imageBlob], `ijazah-${user.nim}.png`, { type: "image/png" });
     const { gatewayUrl: imageUrl } = await uploadImageToPinata(imageFile);
 
-    // Generate metadata with image
+    // Generate metadata TANPA PII (Privacy Architecture)
     const metadata = generateCertificateMetadata({
-      nama: user.nama,
-      nim: user.nim,
       prodi: user.prodi || "Informatika",
       tahunLulus: user.angkatan || "2026",
+      dataHash,
       imageUri: imageUrl,
     });
 
@@ -115,7 +130,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update atau buat certificate
+    // Update atau buat certificate — simpan dataHash dan dataSalt
     const certificate = await prisma.certificate.upsert({
       where: { userId },
       update: {
@@ -125,6 +140,8 @@ export async function POST(request: NextRequest) {
         status: "MINTED",
         issuedAt: new Date(),
         issuedBy: payload.userId,
+        dataHash,
+        dataSalt,
       },
       create: {
         userId,
@@ -134,6 +151,8 @@ export async function POST(request: NextRequest) {
         status: "MINTED",
         issuedAt: new Date(),
         issuedBy: payload.userId,
+        dataHash,
+        dataSalt,
       },
     });
 
@@ -163,3 +182,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+

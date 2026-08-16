@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Search, Pencil, Eye, Check, X, XCircle, Users } from "lucide-react";
+import { Search, Pencil, Eye, Check, X, XCircle, Users, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +32,8 @@ interface Mahasiswa {
   email: string;
   prodi: string;
   angkatan: string;
+  dataConsent: boolean;
+  consentGivenAt: string | null;
   wallet: {
     id: string;
     walletAddress: string;
@@ -183,7 +185,7 @@ export default function MahasiswaPage() {
 
   // Pagination Logic
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 5;
+  const ITEMS_PER_PAGE = 10;
   const totalPages = Math.ceil(filteredMahasiswa.length / ITEMS_PER_PAGE);
   const paginatedMahasiswa = filteredMahasiswa.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
@@ -344,6 +346,7 @@ export default function MahasiswaPage() {
                 <TableHead>NIM</TableHead>
                 <TableHead>Nama</TableHead>
                 <TableHead>Prodi</TableHead>
+                <TableHead>Consent</TableHead>
                 <TableHead>Wallet</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Ijazah</TableHead>
@@ -353,7 +356,7 @@ export default function MahasiswaPage() {
             <TableBody>
               {filteredMahasiswa.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-12">
+                  <TableCell colSpan={8} className="text-center py-12">
                     <Users className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
                     <p className="text-muted-foreground font-medium">
                       Tidak ada data mahasiswa
@@ -371,6 +374,17 @@ export default function MahasiswaPage() {
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {m.prodi || "-"}
+                    </TableCell>
+                    <TableCell>
+                      {m.dataConsent ? (
+                        <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                          <CheckCircle2 className="w-3 h-3 mr-1" /> {m.consentGivenAt ? new Date(m.consentGivenAt).toLocaleDateString("id-ID", { day: "numeric", month: "short" }) : ""}
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary" className="bg-amber-50 text-amber-700 border-amber-200">
+                          <XCircle className="w-3 h-3 mr-1" /> Belum
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell>
                       {m.wallet ? (

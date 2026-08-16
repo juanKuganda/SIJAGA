@@ -66,53 +66,60 @@ export async function uploadImageToPinata(file: File) {
 
 /**
  * Generate metadata JSON untuk NFT ijazah
+ * PRIVACY: Tidak menyertakan nama atau NIM di metadata IPFS.
+ * PII hanya disimpan di database lokal SIJAGA.
  */
 export function generateCertificateMetadata(data: {
-  nama: string;
-  nim: string;
   prodi: string;
   tahunLulus: string;
+  dataHash: string;
   imageUri?: string;
 }) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   return {
-    name: `Ijazah S1 - ${data.nama}`,
+    name: "Ijazah S1 - Universitas Tadulako",
     symbol: "SIJAGA",
-    description: `Ijazah Sarjana ${data.prodi}, Universitas Tadulako. Diverifikasi melalui blockchain Solana sebagai NFT Soulbound.`,
+    description: "Ijazah akademik resmi yang diterbitkan oleh Universitas Tadulako. Diverifikasi melalui blockchain Solana sebagai NFT Soulbound.",
     image: data.imageUri || "",
-    external_url: `${appUrl}/ijazah/${data.nim}`,
     attributes: [
-      { trait_type: "NIM", value: data.nim },
+      { trait_type: "Institusi", value: "Universitas Tadulako" },
       { trait_type: "Program Studi", value: data.prodi },
       { trait_type: "Tahun Lulus", value: data.tahunLulus },
+      { trait_type: "Jenjang", value: "Sarjana (S1)" },
       { trait_type: "Tipe", value: "Soulbound" },
-      { trait_type: "Penerbit", value: "Universitas Tadulako" },
+      { trait_type: "Data Hash", value: data.dataHash },
+    ],
+    properties: {
+      files: [
+        {
+          uri: data.imageUri || "",
+          type: "image/png",
+        },
+      ],
+      category: "image",
+    },
+  };
+}
+
+
+/**
+ * Generate metadata JSON untuk NFT ijazah yang dibatalkan
+ * PRIVACY: Tidak menyertakan nama atau NIM di metadata IPFS.
+ */
+export function generateRevokedMetadata(data: {
+  prodi: string;
+  tahunLulus: string;
+}) {
+  return {
+    name: "[DIBATALKAN] Ijazah S1 - Universitas Tadulako",
+    symbol: "REVOKED",
+    description: `Ijazah Sarjana ${data.prodi}, Universitas Tadulako ini telah DIBATALKAN / DICABUT.`,
+    image: "",
+    attributes: [
+      { trait_type: "Institusi", value: "Universitas Tadulako" },
+      { trait_type: "Program Studi", value: data.prodi },
+      { trait_type: "Tahun Lulus", value: data.tahunLulus },
+      { trait_type: "Status", value: "Dibatalkan" },
     ],
   };
 }
 
-/**
- * Generate metadata JSON untuk NFT ijazah yang dibatalkan
- */
-export function generateRevokedMetadata(data: {
-  nama: string;
-  nim: string;
-  prodi: string;
-  tahunLulus: string;
-}) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-  return {
-    name: `[DIBATALKAN] Ijazah S1 - ${data.nama}`,
-    symbol: "REVOKED",
-    description: `Ijazah Sarjana ${data.prodi}, Universitas Tadulako ini telah DIBATALKAN / DICABUT.`,
-    image: "",
-    external_url: `${appUrl}/ijazah/${data.nim}`,
-    attributes: [
-      { trait_type: "NIM", value: data.nim },
-      { trait_type: "Program Studi", value: data.prodi },
-      { trait_type: "Tahun Lulus", value: data.tahunLulus },
-      { trait_type: "Status", value: "Dibatalkan" },
-      { trait_type: "Penerbit", value: "Universitas Tadulako" },
-    ],
-  };
-}

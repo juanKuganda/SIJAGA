@@ -116,8 +116,6 @@ export async function POST(request: NextRequest) {
 
     // 2. Generate Revoked Metadata with image
     const revokedMetadata = generateRevokedMetadata({
-      nama: user.nama,
-      nim: user.nim,
       prodi: user.prodi || "Informatika",
       tahunLulus: user.angkatan || "2026",
     });

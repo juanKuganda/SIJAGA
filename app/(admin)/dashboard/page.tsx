@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Users, Clock, CheckCircle2, FileText, Award, XCircle, ArrowRight, ExternalLink, Activity } from "lucide-react";
+import { Users, Clock, CheckCircle2, FileText, Award, XCircle, ExternalLink, Activity } from "lucide-react";
 import { DashboardCharts } from "@/components/DashboardCharts";
 
 interface Stats {
@@ -144,7 +144,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="p-6 md:p-10 max-w-7xl mx-auto font-sans selection:bg-zinc-200">
+    <div className="font-sans selection:bg-zinc-200">
       {/* Page Header */}
       <div className="mb-10 flex flex-col md:flex-row md:justify-between md:items-end gap-6">
         <div>

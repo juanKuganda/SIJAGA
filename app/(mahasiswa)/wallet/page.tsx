@@ -92,7 +92,7 @@ export default function WalletPage() {
           <div className="h-8 w-48 bg-muted rounded-lg animate-pulse" />
           <div className="h-4 w-72 bg-muted rounded-lg animate-pulse mt-2" />
         </div>
-        <div className="max-w-2xl">
+        <div className="w-full">
           <Card>
             <CardContent className="pt-6">
               <div className="space-y-4">
@@ -116,7 +116,7 @@ export default function WalletPage() {
         </p>
       </div>
 
-      <div className="max-w-2xl">
+      <div className="w-full">
         <Card className="hover:shadow-md transition-shadow">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

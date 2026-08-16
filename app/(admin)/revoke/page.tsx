@@ -11,6 +11,7 @@ import {
   ShieldAlert,
   History,
   CornerUpLeft,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -143,7 +144,7 @@ export default function RevokePage() {
   const [currentPageActive, setCurrentPageActive] = useState(1);
   const [currentPageRevoked, setCurrentPageRevoked] = useState(1);
   const [currentPageBackups, setCurrentPageBackups] = useState(1);
-  const ITEMS_PER_PAGE = 5;
+  const ITEMS_PER_PAGE = 10;
 
 
   const handleRevoke = async () => {
@@ -788,9 +789,14 @@ export default function RevokePage() {
                   !revokeReason.trim() || revoking === revokeModal.userId
                 }
               >
-                {revoking === revokeModal.userId
-                  ? "Memproses..."
-                  : "Revoke Sertifikat"}
+                {revoking === revokeModal.userId ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Memproses...
+                  </>
+                ) : (
+                  "Revoke Sertifikat"
+                )}
               </Button>
             </div>
           </div>
@@ -839,9 +845,14 @@ export default function RevokePage() {
                 onClick={() => handleRestore(restoreModal.backupId)}
                 disabled={restoring === restoreModal.backupId}
               >
-                {restoring === restoreModal.backupId
-                  ? "Memproses..."
-                  : "Ya, Restore"}
+                {restoring === restoreModal.backupId ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Memproses...
+                  </>
+                ) : (
+                  "Ya, Restore"
+                )}
               </Button>
             </div>
           </div>

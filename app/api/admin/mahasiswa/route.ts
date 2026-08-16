@@ -25,6 +25,9 @@ export async function GET(request: NextRequest) {
         email: true,
         prodi: true,
         angkatan: true,
+        dataConsent: true,
+        consentGivenAt: true,
+        dataDeletedAt: true,
         wallet: {
           select: {
             id: true,

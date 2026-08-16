@@ -21,6 +21,16 @@ model User {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  // Consent fields (UU PDP compliance)
+  dataConsent        Boolean   @default(false)
+  consentGivenAt     DateTime?
+  consentIpAddress   String?   // IP saat consent diberikan (bukti hukum)
+  consentVersion     String?   // versi teks agreement (e.g. "v1.0")
+
+  // Right to be Forgotten (UU PDP)
+  dataDeletedAt      DateTime? // null = aktif, ada tanggal = PII sudah dihapus
+  dataDeleteNote     String?
+
   wallet      Wallet?
   certificate Certificate?
   auditLogs   AuditLog[]
@@ -52,6 +62,10 @@ model Certificate {
   revokedBy      String?               // admin yang merevoke
   revokeReason   String?               // alasan revoke
   createdAt      DateTime    @default(now())
+
+  // Two-tier verification fields (Privacy Architecture)
+  dataHash       String?     // SHA256 hash disimpan juga di metadata IPFS
+  dataSalt       String?     // salt unik per mahasiswa (JANGAN taruh di IPFS)
 
   user           User        @relation(fields: [userId], references: [id])
 }

@@ -9,6 +9,7 @@ import {
   FileText,
   LogOut,
   Shield,
+  ShieldCheck,
   Home,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,11 @@ const navItems = [
     href: "/wallet",
     label: "Wallet",
     icon: Wallet,
+  },
+  {
+    href: "/consent",
+    label: "Persetujuan",
+    icon: ShieldCheck,
   },
   {
     href: "/ijazah",

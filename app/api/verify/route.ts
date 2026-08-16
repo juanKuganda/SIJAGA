@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifySchema } from "@/lib/validation";
 import { isValidSolanaAddress } from "@/lib/solana";
+import { verifyDataHash } from "@/lib/crypto";
 
 export async function GET(request: NextRequest) {
   try {
@@ -30,7 +31,13 @@ export async function GET(request: NextRequest) {
         where: { walletAddress: query },
         include: {
           user: {
-            select: { nama: true, nim: true, prodi: true, angkatan: true },
+            select: {
+              nama: true,
+              nim: true,
+              prodi: true,
+              angkatan: true,
+              dataDeletedAt: true,
+            },
           },
         },
       });
@@ -53,6 +60,7 @@ export async function GET(request: NextRequest) {
           prodi: user.prodi,
           angkatan: user.angkatan,
           userId: user.id,
+          dataDeletedAt: user.dataDeletedAt,
         };
       }
     }
@@ -76,6 +84,21 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Cek apakah PII sudah dihapus (Right to be Forgotten)
+    const piiDeleted = !!userWithWallet.dataDeletedAt;
+
+    // 2-tier hash verification (jika salt dan hash tersedia)
+    let hashVerified: boolean | null = null;
+    if (!piiDeleted && certificate.dataSalt && certificate.dataHash) {
+      hashVerified = verifyDataHash(
+        userWithWallet.nama,
+        userWithWallet.nim,
+        userWithWallet.prodi || "Informatika",
+        certificate.dataSalt,
+        certificate.dataHash
+      );
+    }
+
     // Cek apakah sertifikat sudah direvoke
     if (certificate.status === "REVOKED") {
       return NextResponse.json({
@@ -85,27 +108,31 @@ export async function GET(request: NextRequest) {
         revokeReason: certificate.revokeReason || "Tidak ada alasan yang diberikan",
         revokedAt: certificate.revokedAt,
         data: {
-          nama: userWithWallet.nama,
-          nim: userWithWallet.nim,
+          nama: piiDeleted ? "[DATA DIHAPUS]" : userWithWallet.nama,
+          nim: piiDeleted ? "[DIHAPUS]" : userWithWallet.nim,
           prodi: userWithWallet.prodi,
           tahunLulus: userWithWallet.angkatan,
           nftAddress: certificate.nftAddress,
         },
+        piiDeleted,
       });
     }
 
     return NextResponse.json({
       verified: true,
+      hashVerified,
       data: {
-        nama: userWithWallet.nama,
-        nim: userWithWallet.nim,
+        nama: piiDeleted ? "[DATA DIHAPUS]" : userWithWallet.nama,
+        nim: piiDeleted ? "[DIHAPUS]" : userWithWallet.nim,
         prodi: userWithWallet.prodi,
         tahunLulus: userWithWallet.angkatan,
         status: certificate.status,
         nftAddress: certificate.nftAddress,
         issuedAt: certificate.issuedAt,
         penerbit: "Universitas Tadulako",
+        dataHash: certificate.dataHash,
       },
+      piiDeleted,
       explorerUrl: certificate.nftAddress
         ? `https://explorer.solana.com/address/${certificate.nftAddress}?cluster=devnet`
         : null,
@@ -118,3 +145,4 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+

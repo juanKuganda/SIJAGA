@@ -170,12 +170,13 @@ export async function mintSoulboundNFT(data: {
     // Create NFT dengan Metaplex
     const result = await createNft(umi, {
       mint: mintSigner,
-      name: `Ijazah S1 - ${data.nama}`,
+      name: "Ijazah S1 - Universitas Tadulako",
       symbol: "SIJAGA",
       uri: data.metadataUri,
       sellerFeeBasisPoints: percentAmount(0), // Tidak ada royalti (Soulbound)
       tokenOwner: recipient,
       isMutable: true, // Metadata bisa diubah setelah mint (Visual Revoke)
+      primarySaleHappened: true, // Hide Primary Market tag
     }).sendAndConfirm(umi, {
       send: { commitment: "finalized" },
       confirm: { commitment: "finalized" },

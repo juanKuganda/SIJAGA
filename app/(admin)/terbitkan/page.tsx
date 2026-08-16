@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { FileText, Eye, XCircle } from "lucide-react";
+import { FileText, Eye, XCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +29,7 @@ interface Mahasiswa {
   nama: string;
   nim: string;
   prodi: string;
+  dataConsent: boolean;
   wallet: {
     walletAddress: string;
     status: string;
@@ -207,6 +208,7 @@ export default function TerbitkanPage() {
                   <TableHead>NIM</TableHead>
                   <TableHead>Nama</TableHead>
                   <TableHead>Prodi</TableHead>
+                  <TableHead>Consent</TableHead>
                   <TableHead>Wallet Address</TableHead>
                   <TableHead>Aksi</TableHead>
                 </TableRow>
@@ -224,6 +226,17 @@ export default function TerbitkanPage() {
                       {m.prodi || "Informatika"}
                     </TableCell>
                     <TableCell>
+                      {m.dataConsent ? (
+                        <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                          <CheckCircle2 className="w-3 h-3 mr-1" /> Setuju
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary" className="bg-amber-50 text-amber-700 border-amber-200">
+                          <XCircle className="w-3 h-3 mr-1" /> Belum
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
                       <span className="text-xs font-mono text-muted-foreground">
                         {m.wallet?.walletAddress.slice(0, 8)}...
                         {m.wallet?.walletAddress.slice(-6)}
@@ -233,7 +246,8 @@ export default function TerbitkanPage() {
                       <div className="flex gap-2">
                         <Button
                           size="sm"
-                          disabled={minting === m.id}
+                          disabled={minting === m.id || !m.dataConsent}
+                          title={!m.dataConsent ? "Mahasiswa belum memberikan consent" : undefined}
                           onClick={() =>
                             setConfirmModal({
                               userId: m.id,
@@ -242,7 +256,7 @@ export default function TerbitkanPage() {
                             })
                           }
                         >
-                          {minting === m.id ? "Minting..." : "Terbitkan"}
+                          {minting === m.id ? "Minting..." : !m.dataConsent ? "Perlu Consent" : "Terbitkan"}
                         </Button>
                         <Link href={`/detail-ijazah/${m.nim}`}>
                           <Button size="sm" variant="outline">
@@ -349,9 +363,14 @@ export default function TerbitkanPage() {
                 onClick={() => handleMint(confirmModal.userId)}
                 disabled={minting === confirmModal.userId}
               >
-                {minting === confirmModal.userId
-                  ? "Minting..."
-                  : "Ya, Terbitkan"}
+                {minting === confirmModal.userId ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Minting...
+                  </>
+                ) : (
+                  "Ya, Terbitkan"
+                )}
               </Button>
             </div>
           </div>
