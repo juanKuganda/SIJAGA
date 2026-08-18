@@ -4,8 +4,9 @@ import { verifyToken } from "@/lib/auth";
 import { CertStatus } from "@prisma/client";
 import { restoreSoulboundNFT } from "@/lib/metaplex";
 import { generateCertificateImageBuffer } from "@/lib/certificate-image";
-import { uploadImageToPinata, generateCertificateMetadata, uploadMetadataToPinata } from "@/lib/pinata";
+import { generateCertificateMetadata, uploadMetadataToPinata, generateAndUploadCertificateImage } from "@/lib/pinata";
 import { generateDataHash } from "@/lib/crypto";
+import { createAuditLog } from "@/lib/audit";
 
 /**
  * POST — Recovery sertifikat dari backup
@@ -100,19 +101,8 @@ export async function POST(request: NextRequest) {
 
     if (certData.nftAddress) {
       try {
-        // 1. Generate Image baru (berdasarkan data User saat ini)
-        const imageBuffer = await generateCertificateImageBuffer({
-          nama: user.nama,
-          nim: user.nim,
-          prodi: user.prodi || "Informatika",
-          tahunLulus: user.angkatan || "2026",
-          status: "MINTED",
-        });
-        const imageBlob = new Blob([imageBuffer], { type: "image/png" });
-        const imageFile = new File([imageBlob], `ijazah-${user.nim}.png`, { type: "image/png" });
-        
-        // 2. Upload ke Pinata
-        const { gatewayUrl: imageUrl } = await uploadImageToPinata(imageFile);
+        // 1. Generate Image baru (berdasarkan data User saat ini) & Upload ke Pinata
+        const { gatewayUrl: imageUrl } = await generateAndUploadCertificateImage(user, "MINTED");
 
         // 3. Generate dataHash baru untuk recovery
         const { hash, salt } = generateDataHash(
@@ -132,7 +122,7 @@ export async function POST(request: NextRequest) {
         });
 
         // 5. Upload Metadata
-        const { uri: newMetadataUri } = await uploadMetadataToPinata(metadata);
+        const { gatewayUrl: newMetadataUri } = await uploadMetadataToPinata(metadata);
         updatedMetadataUri = newMetadataUri;
 
         // 6. Update NFT Solana
@@ -192,14 +182,12 @@ export async function POST(request: NextRequest) {
     });
 
     // Audit log — userId merujuk ke mahasiswa, bukan admin
-    await prisma.auditLog.create({
-      data: {
-        userId: backup.userId,
-        action: "CERT_RECOVERY",
-        detail: `Sertifikat di-restore untuk ${user.nama} (${user.nim}) oleh admin ${payload.userId} dari backup ${backupId}`,
-        ipAddress: request.headers.get("x-forwarded-for") || "unknown",
-      },
-    });
+    await createAuditLog(
+      backup.userId,
+      "CERT_RECOVERY",
+      `Sertifikat di-restore untuk ${user.nama} (${user.nim}) oleh admin ${payload.userId} dari backup ${backupId}`,
+      request.headers.get("x-forwarded-for") || "unknown"
+    );
 
     return NextResponse.json({
       success: true,

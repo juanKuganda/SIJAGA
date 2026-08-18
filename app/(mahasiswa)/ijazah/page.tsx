@@ -5,6 +5,7 @@ import { FileText, CheckCircle2, Clock, XCircle, User, Info, ExternalLink, Shiel
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { StatusBadge } from "@/components/ui/status-badge";
 
 interface User {
   id: string;
@@ -52,20 +53,7 @@ export default function IjazahPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "NOT_ISSUED":
-        return <Badge variant="secondary" className="bg-slate-100 text-slate-700">Belum Diterbitkan</Badge>;
-      case "MINTED":
-        return <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">Sudah Diterbitkan</Badge>;
-      case "CLAIMED":
-        return <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-200">Sudah Diklaim</Badge>;
-      case "REVOKED":
-        return <Badge variant="destructive">DIREVOKE</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
+
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return "-";
@@ -150,7 +138,7 @@ export default function IjazahPage() {
                 <Award className={`w-5 h-5 ${status === "MINTED" || status === "CLAIMED" ? "text-emerald-600" : "text-foreground"}`} />
                 Status Ijazah
               </CardTitle>
-              {getStatusBadge(status)}
+              <StatusBadge status={status} type="certificate" />
             </div>
           </CardHeader>
           <CardContent>

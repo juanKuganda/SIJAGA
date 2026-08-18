@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import gsap from "gsap";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Shield,
   Search,
@@ -323,10 +324,12 @@ export default function HomePage() {
           }`}
         >
           <Link href="/" className="flex items-center gap-3 z-50">
-            <img
+            <Image
               src="/apple-touch-icon.png"
               alt="Logo Untad"
-              className="w-10 h-10 object-contain drop-shadow-sm"
+              width={40}
+              height={40}
+              className="object-contain drop-shadow-sm"
             />
             <div className="flex flex-col">
               <span className="text-xl font-black text-foreground tracking-tight leading-none">

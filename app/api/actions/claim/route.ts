@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { createAuditLog } from "@/lib/audit";
 import {
   Connection,
   PublicKey,
@@ -288,14 +289,12 @@ export async function POST(request: NextRequest) {
     });
 
     // Buat audit log
-    await prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: "CERT_CLAIMED",
-        detail: `Ijazah diklaim oleh ${user.nama} (${user.nim}) via Blinks. Wallet: ${account}`,
-        ipAddress: request.headers.get("x-forwarded-for") || "unknown",
-      },
-    });
+    await createAuditLog(
+      user.id,
+      "CERT_CLAIMED",
+      `Ijazah diklaim oleh ${user.nama} (${user.nim}) via Blinks. Wallet: ${account}`,
+      request.headers.get("x-forwarded-for") || "unknown"
+    );
 
     // Response format Solana Actions POST
     return NextResponse.json(

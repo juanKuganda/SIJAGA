@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { User, Wallet as WalletIcon, FileText, CheckCircle2, Clock, XCircle, AlertTriangle, ExternalLink, ArrowRight, ShieldCheck, Zap, Check } from "lucide-react";
+import { StatusBadge } from "@/components/ui/status-badge";
 
 interface UserProfile {
   id: string;
@@ -49,33 +50,6 @@ export default function ProfilPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const getWalletStatusBadge = (status: string) => {
-    switch (status) {
-      case "PENDING":
-        return <div className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 font-semibold text-xs px-2.5 py-1 rounded-full border border-amber-200">Menunggu Verifikasi</div>;
-      case "VERIFIED":
-        return <div className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 font-semibold text-xs px-2.5 py-1 rounded-full border border-emerald-200">Terverifikasi</div>;
-      case "REJECTED":
-        return <div className="inline-flex items-center gap-1.5 bg-red-50 text-red-700 font-semibold text-xs px-2.5 py-1 rounded-full border border-red-200">Ditolak</div>;
-      default:
-        return <div className="inline-flex items-center gap-1.5 bg-zinc-100 text-zinc-700 font-semibold text-xs px-2.5 py-1 rounded-full border border-zinc-200">{status}</div>;
-    }
-  };
-
-  const getCertStatusBadge = (status: string) => {
-    switch (status) {
-      case "NOT_ISSUED":
-        return <div className="inline-flex items-center gap-1.5 bg-zinc-100 text-zinc-700 font-semibold text-xs px-3 py-1.5 rounded-full border border-zinc-200">Belum Diterbitkan</div>;
-      case "MINTED":
-        return <div className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 font-semibold text-xs px-3 py-1.5 rounded-full border border-blue-200">Sudah Diterbitkan</div>;
-      case "CLAIMED":
-        return <div className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 font-semibold text-xs px-3 py-1.5 rounded-full border border-emerald-200">Sudah Diklaim</div>;
-      case "REVOKED":
-        return <div className="inline-flex items-center gap-1.5 bg-red-50 text-red-700 font-semibold text-xs px-3 py-1.5 rounded-full border border-red-200">DIREVOKE</div>;
-      default:
-        return <div className="inline-flex items-center gap-1.5 bg-zinc-100 text-zinc-700 font-semibold text-xs px-3 py-1.5 rounded-full border border-zinc-200">{status}</div>;
-    }
-  };
 
   const getProgress = () => {
     let currentStep = 1;
@@ -223,7 +197,7 @@ export default function ProfilPage() {
               <div className="space-y-6 flex-1">
                 <div>
                   <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-2 block">STATUS VERIFIKASI</span>
-                  {getWalletStatusBadge(wallet.status)}
+                  <StatusBadge status={wallet.status} type="wallet" />
                 </div>
                 <div>
                   <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-2 block">ALAMAT WALLET</span>
@@ -281,7 +255,7 @@ export default function ProfilPage() {
             </div>
             Sertifikat Ijazah Digital
           </h2>
-          {certificate ? getCertStatusBadge(certificate.status) : getCertStatusBadge("NOT_ISSUED")}
+          <StatusBadge status={certificate?.status || "NOT_ISSUED"} type="certificate" />
         </div>
         
         <div className="p-8">

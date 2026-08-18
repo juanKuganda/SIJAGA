@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyToken } from "@/lib/auth";
 import { mintNftSchema } from "@/lib/validation";
-import { uploadMetadataToPinata, generateCertificateMetadata, uploadImageToPinata } from "@/lib/pinata";
+import { uploadMetadataToPinata, generateCertificateMetadata, generateAndUploadCertificateImage } from "@/lib/pinata";
 import { mintSoulboundNFT } from "@/lib/metaplex";
-import { generateCertificateImageBuffer } from "@/lib/certificate-image";
 import { generateDataHash } from "@/lib/crypto";
+import { createAuditLog } from "@/lib/audit";
 
 export async function POST(request: NextRequest) {
   try {
@@ -92,15 +92,7 @@ export async function POST(request: NextRequest) {
     );
 
     // Generate & upload PNG certificate image to IPFS
-    const imageBuffer = await generateCertificateImageBuffer({
-      nama: user.nama,
-      nim: user.nim,
-      prodi: user.prodi || "Informatika",
-      tahunLulus: user.angkatan || "2026",
-    });
-    const imageBlob = new Blob([imageBuffer], { type: "image/png" });
-    const imageFile = new File([imageBlob], `ijazah-${user.nim}.png`, { type: "image/png" });
-    const { gatewayUrl: imageUrl } = await uploadImageToPinata(imageFile);
+    const { gatewayUrl: imageUrl } = await generateAndUploadCertificateImage(user, "MINTED");
 
     // Generate metadata TANPA PII (Privacy Architecture)
     const metadata = generateCertificateMetadata({
@@ -111,7 +103,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Upload metadata ke Pinata
-    const { uri: metadataUri } = await uploadMetadataToPinata(metadata);
+    const { gatewayUrl: metadataUri } = await uploadMetadataToPinata(metadata);
 
     // Mint NFT Soulbound
     const mintResult = await mintSoulboundNFT({
@@ -157,14 +149,12 @@ export async function POST(request: NextRequest) {
     });
 
     // Buat audit log — userId merujuk ke mahasiswa, bukan admin
-    await prisma.auditLog.create({
-      data: {
-        userId: userId,
-        action: "NFT_MINT",
-        detail: `NFT ijazah di-mint untuk ${user.nama} (${user.nim}) oleh admin ${payload.userId}`,
-        ipAddress: request.headers.get("x-forwarded-for") || "unknown",
-      },
-    });
+    await createAuditLog(
+      userId,
+      "NFT_MINT",
+      `NFT ijazah di-mint untuk ${user.nama} (${user.nim}) oleh admin ${payload.userId}`,
+      request.headers.get("x-forwarded-for") || "unknown"
+    );
 
     return NextResponse.json({
       certificate: {

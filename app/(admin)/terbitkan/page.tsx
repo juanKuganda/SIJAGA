@@ -15,14 +15,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ActionModal } from "@/components/ui/action-modal";
 
 interface Mahasiswa {
   id: string;
@@ -190,17 +185,11 @@ export default function TerbitkanPage() {
         </CardHeader>
         <CardContent>
           {mahasiswa.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                <FileText className="w-7 h-7 text-muted-foreground" />
-              </div>
-              <p className="text-foreground font-semibold">
-                Tidak ada mahasiswa yang siap untuk diterbitkan ijazahnya.
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Pastikan wallet mahasiswa sudah terverifikasi.
-              </p>
-            </div>
+            <EmptyState
+              icon={FileText}
+              title="Tidak ada mahasiswa yang siap untuk diterbitkan ijazahnya."
+              description="Pastikan wallet mahasiswa sudah terverifikasi."
+            />
           ) : (
             <Table>
               <TableHeader>
@@ -272,110 +261,45 @@ export default function TerbitkanPage() {
             </Table>
           )}
 
-          {totalPages > 1 && (
-            <div className="mt-6">
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                      className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                    />
-                  </PaginationItem>
-                  
-                  {Array.from({ length: totalPages }).map((_, i) => (
-                    <PaginationItem key={i}>
-                      <PaginationLink
-                        onClick={() => setCurrentPage(i + 1)}
-                        isActive={currentPage === i + 1}
-                        className="cursor-pointer"
-                      >
-                        {i + 1}
-                      </PaginationLink>
-                    </PaginationItem>
-                  ))}
-
-                  <PaginationItem>
-                    <PaginationNext
-                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
-          )}
+          <DataTablePagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
         </CardContent>
       </Card>
 
       {/* Confirmation Modal */}
-      {confirmModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-neutral-900/40 backdrop-blur-sm"
-            onClick={() => setConfirmModal(null)}
-          />
-          <div className="relative bg-white border border-border rounded-xl shadow-2xl max-w-md w-full p-6 animate-fade-in-up">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center">
-                <FileText className="w-5 h-5 text-emerald-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-foreground">
-                  Terbitkan Ijazah
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {confirmModal.nama} ({confirmModal.nim})
-                </p>
-              </div>
-            </div>
-
-            <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
-              <p className="text-sm text-emerald-700">
-                Tindakan ini akan <strong>mint NFT Soulbound</strong> ke wallet
-                mahasiswa. Transaksi ini <strong>tidak dapat dibatalkan</strong>{" "}
-                setelah dikonfirmasi di blockchain.
-              </p>
-            </div>
-
-            <div className="mb-6 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-              <p className="text-sm text-amber-800 font-semibold">
-                Yang akan terjadi:
-              </p>
-              <ol className="text-sm text-amber-700 mt-2 space-y-1 list-decimal list-inside">
-                <li>Metadata ijazah di-upload ke IPFS (Pinata)</li>
-                <li>NFT Soulbound di-mint ke wallet mahasiswa</li>
-                <li>Status berubah menjadi MINTED</li>
-                <li>Mahasiswa bisa klaim via Blinks</li>
-              </ol>
-            </div>
-
-            <div className="flex gap-3">
-              <Button
-                variant="ghost"
-                className="flex-1"
-                onClick={() => setConfirmModal(null)}
-              >
-                Batal
-              </Button>
-              <Button
-                className="flex-1"
-                onClick={() => handleMint(confirmModal.userId)}
-                disabled={minting === confirmModal.userId}
-              >
-                {minting === confirmModal.userId ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Minting...
-                  </>
-                ) : (
-                  "Ya, Terbitkan"
-                )}
-              </Button>
-            </div>
-          </div>
+      <ActionModal
+        isOpen={!!confirmModal}
+        onClose={() => setConfirmModal(null)}
+        icon={FileText}
+        title="Terbitkan Ijazah"
+        subtitle={confirmModal ? `${confirmModal.nama} (${confirmModal.nim})` : ""}
+        confirmText="Ya, Terbitkan"
+        onConfirm={() => confirmModal && handleMint(confirmModal.userId)}
+        isConfirming={confirmModal ? minting === confirmModal.userId : false}
+      >
+        <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+          <p className="text-sm text-emerald-700">
+            Tindakan ini akan <strong>mint NFT Soulbound</strong> ke wallet
+            mahasiswa. Transaksi ini <strong>tidak dapat dibatalkan</strong>{" "}
+            setelah dikonfirmasi di blockchain.
+          </p>
         </div>
-      )}
+
+        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+          <p className="text-sm text-amber-800 font-semibold">
+            Yang akan terjadi:
+          </p>
+          <ol className="text-sm text-amber-700 mt-2 space-y-1 list-decimal list-inside">
+            <li>Metadata ijazah di-upload ke IPFS (Pinata)</li>
+            <li>NFT Soulbound di-mint ke wallet mahasiswa</li>
+            <li>Status berubah menjadi MINTED</li>
+            <li>Mahasiswa bisa klaim via Blinks</li>
+          </ol>
+        </div>
+      </ActionModal>
     </div>
   );
 }

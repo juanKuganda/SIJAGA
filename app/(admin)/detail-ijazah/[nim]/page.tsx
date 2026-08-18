@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import Badge from "@/components/ui/status-badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import CopyBlinkLink from "./CopyBlinkLink";
 import EditButton from "./EditButton";
 
@@ -31,32 +31,7 @@ export default async function DetailIjazahPage({
     actionUrl
   )}`;
 
-  const getStatusBadge = (status?: string) => {
-    switch (status) {
-      case "PENDING":
-        return <Badge variant="warning">Pending</Badge>;
-      case "VERIFIED":
-        return <Badge variant="success">Terverifikasi</Badge>;
-      case "REJECTED":
-        return <Badge variant="danger">Ditolak</Badge>;
-      default:
-        return <Badge>{status || "—"}</Badge>;
-    }
-  };
 
-  const getCertBadge = (status?: string) => {
-    switch (status) {
-      case "MINTED":
-        return <Badge variant="info">Minted</Badge>;
-      case "CLAIMED":
-        return <Badge variant="success">Claimed</Badge>;
-      case "REVOKED":
-        return <Badge variant="danger">Revoked</Badge>;
-      case "NOT_ISSUED":
-      default:
-        return <Badge variant="default">Belum Diterbitkan</Badge>;
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -114,7 +89,7 @@ export default async function DetailIjazahPage({
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-muted-foreground">Status Wallet</span>
-                      {getStatusBadge(user.wallet?.status)}
+                      <StatusBadge status={user.wallet?.status} type="wallet" />
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-muted-foreground">Wallet Address</span>
@@ -129,7 +104,7 @@ export default async function DetailIjazahPage({
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-muted-foreground">Status Ijazah</span>
-                      {getCertBadge(user.certificate?.status)}
+                      <StatusBadge status={user.certificate?.status || "NOT_ISSUED"} type="certificate" />
                     </div>
                     
                     {user.certificate && user.certificate.status !== "NOT_ISSUED" && (

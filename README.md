@@ -1,195 +1,125 @@
-# SIJAGA
+# 🛡️ SIJAGA
 
 **Sistem Jaminan Autentikasi Gelar Akademik**
 
-Verifikasi ijazah anti-pemalsuan berbasis NFT Soulbound pada blockchain Solana.
+SIJAGA adalah platform verifikasi ijazah anti-pemalsuan tingkat enterprise untuk **Universitas Tadulako**, memanfaatkan teknologi **Soulbound NFT** pada blockchain Solana dan penyimpanan terdesentralisasi (IPFS) yang **100% patuh terhadap UU PDP** (Pelindungan Data Pribadi).
 
-Universitas Tadulako | Tugas Akhir S1 Informatika
-
----
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|------------|
-| Frontend | Next.js 14 (App Router), TypeScript, Tailwind CSS |
-| Backend | Next.js API Routes |
-| Database | SQLite (dev) / PostgreSQL (prod) via Prisma ORM |
-| Blockchain | Solana Devnet |
-| NFT | Metaplex (Umi + Token Metadata) |
-| Storage | Pinata (IPFS) |
-| Auth | JWT + bcryptjs |
+Tugas Akhir S1 Informatika — Universitas Tadulako.
 
 ---
 
-## Getting Started
+## ✨ Fitur Utama
+
+- **Soulbound NFT Certificates**: Ijazah di-minting sebagai aset digital on-chain yang tidak dapat ditransfer atau diperjualbelikan (Soulbound).
+- **2-Tier Privacy & UU PDP Compliance**: Tidak ada *Personally Identifiable Information* (PII) di public ledger/IPFS. PII (Nama, NIM) tetap aman di database lokal, sedangkan blockchain hanya menyimpan enkripsi *SHA-256 dataHash*. Memiliki fitur **Right to be Forgotten** (hapus PII).
+- **Visual Revocation**: Ijazah palsu/bermasalah dapat dibatalkan secara visual, memperbarui metadata on-chain menjadi *watermark* "DIBATALKAN".
+- **Disaster Recovery**: Backup periodik otomatis dan sistem pemulihan (*restore*) sertifikat terintegrasi ke dalam UI admin.
+- **Solana Blinks Integration**: Mahasiswa dapat melihat preview dan melakukan klaim Ijazah langsung via platform pendukung Blinks.
+- **Bento Design System**: UI modern, *clean*, dan responsif berbasis "Modern Enterprise Bento" grid architecture.
+
+---
+
+## 🛠️ Tech Stack
+
+### Core Frameworks
+- **Frontend / Backend**: [Next.js 15 App Router](https://nextjs.org/)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Database**: SQLite (Dev) / PostgreSQL (Prod) via [Prisma ORM](https://www.prisma.io/)
+
+### Web3 & Blockchain
+- **Network**: Solana Devnet
+- **SDK**: Solana Web3.js v1 & [@metaplex-foundation/umi](https://developers.metaplex.com/umi)
+- **Storage**: IPFS via [Pinata Cloud](https://www.pinata.cloud/)
+
+### UI & Styling
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
+- **Components**: [shadcn/ui](https://ui.shadcn.com/)
+- **Animations**: GSAP & Lenis (Smooth Scroll)
+- **Image Generation**: Satori (Dynamic Certificate PNGs)
+
+---
+
+## 🚀 Getting Started
 
 ### Prerequisites
-
 - Node.js 18+
-- pnpm (recommended) or npm
+- `pnpm` (direkomendasikan)
+- [Phantom Wallet](https://phantom.app/) extension (untuk testing klaim NFT)
 
 ### Installation
 
 ```bash
-# Clone repository
+# 1. Clone repository
 git clone <repository-url>
 cd sijaga
 
-# Install dependencies
+# 2. Install dependencies
 pnpm install
 
-# Setup environment variables
+# 3. Setup environment variables
 cp .env.example .env
-# Edit .env dengan konfigurasi Anda
+# Buka .env dan isi dengan credential Anda (RPC Solana, Pinata JWT, dll)
 
-# Push database schema
+# 4. Push database schema
 npx prisma db push
 
-# Seed database dengan data test
+# 5. Seed database dengan data test (Admin & Mahasiswa dummy)
 npx tsx prisma/seed.ts
 
-# Jalankan development server
+# 6. Jalankan development server
 pnpm dev
 ```
 
+Aplikasi akan berjalan di `http://localhost:3000`.
+
 ### Login Credentials (Test Data)
 
-| Role | NIM | Password |
-|------|-----|----------|
-| Admin | ADMIN001 | admin123 |
-| Mahasiswa | H071211001 | mahasiswa123 |
-| Mahasiswa | H071211002 | mahasiswa123 |
+Gunakan kredensial berikut untuk login ke dalam sistem (hasil dari script `seed.ts`):
+
+| Role | NIM/ID | Password | Keterangan |
+|------|--------|----------|------------|
+| 👨‍💼 **Admin** | `ADMIN001` | `admin123` | Akses penuh dashboard admin |
+| 🎓 **Mahasiswa** | `H071211001` | `mahasiswa123` | Simulasi mhs dengan wallet PENDING |
+| 🎓 **Mahasiswa** | `H071211002` | `mahasiswa123` | Simulasi mhs dengan wallet VERIFIED |
 
 ---
 
-## Fitur
+## 🏗️ Project Architecture
 
-### Admin Kampus
-- Dashboard statistik (total mahasiswa, wallet status, ijazah status)
-- Kelola data mahasiswa (search, filter)
-- Verifikasi/approve/reject wallet mahasiswa
-- Terbitkan NFT ijazah Soulbound
-
-### Mahasiswa
-- Profil dan status ijazah
-- Daftarkan wallet Phantom
-- Status wallet (pending/verified/rejected)
-
-### Verifikasi Publik
-- Cek keaslian ijazah berdasarkan alamat wallet
-- Tampilkan data ijazah dari blockchain
-- Link ke Solana Explorer
-
-### Blinks (Klaim Ijazah)
-- Preview kartu ijazah
-- Klaim NFT ke wallet mahasiswa
-
----
-
-## API Endpoints
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST | /api/auth/login | Public | Login user |
-| POST | /api/auth/logout | User | Logout |
-| GET | /api/auth/me | User | Get current user |
-| POST | /api/wallet/register | Mahasiswa | Daftar wallet |
-| GET | /api/wallet/status | Mahasiswa | Status wallet |
-| POST | /api/wallet/verify | Admin | Approve/reject wallet |
-| POST | /api/nft/mint | Admin | Mint NFT ijazah |
-| GET | /api/nft/status | Mahasiswa | Status NFT |
-| GET | /api/verify?wallet=xxx | Public | Verifikasi publik |
-| GET | /api/actions/claim?nim=xxx | Public | Blinks preview |
-| POST | /api/actions/claim?nim=xxx | Public | Klaim ijazah |
-| GET | /api/admin/stats | Admin | Dashboard stats |
-| GET | /api/admin/mahasiswa | Admin | List mahasiswa |
-
----
-
-## Project Structure
-
-```
+```text
 sijaga/
-├── app/                    # Next.js App Router
-│   ├── (auth)/            # Auth pages (login)
-│   ├── (admin)/           # Admin pages (dashboard, mahasiswa, terbitkan)
-│   ├── (mahasiswa)/       # Mahasiswa pages (profil, wallet)
-│   ├── verifikasi/        # Public verification page
-│   └── api/               # API routes
-├── components/            # React components
-│   └── ui/                # Reusable UI components
-├── lib/                   # Utility functions
-│   ├── auth.ts            # Authentication utilities
-│   ├── prisma.ts          # Prisma client
-│   ├── solana.ts          # Solana connection
-│   ├── metaplex.ts        # Metaplex NFT minting
-│   ├── pinata.ts          # Pinata IPFS upload
-│   └── validation.ts      # Zod schemas
-├── prisma/                # Database schema & seed
-├── .paul/                 # PAUL project management
-└── projects/              # SEED planning docs
+├── app/                    # Next.js App Router (13 Pages + 20 API Routes)
+│   ├── (auth)/             # Login & Registration flows
+│   ├── (admin)/            # Admin Dashboard, Revoke, Issuance, Data Management
+│   ├── (mahasiswa)/        # Student Portal (Consent, Wallet, Certificate status)
+│   ├── api/                # REST API & Solana Actions endpoints
+│   └── page.tsx            # Public verification & landing page
+├── components/             # Custom React components & GSAP animations
+│   └── ui/                 # 26 shadcn/ui generic components
+├── lib/                    # Core business logic layer
+│   ├── auth.ts             # JWT session management
+│   ├── crypto.ts           # SHA-256 data hashing (Privacy)
+│   ├── metaplex.ts         # Solana NFT minting, revoking, restoring
+│   ├── pinata.ts           # IPFS orchestration & metadata JSON gen
+│   └── certificate-image.tsx # Satori dynamic image generation
+├── prisma/                 # SQLite database schemas and seeders
+└── DESIGN.md               # UI/UX design specifications
 ```
 
 ---
 
-## Environment Variables
+## 🔐 Arsitektur Privasi & UU PDP
 
-```env
-# Database
-DATABASE_URL="file:./dev.db"
+SIJAGA didesain **privasi-pertama** untuk memenuhi standardisasi Undang-Undang Pelindungan Data Pribadi (UU PDP):
 
-# Auth
-JWT_SECRET="your-jwt-secret"
-
-# Solana
-NEXT_PUBLIC_SOLANA_NETWORK="devnet"
-NEXT_PUBLIC_SOLANA_RPC="https://api.devnet.solana.com"
-ADMIN_WALLET_PRIVATE_KEY=""
-
-# Pinata (IPFS)
-PINATA_JWT=""
-NEXT_PUBLIC_PINATA_GATEWAY="https://gateway.pinata.cloud"
-
-# App
-NEXT_PUBLIC_APP_URL="http://localhost:3000"
-```
+1. **Consent Gate**: Mahasiswa wajib membaca dan menyetujui kesepakatan penggunaan data publik sebelum ijazahnya dapat diterbitkan ke blockchain.
+2. **On-Chain Anonymity**: Metadata NFT di IPFS tidak mengandung nama atau NIM. Hanya menyimpan informasi akademik umum (Tahun Lulus, Program Studi) dan sebuah *cryptographic data hash*.
+3. **2-Tier Verification**: Sistem Web3 membaca *hash* dari blockchain, lalu mencocokkannya secara lokal dengan nama & NIM via algoritma kriptografi (`SHA256`) menggunakan *unique salt* yang tersimpan aman di database server tertutup.
+4. **Right to be Forgotten (Hak untuk Dilupakan)**: Admin memiliki instrumen untuk menghapus data PII mahasiswa secara permanen dari server. Data *salt* dibuang dari sistem, membuat algoritma *hash* di blockchain/IPFS terputus secara matematis (tidak bisa lagi diverifikasi atau direkayasa balik).
 
 ---
 
-## Deployment
+## 📜 Lisensi & Copyright
 
-### Vercel
-
-1. Push ke GitHub
-2. Import repository di Vercel
-3. Setup environment variables
-4. Deploy
-
-### Database Production
-
-Untuk production, migrasi dari SQLite ke PostgreSQL:
-
-1. Setup Vercel Postgres atau Neon
-2. Update `DATABASE_URL` di environment variables
-3. Update `provider` di `prisma/schema.prisma` ke `"postgresql"`
-4. Run `npx prisma db push`
-
----
-
-## Dokumen Proyek
-
-- [PRD.md](PRD.md) — Product Requirements Document
-- [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) — Implementation Plan
-- [TRD.md](TRD.md) — Technical Requirements Document
-- [projects/sijaga/PLANNING.md](projects/sijaga/PLANNING.md) — SEED Planning Document
-
----
-
-## License
-
-Tugas Akhir S1 Informatika — Universitas Tadulako
-
----
-
-*Built with Next.js, Solana, and Metaplex*
+Tugas Akhir S1 Informatika — Universitas Tadulako.
+Dibuat dengan ❤️ untuk sistem pendidikan yang lebih modern, transparan, dan aman.

@@ -16,14 +16,10 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { ActionModal } from "@/components/ui/action-modal";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface Mahasiswa {
   id: string;
@@ -192,59 +188,6 @@ export default function MahasiswaPage() {
     currentPage * ITEMS_PER_PAGE
   );
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "PENDING":
-        return (
-          <Badge
-            variant="secondary"
-            className="bg-amber-50 text-amber-700 border-amber-200"
-          >
-            Pending
-          </Badge>
-        );
-      case "VERIFIED":
-        return (
-          <Badge
-            variant="secondary"
-            className="bg-emerald-50 text-emerald-700 border-emerald-200"
-          >
-            Terverifikasi
-          </Badge>
-        );
-      case "REJECTED":
-        return <Badge variant="destructive">Ditolak</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
-
-  const getCertBadge = (status: string | undefined) => {
-    switch (status) {
-      case "MINTED":
-        return (
-          <Badge
-            variant="secondary"
-            className="bg-blue-50 text-blue-700 border-blue-200"
-          >
-            Minted
-          </Badge>
-        );
-      case "CLAIMED":
-        return (
-          <Badge
-            variant="secondary"
-            className="bg-emerald-50 text-emerald-700 border-emerald-200"
-          >
-            Claimed
-          </Badge>
-        );
-      case "REVOKED":
-        return <Badge variant="destructive">Revoked</Badge>;
-      default:
-        return <Badge variant="outline">—</Badge>;
-    }
-  };
 
   if (loading) {
     return (
@@ -356,11 +299,11 @@ export default function MahasiswaPage() {
             <TableBody>
               {filteredMahasiswa.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-12">
-                    <Users className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
-                    <p className="text-muted-foreground font-medium">
-                      Tidak ada data mahasiswa
-                    </p>
+                  <TableCell colSpan={8}>
+                    <EmptyState
+                      icon={Users}
+                      title="Tidak ada data mahasiswa"
+                    />
                   </TableCell>
                 </TableRow>
               ) : (
@@ -399,13 +342,11 @@ export default function MahasiswaPage() {
                       )}
                     </TableCell>
                     <TableCell>
-                      {m.wallet ? (
-                        getStatusBadge(m.wallet.status)
-                      ) : (
-                        <Badge variant="outline">-</Badge>
-                      )}
+                      <StatusBadge status={m.wallet?.status} type="wallet" />
                     </TableCell>
-                    <TableCell>{getCertBadge(m.certificate?.status)}</TableCell>
+                    <TableCell>
+                      <StatusBadge status={m.certificate?.status || "NOT_ISSUED"} type="certificate" />
+                    </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
                         <Link href={`/detail-ijazah/${m.nim}`}>
@@ -445,174 +386,117 @@ export default function MahasiswaPage() {
             </TableBody>
           </Table>
 
-          {totalPages > 1 && (
-            <div className="mt-6">
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                      className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                    />
-                  </PaginationItem>
-                  
-                  {Array.from({ length: totalPages }).map((_, i) => (
-                    <PaginationItem key={i}>
-                      <PaginationLink
-                        onClick={() => setCurrentPage(i + 1)}
-                        isActive={currentPage === i + 1}
-                        className="cursor-pointer"
-                      >
-                        {i + 1}
-                      </PaginationLink>
-                    </PaginationItem>
-                  ))}
-
-                  <PaginationItem>
-                    <PaginationNext
-                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
-          )}
+          <DataTablePagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
         </CardContent>
       </Card>
 
-      {/* Edit Modal */}
-      {editModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-neutral-900/40 backdrop-blur-sm"
-            onClick={() => setEditModal(null)}
-          />
-          <div className="relative bg-white border border-border rounded-xl shadow-2xl max-w-md w-full p-6 animate-fade-in-up">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
-                <Pencil className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-foreground">
-                  Edit Data Mahasiswa
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  NIM: {editModal.nim}
-                </p>
-              </div>
-            </div>
+      <ActionModal
+        isOpen={!!editModal}
+        onClose={() => setEditModal(null)}
+        icon={Pencil}
+        iconBgColor="bg-blue-50"
+        iconTextColor="text-blue-600"
+        title="Edit Data Mahasiswa"
+        subtitle={editModal ? `NIM: ${editModal.nim}` : ""}
+        confirmText="Simpan Perubahan"
+        onConfirm={handleEditSubmit}
+        isConfirming={editModal ? editLoading : false}
+      >
+        {editError && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+            {editError}
+          </div>
+        )}
 
-            {editError && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
-                {editError}
-              </div>
-            )}
+        <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700">
+          <strong>Peringatan:</strong> Mengubah NIM jika sertifikat sudah aktif dapat menyebabkan ketidakkonsistenan data. Lakukan hanya jika ijazah belum diterbitkan atau telah di-revoke.
+        </div>
 
-            <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700">
-              <strong>Peringatan:</strong> Mengubah NIM jika sertifikat sudah aktif dapat menyebabkan ketidakkonsistenan data. Lakukan hanya jika ijazah belum diterbitkan atau telah di-revoke.
-            </div>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="edit-nama" className="font-semibold">
+              Nama Lengkap
+            </Label>
+            <Input
+              id="edit-nama"
+              value={editForm.nama}
+              onChange={(e) =>
+                setEditForm((prev) => ({ ...prev, nama: e.target.value }))
+              }
+            />
+          </div>
 
-            <div className="space-y-4 mb-6">
-              <div className="space-y-2">
-                <Label htmlFor="edit-nama" className="font-semibold">
-                  Nama Lengkap
-                </Label>
-                <Input
-                  id="edit-nama"
-                  value={editForm.nama}
-                  onChange={(e) =>
-                    setEditForm((prev) => ({ ...prev, nama: e.target.value }))
-                  }
-                />
-              </div>
+          <div className="space-y-2">
+            <Label htmlFor="edit-nim" className="font-semibold">
+              Nomor Induk Mahasiswa (NIM)
+            </Label>
+            <Input
+              id="edit-nim"
+              value={editForm.nim}
+              onChange={(e) =>
+                setEditForm((prev) => ({ ...prev, nim: e.target.value }))
+              }
+            />
+          </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="edit-nim" className="font-semibold">
-                  Nomor Induk Mahasiswa (NIM)
-                </Label>
-                <Input
-                  id="edit-nim"
-                  value={editForm.nim}
-                  onChange={(e) =>
-                    setEditForm((prev) => ({ ...prev, nim: e.target.value }))
-                  }
-                />
-              </div>
+          <div className="space-y-2">
+            <Label htmlFor="edit-email" className="font-semibold">
+              Email
+            </Label>
+            <Input
+              id="edit-email"
+              type="email"
+              value={editForm.email}
+              onChange={(e) =>
+                setEditForm((prev) => ({ ...prev, email: e.target.value }))
+              }
+            />
+          </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="edit-email" className="font-semibold">
-                  Email
-                </Label>
-                <Input
-                  id="edit-email"
-                  type="email"
-                  value={editForm.email}
-                  onChange={(e) =>
-                    setEditForm((prev) => ({ ...prev, email: e.target.value }))
-                  }
-                />
-              </div>
+          <div className="space-y-2">
+            <Label htmlFor="edit-prodi" className="font-semibold">
+              Program Studi
+            </Label>
+            <Input
+              id="edit-prodi"
+              list="prodi-options"
+              value={editForm.prodi}
+              onChange={(e) =>
+                setEditForm((prev) => ({ ...prev, prodi: e.target.value }))
+              }
+              placeholder="Ketik atau pilih program studi..."
+            />
+            <datalist id="prodi-options">
+              <option value="Informatika" />
+              <option value="Sistem Informasi" />
+              <option value="Teknik Komputer" />
+              <option value="Teknologi Informasi" />
+              <option value="Ilmu Komputer" />
+            </datalist>
+          </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="edit-prodi" className="font-semibold">
-                  Program Studi
-                </Label>
-                <Input
-                  id="edit-prodi"
-                  list="prodi-options"
-                  value={editForm.prodi}
-                  onChange={(e) =>
-                    setEditForm((prev) => ({ ...prev, prodi: e.target.value }))
-                  }
-                  placeholder="Ketik atau pilih program studi..."
-                />
-                <datalist id="prodi-options">
-                  <option value="Informatika" />
-                  <option value="Sistem Informasi" />
-                  <option value="Teknik Komputer" />
-                  <option value="Teknologi Informasi" />
-                  <option value="Ilmu Komputer" />
-                </datalist>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="edit-angkatan" className="font-semibold">
-                  Angkatan
-                </Label>
-                <Input
-                  id="edit-angkatan"
-                  value={editForm.angkatan}
-                  onChange={(e) =>
-                    setEditForm((prev) => ({
-                      ...prev,
-                      angkatan: e.target.value,
-                    }))
-                  }
-                  maxLength={4}
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <Button
-                variant="ghost"
-                className="flex-1"
-                onClick={() => setEditModal(null)}
-              >
-                Batal
-              </Button>
-              <Button
-                className="flex-1"
-                onClick={handleEditSubmit}
-                disabled={editLoading}
-              >
-                {editLoading ? "Menyimpan..." : "Simpan Perubahan"}
-              </Button>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="edit-angkatan" className="font-semibold">
+              Angkatan
+            </Label>
+            <Input
+              id="edit-angkatan"
+              value={editForm.angkatan}
+              onChange={(e) =>
+                setEditForm((prev) => ({
+                  ...prev,
+                  angkatan: e.target.value,
+                }))
+              }
+              maxLength={4}
+            />
           </div>
         </div>
-      )}
+      </ActionModal>
     </div>
   );
 }

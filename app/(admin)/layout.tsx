@@ -3,6 +3,7 @@
 import { ReactNode, useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import {
   LayoutDashboard,
   Users,
@@ -101,7 +102,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         >
           <SidebarHeader>
             <div className="flex items-center gap-3 px-2 py-3 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
-              <img src="/apple-touch-icon.png" alt="Logo Untad" className="w-10 h-10 group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8 object-contain shrink-0 drop-shadow-sm transition-all" />
+              <Image src="/apple-touch-icon.png" alt="Logo Untad" width={40} height={40} className="w-10 h-10 group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8 object-contain shrink-0 drop-shadow-sm transition-all" />
               <div className="flex flex-col group-data-[collapsible=icon]:hidden">
                 <span className="text-xl font-black text-foreground tracking-tight leading-none">SIJAGA</span>
                 <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest mt-1">Universitas Tadulako</span>

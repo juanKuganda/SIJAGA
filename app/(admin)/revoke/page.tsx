@@ -11,6 +11,7 @@ import {
   ShieldAlert,
   History,
   CornerUpLeft,
+  RefreshCcw,
   Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,14 +25,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ActionModal } from "@/components/ui/action-modal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 
@@ -379,14 +375,10 @@ export default function RevokePage() {
             </CardHeader>
             <CardContent>
               {activeCerts.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                    <FileText className="w-7 h-7 text-muted-foreground" />
-                  </div>
-                  <p className="text-foreground font-semibold">
-                    Belum ada sertifikat yang diterbitkan
-                  </p>
-                </div>
+                <EmptyState
+                  icon={FileText}
+                  title="Belum ada sertifikat yang diterbitkan"
+                />
               ) : (
                 <Table>
                   <TableHeader>
@@ -461,37 +453,11 @@ export default function RevokePage() {
                 </Table>
               )}
 
-              {totalPagesActive > 1 && (
-                <div className="mt-6">
-                  <Pagination>
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious
-                          onClick={() => setCurrentPageActive((p) => Math.max(1, p - 1))}
-                          className={currentPageActive === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                        />
-                      </PaginationItem>
-                      {Array.from({ length: totalPagesActive }).map((_, i) => (
-                        <PaginationItem key={i}>
-                          <PaginationLink
-                            onClick={() => setCurrentPageActive(i + 1)}
-                            isActive={currentPageActive === i + 1}
-                            className="cursor-pointer"
-                          >
-                            {i + 1}
-                          </PaginationLink>
-                        </PaginationItem>
-                      ))}
-                      <PaginationItem>
-                        <PaginationNext
-                          onClick={() => setCurrentPageActive((p) => Math.min(totalPagesActive, p + 1))}
-                          className={currentPageActive === totalPagesActive ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                        />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                </div>
-              )}
+              <DataTablePagination
+                currentPage={currentPageActive}
+                totalPages={totalPagesActive}
+                onPageChange={setCurrentPageActive}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -505,11 +471,10 @@ export default function RevokePage() {
             </CardHeader>
             <CardContent>
               {revokedCerts.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-muted-foreground font-medium">
-                    Belum ada sertifikat yang direvoke
-                  </p>
-                </div>
+                <EmptyState
+                  icon={FileText}
+                  title="Belum ada sertifikat yang direvoke"
+                />
               ) : (
                 <Table>
                   <TableHeader>
@@ -549,37 +514,11 @@ export default function RevokePage() {
                 </Table>
               )}
 
-              {totalPagesRevoked > 1 && (
-                <div className="mt-6">
-                  <Pagination>
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious
-                          onClick={() => setCurrentPageRevoked((p) => Math.max(1, p - 1))}
-                          className={currentPageRevoked === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                        />
-                      </PaginationItem>
-                      {Array.from({ length: totalPagesRevoked }).map((_, i) => (
-                        <PaginationItem key={i}>
-                          <PaginationLink
-                            onClick={() => setCurrentPageRevoked(i + 1)}
-                            isActive={currentPageRevoked === i + 1}
-                            className="cursor-pointer"
-                          >
-                            {i + 1}
-                          </PaginationLink>
-                        </PaginationItem>
-                      ))}
-                      <PaginationItem>
-                        <PaginationNext
-                          onClick={() => setCurrentPageRevoked((p) => Math.min(totalPagesRevoked, p + 1))}
-                          className={currentPageRevoked === totalPagesRevoked ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                        />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                </div>
-              )}
+              <DataTablePagination
+                currentPage={currentPageRevoked}
+                totalPages={totalPagesRevoked}
+                onPageChange={setCurrentPageRevoked}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -598,17 +537,11 @@ export default function RevokePage() {
             </CardHeader>
             <CardContent>
               {backups.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                    <History className="w-7 h-7 text-muted-foreground" />
-                  </div>
-                  <p className="text-foreground font-semibold">
-                    Belum ada data backup
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Backup otomatis dibuat setiap kali sertifikat direvoke
-                  </p>
-                </div>
+                <EmptyState
+                  icon={History}
+                  title="Belum ada data backup"
+                  description="Backup otomatis dibuat setiap kali sertifikat direvoke"
+                />
               ) : (
                 <Table>
                   <TableHeader>
@@ -680,184 +613,87 @@ export default function RevokePage() {
                 </Table>
               )}
 
-              {totalPagesBackups > 1 && (
-                <div className="mt-6">
-                  <Pagination>
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious
-                          onClick={() => setCurrentPageBackups((p) => Math.max(1, p - 1))}
-                          className={currentPageBackups === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                        />
-                      </PaginationItem>
-                      {Array.from({ length: totalPagesBackups }).map((_, i) => (
-                        <PaginationItem key={i}>
-                          <PaginationLink
-                            onClick={() => setCurrentPageBackups(i + 1)}
-                            isActive={currentPageBackups === i + 1}
-                            className="cursor-pointer"
-                          >
-                            {i + 1}
-                          </PaginationLink>
-                        </PaginationItem>
-                      ))}
-                      <PaginationItem>
-                        <PaginationNext
-                          onClick={() => setCurrentPageBackups((p) => Math.min(totalPagesBackups, p + 1))}
-                          className={currentPageBackups === totalPagesBackups ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                        />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                </div>
-              )}
+              <DataTablePagination
+                currentPage={currentPageBackups}
+                totalPages={totalPagesBackups}
+                onPageChange={setCurrentPageBackups}
+              />
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
 
       {/* Revoke Modal */}
-      {revokeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-neutral-900/40 backdrop-blur-sm"
-            onClick={() => {
-              setRevokeModal(null);
-              setRevokeReason("");
-            }}
-          />
-          <div className="relative bg-white border border-border rounded-xl shadow-2xl max-w-md w-full p-6 animate-fade-in-up">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center">
-                <ShieldAlert className="w-5 h-5 text-red-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-foreground">
-                  Revoke Sertifikat
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {revokeModal.nama}
-                </p>
-              </div>
-            </div>
-
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-700">
-                Tindakan ini akan mencabut sertifikat ijazah. Data akan
-                di-backup otomatis sebelum direvoke. Anda dapat me-restore dari
-                tab Restore.
-              </p>
-            </div>
-
-            <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-              <p className="text-sm text-amber-800">
-                <strong>Catatan:</strong> NFT di Solana Explorer akan tetap
-                terlihat (soft-revoke), namun verifikasi melalui SIJAGA akan
-                menunjukkan status DIREVOKE.
-              </p>
-            </div>
-
-            <div className="mb-6 space-y-2">
-              <Label className="font-semibold text-foreground">
-                Alasan Revokasi *
-              </Label>
-              <textarea
-                className="w-full px-4 py-2.5 bg-white border border-input rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all resize-none shadow-sm"
-                rows={3}
-                placeholder="Jelaskan alasan revokasi sertifikat ini..."
-                value={revokeReason}
-                onChange={(e) => setRevokeReason(e.target.value)}
-              />
-            </div>
-
-            <div className="flex gap-3">
-              <Button
-                variant="ghost"
-                className="flex-1"
-                onClick={() => {
-                  setRevokeModal(null);
-                  setRevokeReason("");
-                }}
-              >
-                Batal
-              </Button>
-              <Button
-                variant="destructive"
-                className="flex-1"
-                onClick={handleRevoke}
-                disabled={
-                  !revokeReason.trim() || revoking === revokeModal.userId
-                }
-              >
-                {revoking === revokeModal.userId ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Memproses...
-                  </>
-                ) : (
-                  "Revoke Sertifikat"
-                )}
-              </Button>
-            </div>
-          </div>
+      <ActionModal
+        isOpen={!!revokeModal}
+        onClose={() => {
+          if (!revoking) {
+            setRevokeModal(null);
+            setRevokeReason("");
+          }
+        }}
+        icon={ShieldAlert}
+        iconBgColor="bg-red-50"
+        iconTextColor="text-red-600"
+        title="Revoke Ijazah"
+        subtitle={revokeModal ? revokeModal.nama : ""}
+        confirmText="Revoke Permanen"
+        confirmVariant="destructive"
+        onConfirm={handleRevoke}
+        isConfirming={revokeModal ? revoking === revokeModal.userId : false}
+        confirmDisabled={!revokeReason.trim()}
+      >
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-sm text-red-700">
+            Tindakan ini akan membatalkan sertifikat di blockchain. NFT akan tetap ada di wallet mahasiswa namun statusnya akan berubah menjadi <strong>REVOKED</strong> dan metadata-nya akan di-update.
+          </p>
         </div>
-      )}
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-foreground">
+            Alasan Revoke <span className="text-red-500">*</span>
+          </label>
+          <textarea
+            value={revokeReason}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setRevokeReason(e.target.value)}
+            placeholder="Masukkan alasan pencabutan (contoh: Kesalahan data, Pelanggaran akademik, dll)"
+            className="w-full px-4 py-2.5 bg-white border border-input rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all resize-none shadow-sm"
+            rows={3}
+            disabled={revokeModal ? revoking === revokeModal.userId : false}
+          />
+        </div>
+      </ActionModal>
 
       {/* Restore Confirmation Modal */}
-      {restoreModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-neutral-900/40 backdrop-blur-sm"
-            onClick={() => setRestoreModal(null)}
-          />
-          <div className="relative bg-white border border-border rounded-xl shadow-2xl max-w-md w-full p-6 animate-fade-in-up">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
-                <CornerUpLeft className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-foreground">
-                  Restore Sertifikat
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {restoreModal.nama}
-                </p>
-              </div>
-            </div>
-
-            <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-800">
-                Sertifikat akan dikembalikan ke status sebelum direvoke.
-                Mahasiswa dapat kembali menggunakan ijazah digitalnya.
-              </p>
-            </div>
-
-            <div className="flex gap-3">
-              <Button
-                variant="ghost"
-                className="flex-1"
-                onClick={() => setRestoreModal(null)}
-              >
-                Batal
-              </Button>
-              <Button
-                className="flex-1"
-                onClick={() => handleRestore(restoreModal.backupId)}
-                disabled={restoring === restoreModal.backupId}
-              >
-                {restoring === restoreModal.backupId ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Memproses...
-                  </>
-                ) : (
-                  "Ya, Restore"
-                )}
-              </Button>
-            </div>
-          </div>
+      <ActionModal
+        isOpen={!!restoreModal}
+        onClose={() => !restoring && setRestoreModal(null)}
+        icon={RefreshCcw}
+        iconBgColor="bg-blue-50"
+        iconTextColor="text-blue-600"
+        title="Restore Ijazah"
+        subtitle={restoreModal ? restoreModal.nama : ""}
+        confirmText="Ya, Restore"
+        onConfirm={() => restoreModal && handleRestore(restoreModal.backupId)}
+        isConfirming={restoreModal ? restoring === restoreModal.backupId : false}
+      >
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-sm text-blue-700">
+            Tindakan ini akan mengembalikan sertifikat ke status aktif berdasarkan data backup.
+          </p>
         </div>
-      )}
+
+        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+          <p className="text-sm text-amber-800 font-semibold">
+            Yang akan terjadi:
+          </p>
+          <ol className="text-sm text-amber-700 mt-2 space-y-1 list-decimal list-inside">
+            <li>Metadata dikembalikan ke versi sebelum di-revoke</li>
+            <li>Status sertifikat berubah menjadi MINTED</li>
+            <li>Data backup akan ditandai sebagai telah digunakan</li>
+          </ol>
+        </div>
+      </ActionModal>
     </div>
   );
 }

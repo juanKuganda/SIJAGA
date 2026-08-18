@@ -2,26 +2,22 @@ const PINATA_API_URL = "https://api.pinata.cloud";
 const PINATA_GATEWAY =
   process.env.NEXT_PUBLIC_PINATA_GATEWAY || "https://gateway.pinata.cloud";
 
-/**
- * Upload JSON metadata ke Pinata IPFS
- */
-export async function uploadMetadataToPinata(metadata: Record<string, unknown>) {
+async function pinataRequest(endpoint: string, options: RequestInit) {
   const jwt = process.env.PINATA_JWT;
   if (!jwt) {
     throw new Error("PINATA_JWT tidak ditemukan di environment variables");
   }
 
-  const response = await fetch(`${PINATA_API_URL}/pinning/pinJSONToIPFS`, {
-    method: "POST",
+  const response = await fetch(`${PINATA_API_URL}${endpoint}`, {
+    ...options,
     headers: {
-      "Content-Type": "application/json",
+      ...options.headers,
       Authorization: `Bearer ${jwt}`,
     },
-    body: JSON.stringify(metadata),
   });
 
   if (!response.ok) {
-    throw new Error(`Gagal upload ke Pinata: ${response.statusText}`);
+    throw new Error(`Gagal upload ke Pinata (${endpoint}): ${response.statusText}`);
   }
 
   const data = await response.json();
@@ -33,35 +29,29 @@ export async function uploadMetadataToPinata(metadata: Record<string, unknown>) 
 }
 
 /**
+ * Upload JSON metadata ke Pinata IPFS
+ */
+export async function uploadMetadataToPinata(metadata: Record<string, unknown>) {
+  return pinataRequest("/pinning/pinJSONToIPFS", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(metadata),
+  });
+}
+
+/**
  * Upload file gambar ke Pinata IPFS
  */
 export async function uploadImageToPinata(file: File) {
-  const jwt = process.env.PINATA_JWT;
-  if (!jwt) {
-    throw new Error("PINATA_JWT tidak ditemukan di environment variables");
-  }
-
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await fetch(`${PINATA_API_URL}/pinning/pinFileToIPFS`, {
+  return pinataRequest("/pinning/pinFileToIPFS", {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${jwt}`,
-    },
     body: formData,
   });
-
-  if (!response.ok) {
-    throw new Error(`Gagal upload gambar ke Pinata: ${response.statusText}`);
-  }
-
-  const data = await response.json();
-  return {
-    ipfsHash: data.IpfsHash,
-    uri: `ipfs://${data.IpfsHash}`,
-    gatewayUrl: `${PINATA_GATEWAY}/ipfs/${data.IpfsHash}`,
-  };
 }
 
 /**
@@ -120,6 +110,42 @@ export function generateRevokedMetadata(data: {
       { trait_type: "Tahun Lulus", value: data.tahunLulus },
       { trait_type: "Status", value: "Dibatalkan" },
     ],
+    properties: {
+      files: [
+        {
+          uri: "", // Akan diisi saat eksekusi
+          type: "image/png",
+        },
+      ],
+      category: "image",
+    },
   };
+}
+
+import { generateCertificateImageBuffer } from "./certificate-image";
+
+/**
+ * Helper terpusat untuk men-generate gambar sertifikat PNG lalu mengunggahnya ke Pinata.
+ * Ini mengurangi duplikasi kode (Blob/File conversion) di berbagai API Routes.
+ */
+export async function generateAndUploadCertificateImage(user: {
+  nama: string;
+  nim: string;
+  prodi?: string | null;
+  angkatan?: string | null;
+}, status: "MINTED" | "REVOKED" = "MINTED") {
+  const imageBuffer = await generateCertificateImageBuffer({
+    nama: user.nama,
+    nim: user.nim,
+    prodi: user.prodi || "Informatika",
+    tahunLulus: user.angkatan || "2026",
+    status,
+  });
+
+  const imageBlob = new Blob([imageBuffer], { type: "image/png" });
+  const filename = status === "REVOKED" ? `ijazah-revoked-${user.nim}.png` : `ijazah-${user.nim}.png`;
+  const imageFile = new File([imageBlob], filename, { type: "image/png" });
+
+  return uploadImageToPinata(imageFile);
 }
 

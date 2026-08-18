@@ -62,9 +62,9 @@ export async function generateCertificateImageBuffer(data: {
           <div
             style={{
               display: "flex",
-              width: "112px",
-              height: "112px",
-              marginBottom: "32px",
+              width: "84px",
+              height: "84px",
+              marginBottom: "24px",
               zIndex: 10,
             }}
           >
@@ -91,7 +91,7 @@ export async function generateCertificateImageBuffer(data: {
               <h3
                 style={{
                   color: "#111827", // text-gray-900
-                  fontSize: "30px",
+                  fontSize: "24px",
                   fontWeight: "bold",
                   textTransform: "uppercase",
                   letterSpacing: "0.2em",
@@ -103,12 +103,12 @@ export async function generateCertificateImageBuffer(data: {
               <p
                 style={{
                   color: "#6B7280", // text-gray-500
-                  fontSize: "16px",
+                  fontSize: "12px",
                   fontWeight: 500,
-                  marginTop: "8px",
+                  marginTop: "6px",
                   textTransform: "uppercase",
                   letterSpacing: "0.1em",
-                  margin: "8px 0 0 0",
+                  margin: "6px 0 0 0",
                 }}
               >
                 Sertifikat Ijazah Kelulusan
@@ -121,21 +121,21 @@ export async function generateCertificateImageBuffer(data: {
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                paddingTop: "24px",
-                paddingBottom: "24px",
-                marginTop: "24px",
-                marginBottom: "24px",
+                paddingTop: "16px",
+                paddingBottom: "16px",
+                marginTop: "16px",
+                marginBottom: "16px",
                 borderTop: "1px dashed #E5E7EB",
                 borderBottom: "1px dashed #E5E7EB",
                 width: "100%",
               }}
             >
-              <p style={{ color: "#6B7280", fontSize: "14px", fontStyle: "italic", margin: "0 0 16px 0" }}>
+              <p style={{ color: "#6B7280", fontSize: "12px", fontStyle: "italic", margin: "0 0 12px 0" }}>
                 Diberikan Kepada
               </p>
               <h2
                 style={{
-                  fontSize: "48px",
+                  fontSize: "36px",
                   color: "#111827",
                   fontWeight: "bold",
                   margin: 0,
@@ -148,10 +148,10 @@ export async function generateCertificateImageBuffer(data: {
                 style={{
                   color: "#4B5563", // text-gray-600
                   fontFamily: "monospace",
-                  fontSize: "16px",
+                  fontSize: "12px",
                   fontWeight: 500,
-                  marginTop: "12px",
-                  margin: "12px 0 0 0",
+                  marginTop: "8px",
+                  margin: "8px 0 0 0",
                 }}
               >
                 NIM: {data.nim}
@@ -160,7 +160,7 @@ export async function generateCertificateImageBuffer(data: {
 
             {/* Details */}
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-              <p style={{ color: "#6B7280", fontSize: "14px", textAlign: "center", margin: "0 0 8px 0" }}>
+              <p style={{ color: "#6B7280", fontSize: "12px", textAlign: "center", margin: "0 0 6px 0" }}>
                 Telah menyelesaikan semua persyaratan akademik<br />pada Program Studi:
               </p>
               <p
@@ -169,13 +169,13 @@ export async function generateCertificateImageBuffer(data: {
                   fontWeight: "bold",
                   textTransform: "uppercase",
                   letterSpacing: "0.15em",
-                  fontSize: "20px",
+                  fontSize: "16px",
                   margin: 0,
                 }}
               >
                 {data.prodi || "INFORMATIKA"}
               </p>
-              <p style={{ color: "#6B7280", fontSize: "14px", fontWeight: 500, marginTop: "12px", margin: "12px 0 0 0" }}>
+              <p style={{ color: "#6B7280", fontSize: "12px", fontWeight: 500, marginTop: "8px", margin: "8px 0 0 0" }}>
                 Tahun Kelulusan: {data.tahunLulus || "2024"}
               </p>
             </div>
@@ -199,14 +199,14 @@ export async function generateCertificateImageBuffer(data: {
               <div
                 style={{
                   color: "rgba(239, 68, 68, 0.25)", // red-500 with low opacity
-                  fontSize: "140px",
+                  fontSize: "100px",
                   fontWeight: 900,
                   textTransform: "uppercase",
                   letterSpacing: "0.2em",
                   transform: "rotate(-30deg)",
-                  border: "12px solid rgba(239, 68, 68, 0.25)",
-                  padding: "24px 64px",
-                  borderRadius: "24px",
+                  border: "8px solid rgba(239, 68, 68, 0.25)",
+                  padding: "16px 48px",
+                  borderRadius: "16px",
                   display: "flex",
                 }}
               >
@@ -218,8 +218,8 @@ export async function generateCertificateImageBuffer(data: {
       </div>
     ),
     {
-      width: 1131,
-      height: 800, // aspect ratio 1.414 (1131 / 800)
+      width: 848,
+      height: 600, // aspect ratio 1.414 (848 / 600)
     }
   );
 

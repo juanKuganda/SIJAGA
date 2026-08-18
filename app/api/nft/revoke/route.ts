@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyToken } from "@/lib/auth";
 import { revokeNftSchema } from "@/lib/validation";
-import { generateRevokedMetadata, uploadMetadataToPinata, uploadImageToPinata } from "@/lib/pinata";
+import { generateRevokedMetadata, uploadMetadataToPinata, generateAndUploadCertificateImage } from "@/lib/pinata";
 import { revokeSoulboundNFT } from "@/lib/metaplex";
-import { generateCertificateImageBuffer } from "@/lib/certificate-image";
+import { createAuditLog } from "@/lib/audit";
 
 
 export async function POST(request: NextRequest) {
@@ -102,17 +102,8 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // 1. Generate Revoked PNG Image
-    const revokedImageBuffer = await generateCertificateImageBuffer({
-      nama: user.nama,
-      nim: user.nim,
-      prodi: user.prodi || "Informatika",
-      tahunLulus: user.angkatan || "2026",
-      status: "REVOKED",
-    });
-    const imageBlob = new Blob([revokedImageBuffer], { type: "image/png" });
-    const imageFile = new File([imageBlob], `ijazah-revoked-${user.nim}.png`, { type: "image/png" });
-    const { gatewayUrl: revokedImageUrl } = await uploadImageToPinata(imageFile);
+    // 1. Generate Revoked PNG Image & Upload
+    const { gatewayUrl: revokedImageUrl } = await generateAndUploadCertificateImage(user, "REVOKED");
 
     // 2. Generate Revoked Metadata with image
     const revokedMetadata = generateRevokedMetadata({
@@ -121,9 +112,10 @@ export async function POST(request: NextRequest) {
     });
     // Override image with IPFS-hosted revoked SVG
     revokedMetadata.image = revokedImageUrl;
+    revokedMetadata.properties.files[0].uri = revokedImageUrl;
 
     // 3. Upload Revoked Metadata to IPFS via Pinata
-    const { uri: newMetadataUri } = await uploadMetadataToPinata(revokedMetadata);
+    const { gatewayUrl: newMetadataUri } = await uploadMetadataToPinata(revokedMetadata);
 
     // 4. Eksekusi On-Chain Revoke (Update URI)
     let onChainWarning: string | null = null;
@@ -159,14 +151,12 @@ export async function POST(request: NextRequest) {
     });
 
     // Buat audit log — userId merujuk ke mahasiswa, bukan admin
-    await prisma.auditLog.create({
-      data: {
-        userId: userId,
-        action: "NFT_REVOKE",
-        detail: `NFT ijazah di-revoke untuk ${user.nama} (${user.nim}) oleh admin ${payload.userId}. Alasan: ${reason}`,
-        ipAddress: request.headers.get("x-forwarded-for") || "unknown",
-      },
-    });
+    await createAuditLog(
+      userId,
+      "NFT_REVOKE",
+      `NFT ijazah di-revoke untuk ${user.nama} (${user.nim}) oleh admin ${payload.userId}. Alasan: ${reason}`,
+      request.headers.get("x-forwarded-for") || "unknown"
+    );
 
     return NextResponse.json({
       success: true,
