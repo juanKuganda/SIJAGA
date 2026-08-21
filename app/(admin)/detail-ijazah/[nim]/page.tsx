@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import CopyBlinkLink from "./CopyBlinkLink";
 import EditButton from "./EditButton";
+import { headers } from "next/headers";
 
 export default async function DetailIjazahPage({
   params,
@@ -25,7 +26,10 @@ export default async function DetailIjazahPage({
     notFound();
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const headersList = await headers();
+  const host = headersList.get("host") || "localhost:3000";
+  const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || `${protocol}://${host}`;
   const actionUrl = `${appUrl}/api/actions/claim?nim=${user.nim}`;
   const blinkLink = `https://dial.to/?action=solana-action:${encodeURIComponent(
     actionUrl
