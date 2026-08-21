@@ -4,6 +4,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { authClient } from "@/lib/auth/client";
 import {
   LayoutDashboard,
   Users,
@@ -38,6 +39,12 @@ interface User {
   role: string;
 }
 
+interface AdminStats {
+  walletPending: number;
+  readyToMint: number;
+  ijazahRevoked: number;
+}
+
 const navItems = [
   {
     href: "/dashboard",
@@ -70,19 +77,25 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<AdminStats | null>(null);
+  const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
     fetch("/api/auth/me")
       .then((res) => res.json())
       .then((data) => {
         if (data.user) {
+          if (data.user.role !== "ADMIN") {
+            router.push("/profil");
+            return;
+          }
           setUser(data.user);
         } else {
           router.push("/login");
         }
       })
-      .catch(() => router.push("/login"));
+      .catch(() => router.push("/login"))
+      .finally(() => setIsChecking(false));
 
     fetch("/api/admin/stats")
       .then((res) => res.json())
@@ -95,9 +108,17 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   }, [router]);
 
   const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
+    await authClient.signOut();
     router.push("/login");
   };
+
+  if (isChecking || !user) {
+    return (
+      <div className="min-h-screen bg-slate-50/50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-muted border-t-red-600" />
+      </div>
+    );
+  }
 
   return (
     <SidebarProvider defaultOpen={true}>

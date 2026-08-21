@@ -14,8 +14,17 @@ async function main() {
 
   console.log("🌱 Mulai seeding database & Neon Auth...");
 
+  interface SeedUserData {
+    nama: string;
+    nim: string;
+    email: string;
+    password: string;
+    prodi: string;
+    angkatan?: string;
+  }
+
   // Fungsi helper untuk register user ke Neon Auth dan simpan ke Prisma
-  async function seedUser(data: any, role: "ADMIN" | "MAHASISWA") {
+  async function seedUser(data: SeedUserData, role: "ADMIN" | "MAHASISWA") {
     let authUserId: string;
     
     try {
@@ -29,10 +38,11 @@ async function main() {
         return null;
       }
       authUserId = response.user.id;
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Jika email sudah ada di Neon Auth, kita tidak dapat seed dengan mudah tanpa ID-nya.
       // Anda bisa membersihkan Neon Auth console manual jika ini terjadi.
-      console.error(`Gagal membuat akun ${data.email} di Neon Auth. Pesan:`, err.message);
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      console.error(`Gagal membuat akun ${data.email} di Neon Auth. Pesan:`, errorMessage);
       console.error(`(HINT: Hapus akun ${data.email} dari dashboard Neon Auth Anda terlebih dahulu)`);
       return null;
     }

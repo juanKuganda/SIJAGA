@@ -76,6 +76,7 @@ export default function AiChatBubble() {
     if (!question || isLoading) return;
 
     const userMsg: Message = {
+      // eslint-disable-next-line react-hooks/purity
       id: `user-${Date.now()}`,
       role: "user",
       content: question,
@@ -101,6 +102,7 @@ export default function AiChatBubble() {
       const data = await res.json();
 
       const assistantMsg: Message = {
+        // eslint-disable-next-line react-hooks/purity
         id: `assistant-${Date.now()}`,
         role: "assistant",
         content:
@@ -115,6 +117,7 @@ export default function AiChatBubble() {
       setMessages((prev) => [
         ...prev,
         {
+          // eslint-disable-next-line react-hooks/purity
           id: `error-${Date.now()}`,
           role: "assistant",
           content:
