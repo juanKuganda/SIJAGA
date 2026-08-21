@@ -5,4 +5,8 @@ export const auth = createNeonAuth({
   cookies: {
     secret: process.env.NEON_AUTH_COOKIE_SECRET!,
   },
+  trustedOrigins: [
+    "https://sijaga-seven.vercel.app",
+    ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : [])
+  ],
 });
