@@ -3,6 +3,7 @@
 import { ReactNode, useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import { authClient } from "@/lib/auth/client";
 import {
   User as UserIcon,
   Wallet,
@@ -84,7 +85,7 @@ export default function MahasiswaLayout({ children }: { children: ReactNode }) {
   }, [router]);
 
   const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
+    await authClient.signOut();
     router.push("/login");
   };
 
