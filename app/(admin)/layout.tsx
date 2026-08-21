@@ -78,7 +78,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       .then((data) => {
         if (data.user) {
           if (data.user.role !== "ADMIN") {
-            router.push("/mahasiswa");
+            router.push("/profil");
             return;
           }
           setUser(data.user);

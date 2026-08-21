@@ -11,6 +11,9 @@ export const config = {
     '/dashboard/:path*',
     '/account/:path*',
     '/admin/:path*',
-    '/mahasiswa/:path*',
+    '/profil/:path*',
+    '/wallet/:path*',
+    '/consent/:path*',
+    '/ijazah/:path*',
   ],
 };

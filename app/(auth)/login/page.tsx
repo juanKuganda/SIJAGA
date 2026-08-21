@@ -63,11 +63,11 @@ function LoginForm() {
         if (user.role === "ADMIN") {
           router.push("/dashboard");
         } else {
-          router.push("/mahasiswa");
+          router.push("/profil");
         }
       } else {
         // Fallback jika fetch profile gagal
-        router.push("/mahasiswa");
+        router.push("/profil");
       }
     } catch {
       setError("Terjadi kesalahan. Silakan coba lagi.");
