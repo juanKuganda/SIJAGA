@@ -11,5 +11,6 @@ export const config = {
     '/dashboard/:path*',
     '/account/:path*',
     '/admin/:path*',
+    '/mahasiswa/:path*',
   ],
 };

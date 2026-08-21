@@ -56,7 +56,19 @@ function LoginForm() {
         return;
       }
 
-      router.push("/dashboard"); // Better Auth will redirect but we push for fallback
+      // Ambil profile dari Prisma untuk menentukan role
+      const profileRes = await fetch("/api/auth/me");
+      if (profileRes.ok) {
+        const { user } = await profileRes.json();
+        if (user.role === "ADMIN") {
+          router.push("/dashboard");
+        } else {
+          router.push("/mahasiswa");
+        }
+      } else {
+        // Fallback jika fetch profile gagal
+        router.push("/mahasiswa");
+      }
     } catch {
       setError("Terjadi kesalahan. Silakan coba lagi.");
     } finally {

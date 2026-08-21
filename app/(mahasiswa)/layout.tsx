@@ -69,6 +69,10 @@ export default function MahasiswaLayout({ children }: { children: ReactNode }) {
       .then((res) => res.json())
       .then((data) => {
         if (data.user) {
+          if (data.user.role === "ADMIN") {
+            router.push("/dashboard");
+            return;
+          }
           setUser(data.user);
         } else {
           router.push("/login");
