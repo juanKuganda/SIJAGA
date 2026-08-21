@@ -63,6 +63,7 @@ export default function MahasiswaLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
+  const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -78,13 +79,22 @@ export default function MahasiswaLayout({ children }: { children: ReactNode }) {
           router.push("/login");
         }
       })
-      .catch(() => router.push("/login"));
+      .catch(() => router.push("/login"))
+      .finally(() => setIsChecking(false));
   }, [router]);
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
   };
+
+  if (isChecking || !user) {
+    return (
+      <div className="min-h-screen bg-slate-50/50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-muted border-t-red-600" />
+      </div>
+    );
+  }
 
   return (
     <SidebarProvider defaultOpen={true}>

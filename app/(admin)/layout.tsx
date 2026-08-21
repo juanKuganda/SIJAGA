@@ -71,6 +71,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [stats, setStats] = useState<any>(null);
+  const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -86,7 +87,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           router.push("/login");
         }
       })
-      .catch(() => router.push("/login"));
+      .catch(() => router.push("/login"))
+      .finally(() => setIsChecking(false));
 
     fetch("/api/admin/stats")
       .then((res) => res.json())
@@ -102,6 +104,14 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
   };
+
+  if (isChecking || !user) {
+    return (
+      <div className="min-h-screen bg-slate-50/50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-muted border-t-red-600" />
+      </div>
+    );
+  }
 
   return (
     <SidebarProvider defaultOpen={true}>

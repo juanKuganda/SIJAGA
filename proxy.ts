@@ -15,5 +15,9 @@ export const config = {
     '/wallet/:path*',
     '/consent/:path*',
     '/ijazah/:path*',
+    '/terbitkan/:path*',
+    '/ocr-scan/:path*',
+    '/revoke/:path*',
+    '/mahasiswa/:path*',
   ],
 };
