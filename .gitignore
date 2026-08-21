@@ -31,8 +31,17 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
-.env*
+.env
+.env.local
+.env.*
+!.env.example
 private.md
+
+# agent metadata
+.paul/
+.claude/
+.fallow/
+.impeccable/
 
 # vercel
 .vercel
@@ -40,3 +49,15 @@ private.md
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# prisma
+prisma/dev.db
+prisma/dev.db-journal
+
+projects/
+
+# editor and mcp configs
+/.vscode
+/.cursor
+/.mcp.json
+/.gemini

@@ -1,0 +1,115 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String    @id @default(cuid())
+  nama        String
+  nim         String    @unique
+  email       String    @unique
+  password    String    // bcrypt hash
+  role        Role      @default(MAHASISWA)
+  prodi       String?
+  angkatan    String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Consent fields (UU PDP compliance)
+  dataConsent        Boolean   @default(false)
+  consentGivenAt     DateTime?
+  consentIpAddress   String?   // IP saat consent diberikan (bukti hukum)
+  consentVersion     String?   // versi teks agreement (e.g. "v1.0")
+
+  // Right to be Forgotten (UU PDP)
+  dataDeletedAt      DateTime? // null = aktif, ada tanggal = PII sudah dihapus
+  dataDeleteNote     String?
+
+  wallet      Wallet?
+  certificate Certificate?
+  auditLogs   AuditLog[]
+}
+
+model Wallet {
+  id             String        @id @default(cuid())
+  userId         String        @unique
+  walletAddress  String        @unique
+  status         WalletStatus  @default(PENDING)
+  verifiedAt     DateTime?
+  verifiedBy     String?
+  createdAt      DateTime      @default(now())
+
+  user           User          @relation(fields: [userId], references: [id])
+}
+
+model Certificate {
+  id             String      @id @default(cuid())
+  userId         String      @unique
+  nftAddress     String?     @unique   // alamat NFT di Solana
+  metadataUri    String?               // link IPFS (Pinata gateway)
+  txSignature    String?               // transaction hash
+  status         CertStatus  @default(NOT_ISSUED)
+  issuedAt       DateTime?
+  issuedBy       String?               // wallet admin
+  claimedAt      DateTime?
+  revokedAt      DateTime?
+  revokedBy      String?               // admin yang merevoke
+  revokeReason   String?               // alasan revoke
+  createdAt      DateTime    @default(now())
+
+  // Two-tier verification fields (Privacy Architecture)
+  dataHash       String?     // SHA256 hash disimpan juga di metadata IPFS
+  dataSalt       String?     // salt unik per mahasiswa (JANGAN taruh di IPFS)
+
+  user           User        @relation(fields: [userId], references: [id])
+}
+
+model CertificateBackup {
+  id             String    @id @default(cuid())
+  certificateId  String
+  userId         String
+  backupData     String    // JSON string dari semua data sertifikat
+  nftAddress     String?
+  metadataUri    String?
+  txSignature    String?
+  reason         String?   // alasan backup (revoke, recovery, manual, etc)
+  createdAt      DateTime  @default(now())
+  createdBy      String    // admin yang membuat backup
+  usedAt         DateTime? // waktu backup digunakan untuk recovery
+  usedBy         String?   // admin yang menggunakan backup untuk recovery
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  detail    String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+enum Role {
+  ADMIN
+  MAHASISWA
+}
+
+enum WalletStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum CertStatus {
+  NOT_ISSUED
+  MINTED
+  CLAIMED
+  REVOKED
+}

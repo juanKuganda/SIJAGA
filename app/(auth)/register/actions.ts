@@ -1,0 +1,60 @@
+'use server';
+
+import { auth } from '@/lib/auth/server';
+import { prisma } from '@/lib/prisma';
+import { redirect } from 'next/navigation';
+
+export async function registerWithEmail(
+  _prevState: { error: string } | null,
+  formData: FormData
+) {
+  const email = formData.get('email') as string;
+  const name = formData.get('nama') as string;
+  const nim = formData.get('nim') as string;
+  const prodi = formData.get('prodi') as string;
+  const angkatan = formData.get('angkatan') as string;
+  const password = formData.get('password') as string;
+  const confirmPassword = formData.get('confirmPassword') as string;
+
+  if (password !== confirmPassword) {
+    return { error: 'Password dan konfirmasi password tidak cocok' };
+  }
+
+  // Cek apakah email/NIM sudah terdaftar
+  const existingUser = await prisma.user.findFirst({
+    where: {
+      OR: [{ email }, { nim }]
+    }
+  });
+
+  if (existingUser) {
+    return { error: 'Email atau NIM sudah terdaftar' };
+  }
+
+  // Register ke Neon Auth
+  const { data, error } = await auth.signUp.email({
+    email,
+    name,
+    password,
+  });
+
+  if (error) {
+    return { error: error.message || 'Gagal membuat akun' };
+  }
+
+  // Buat User di Prisma DB
+  await prisma.user.create({
+    data: {
+      id: data?.user?.id, // Gunakan ID yang sama dengan Neon Auth jika ada, atau biarkan default cuid()
+      nama: name,
+      email,
+      nim,
+      prodi,
+      angkatan,
+      password: '', // Neon Auth yang handle password asli
+      role: 'MAHASISWA',
+    },
+  });
+
+  redirect('/login?registered=true');
+}

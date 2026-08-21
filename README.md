@@ -1,36 +1,131 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🛡️ SIJAGA
 
-## Getting Started
+**Sistem Jaminan Autentikasi Gelar Akademik**
 
-First, run the development server:
+SIJAGA adalah platform verifikasi ijazah anti-pemalsuan tingkat enterprise untuk **Universitas Tadulako**, memanfaatkan teknologi **Soulbound NFT** pada blockchain Solana dan penyimpanan terdesentralisasi (IPFS) yang **100% patuh terhadap UU PDP** (Pelindungan Data Pribadi).
+
+Tugas Akhir S1 Informatika — Universitas Tadulako.
+
+---
+
+## ✨ Fitur Utama
+
+- **Soulbound NFT Certificates**: Ijazah di-minting sebagai aset digital on-chain yang tidak dapat ditransfer atau diperjualbelikan (Soulbound).
+- **2-Tier Privacy & UU PDP Compliance**: Tidak ada *Personally Identifiable Information* (PII) di public ledger/IPFS. PII (Nama, NIM) tetap aman di database lokal, sedangkan blockchain hanya menyimpan enkripsi *SHA-256 dataHash*. Memiliki fitur **Right to be Forgotten** (hapus PII).
+- **Visual Revocation**: Ijazah palsu/bermasalah dapat dibatalkan secara visual, memperbarui metadata on-chain menjadi *watermark* "DIBATALKAN".
+- **Disaster Recovery**: Backup periodik otomatis dan sistem pemulihan (*restore*) sertifikat terintegrasi ke dalam UI admin.
+- **Solana Blinks Integration**: Mahasiswa dapat melihat preview dan melakukan klaim Ijazah langsung via platform pendukung Blinks.
+- **Bento Design System**: UI modern, *clean*, dan responsif berbasis "Modern Enterprise Bento" grid architecture.
+
+---
+
+## 🛠️ Tech Stack
+
+### Core Frameworks
+- **Frontend / Backend**: [Next.js 15 App Router](https://nextjs.org/)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Database**: PostgreSQL (Serverless) via [Neon](https://neon.tech) & [Prisma ORM](https://www.prisma.io/)
+- **Authentication**: [Neon Managed Better Auth](https://neon.tech)
+
+### Web3 & Blockchain
+- **Network**: Solana Devnet
+- **SDK**: Solana Web3.js v1 & [@metaplex-foundation/umi](https://developers.metaplex.com/umi)
+- **Storage**: IPFS via [Pinata Cloud](https://www.pinata.cloud/)
+
+### UI & Styling
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
+- **Components**: [shadcn/ui](https://ui.shadcn.com/)
+- **Animations**: GSAP & Lenis (Smooth Scroll)
+- **Image Generation**: Satori (Dynamic Certificate PNGs)
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 18+
+- `pnpm` (direkomendasikan)
+- [Phantom Wallet](https://phantom.app/) extension (untuk testing klaim NFT)
+
+### Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+# 1. Clone repository
+git clone <repository-url>
+cd sijaga
+
+# 2. Install dependencies
+pnpm install
+
+# 3. Setup environment variables
+cp .env.example .env
+# Buka .env dan isi dengan credential Anda (RPC Solana, Pinata JWT, dll)
+
+# 4. Push database schema ke Neon PostgreSQL
+npx prisma db push
+
+# 5. Seed database & Registrasi akun test ke Neon Auth
+npx prisma db seed
+
+# 6. (Jika Error saat Seeding Admin) Eksekusi script pembuatan admin
+# Cukup daftar manual melalui UI /register atau buat script khusus
+# untuk akun Admin karena seed otomatis kadang terblokir CORS lokal.
+
+# 7. Jalankan development server
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Aplikasi akan berjalan di `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Login Credentials (Test Data)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Gunakan kredensial berikut untuk login ke dalam sistem (hasil dari script `seed.ts`):
 
-## Learn More
+| Role | Email Login | Password | Keterangan |
+|------|-------------|----------|------------|
+| 👨‍💼 **Admin** | `admin@sijaga.ac.id` | `admin123` | Akses penuh dashboard admin |
+| 🎓 **Mahasiswa** | `budi@student.untad.ac.id` | `mahasiswa123` | Simulasi mhs dengan wallet PENDING |
+| 🎓 **Mahasiswa** | `siti@student.untad.ac.id` | `mahasiswa123` | Simulasi mhs dengan wallet VERIFIED |
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🏗️ Project Architecture
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```text
+sijaga/
+├── app/                    # Next.js App Router (13 Pages + 20 API Routes)
+│   ├── (auth)/             # Login & Registration flows
+│   ├── (admin)/            # Admin Dashboard, Revoke, Issuance, Data Management
+│   ├── (mahasiswa)/        # Student Portal (Consent, Wallet, Certificate status)
+│   ├── api/                # REST API & Solana Actions endpoints
+│   └── page.tsx            # Public verification & landing page
+├── components/             # Custom React components & GSAP animations
+│   └── ui/                 # 26 shadcn/ui generic components
+├── lib/                    # Core business logic layer
+│   ├── auth.ts             # Adapter untuk Neon Managed Better Auth
+│   ├── auth/               # Konfigurasi server & client Neon Auth
+│   ├── crypto.ts           # SHA-256 data hashing (Privacy)
+│   ├── metaplex.ts         # Solana NFT minting, revoking, restoring
+│   ├── pinata.ts           # IPFS orchestration & metadata JSON gen
+│   └── certificate-image.tsx # Satori dynamic image generation
+├── prisma/                 # SQLite database schemas and seeders
+└── DESIGN.md               # UI/UX design specifications
+```
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🔐 Arsitektur Privasi & UU PDP
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+SIJAGA didesain **privasi-pertama** untuk memenuhi standardisasi Undang-Undang Pelindungan Data Pribadi (UU PDP):
+
+1. **Consent Gate**: Mahasiswa wajib membaca dan menyetujui kesepakatan penggunaan data publik sebelum ijazahnya dapat diterbitkan ke blockchain.
+2. **On-Chain Anonymity**: Metadata NFT di IPFS tidak mengandung nama atau NIM. Hanya menyimpan informasi akademik umum (Tahun Lulus, Program Studi) dan sebuah *cryptographic data hash*.
+3. **2-Tier Verification**: Sistem Web3 membaca *hash* dari blockchain, lalu mencocokkannya secara lokal dengan nama & NIM via algoritma kriptografi (`SHA256`) menggunakan *unique salt* yang tersimpan aman di database server tertutup.
+4. **Right to be Forgotten (Hak untuk Dilupakan)**: Admin memiliki instrumen untuk menghapus data PII mahasiswa secara permanen dari server. Data *salt* dibuang dari sistem, membuat algoritma *hash* di blockchain/IPFS terputus secara matematis (tidak bisa lagi diverifikasi atau direkayasa balik).
+
+---
+
+## 📜 Lisensi & Copyright
+
+Tugas Akhir S1 Informatika — Universitas Tadulako.
+Dibuat dengan ❤️ untuk sistem pendidikan yang lebih modern, transparan, dan aman.
