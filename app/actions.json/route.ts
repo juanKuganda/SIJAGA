@@ -11,8 +11,8 @@ export async function GET() {
     {
       rules: [
         {
-          pathPattern: "/api/actions/claim",
-          apiPath: "/api/actions/claim",
+          pathPattern: "/api/actions/claim**",
+          apiPath: "/api/actions/claim**",
         },
       ],
     },

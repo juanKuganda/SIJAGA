@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
     if (!nim) {
       return NextResponse.json(
         {
+          type: "action",
           icon: `${appUrl}/web-app-manifest-512x512.png`,
           title: "SIJAGA — Klaim Ijazah Digital",
           description:
@@ -76,6 +77,7 @@ export async function GET(request: NextRequest) {
     if (!user) {
       return NextResponse.json(
         {
+          type: "action",
           icon: `${appUrl}/web-app-manifest-512x512.png`,
           title: "Mahasiswa Tidak Ditemukan",
           description: `Tidak ditemukan mahasiswa dengan NIM: ${nim}`,
@@ -90,6 +92,7 @@ export async function GET(request: NextRequest) {
     if (!user.certificate || user.certificate.status === "NOT_ISSUED") {
       return NextResponse.json(
         {
+          type: "action",
           icon: `${appUrl}/web-app-manifest-512x512.png`,
           title: `Ijazah Belum Diterbitkan`,
           description: `Ijazah untuk ${user.nama} belum diterbitkan oleh universitas.`,
@@ -103,6 +106,7 @@ export async function GET(request: NextRequest) {
     if (user.certificate.status === "CLAIMED") {
       return NextResponse.json(
         {
+          type: "action",
           icon: `${appUrl}/web-app-manifest-512x512.png`,
           title: `Ijazah S1 — ${user.nama}`,
           description: `Ijazah Sarjana ${user.prodi || "Informatika"}, Universitas Tadulako. Ijazah ini sudah diklaim.`,
@@ -116,6 +120,7 @@ export async function GET(request: NextRequest) {
     if (user.certificate.status === "REVOKED") {
       return NextResponse.json(
         {
+          type: "action",
           icon: `${appUrl}/web-app-manifest-512x512.png`,
           title: `Ijazah DIREVOKE — ${user.nama}`,
           description: `Ijazah ini telah dicabut. Alasan: ${user.certificate.revokeReason || "Tidak tersedia"}`,
@@ -129,6 +134,7 @@ export async function GET(request: NextRequest) {
     // Status MINTED — siap diklaim
     return NextResponse.json(
       {
+        type: "action",
         icon: `${appUrl}/web-app-manifest-512x512.png`,
         title: `Ijazah S1 — ${user.nama}`,
         description: `Ijazah Sarjana ${user.prodi || "Informatika"}, Universitas Tadulako. NIM: ${user.nim}. Klik untuk mengklaim ijazah digital Anda di blockchain Solana.`,
