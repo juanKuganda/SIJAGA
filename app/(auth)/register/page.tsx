@@ -34,8 +34,12 @@ const PRODI_OPTIONS = [
   "Statistika",
 ];
 
+import { useActionState } from "react";
+import { registerWithEmail } from "./actions";
+
 export default function RegisterPage() {
-  const router = useRouter();
+  const [state, formAction, isPending] = useActionState(registerWithEmail, null);
+
   const [formData, setFormData] = useState({
     nama: "",
     nim: "",
@@ -47,8 +51,6 @@ export default function RegisterPage() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -61,46 +63,6 @@ export default function RegisterPage() {
       ...prev,
       [e.target.name]: value,
     }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-
-    if (formData.password !== formData.confirmPassword) {
-      setError("Password dan konfirmasi password tidak cocok");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nama: formData.nama,
-          nim: formData.nim,
-          email: formData.email,
-          password: formData.password,
-          prodi: formData.prodi,
-          angkatan: formData.angkatan,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || "Registrasi gagal");
-        return;
-      }
-
-      router.push("/login?registered=true");
-    } catch {
-      setError("Terjadi kesalahan. Silakan coba lagi.");
-    } finally {
-      setLoading(false);
-    }
   };
 
   return (
@@ -168,14 +130,14 @@ export default function RegisterPage() {
             </p>
           </div>
 
-          {error && (
+          {state?.error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
               <XCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-              <p className="text-sm font-medium text-red-800 leading-relaxed">{error}</p>
+              <p className="text-sm font-medium text-red-800 leading-relaxed">{state.error}</p>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form action={formAction} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="nama" className="font-semibold">Nama Lengkap</Label>
               <Input
@@ -304,8 +266,8 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full h-12 font-bold text-base mt-2" disabled={loading}>
-              {loading ? "Memproses..." : "Daftar Sekarang"}
+            <Button type="submit" className="w-full h-12 font-bold text-base mt-2" disabled={isPending}>
+              {isPending ? "Memproses..." : "Daftar Sekarang"}
             </Button>
           </form>
 

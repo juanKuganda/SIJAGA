@@ -12,6 +12,7 @@ import {
   LogOut,
   Shield,
   Home,
+  ScanLine,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -52,6 +53,11 @@ const navItems = [
     href: "/terbitkan",
     label: "Terbitkan",
     icon: FileText,
+  },
+  {
+    href: "/ocr-scan",
+    label: "OCR Scan",
+    icon: ScanLine,
   },
   {
     href: "/revoke",

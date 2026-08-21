@@ -12,6 +12,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://sijaga.untad.ac.id"),
   title: {
     default: "SIJAGA | Sistem Jaminan Autentikasi Gelar Akademik Universitas Tadulako",
     template: "%s | SIJAGA Universitas Tadulako"

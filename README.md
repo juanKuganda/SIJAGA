@@ -24,7 +24,8 @@ Tugas Akhir S1 Informatika — Universitas Tadulako.
 ### Core Frameworks
 - **Frontend / Backend**: [Next.js 15 App Router](https://nextjs.org/)
 - **Language**: [TypeScript](https://www.typescriptlang.org/)
-- **Database**: SQLite (Dev) / PostgreSQL (Prod) via [Prisma ORM](https://www.prisma.io/)
+- **Database**: PostgreSQL (Serverless) via [Neon](https://neon.tech) & [Prisma ORM](https://www.prisma.io/)
+- **Authentication**: [Neon Managed Better Auth](https://neon.tech)
 
 ### Web3 & Blockchain
 - **Network**: Solana Devnet
@@ -60,13 +61,17 @@ pnpm install
 cp .env.example .env
 # Buka .env dan isi dengan credential Anda (RPC Solana, Pinata JWT, dll)
 
-# 4. Push database schema
+# 4. Push database schema ke Neon PostgreSQL
 npx prisma db push
 
-# 5. Seed database dengan data test (Admin & Mahasiswa dummy)
-npx tsx prisma/seed.ts
+# 5. Seed database & Registrasi akun test ke Neon Auth
+npx prisma db seed
 
-# 6. Jalankan development server
+# 6. (Jika Error saat Seeding Admin) Eksekusi script pembuatan admin
+# Cukup daftar manual melalui UI /register atau buat script khusus
+# untuk akun Admin karena seed otomatis kadang terblokir CORS lokal.
+
+# 7. Jalankan development server
 pnpm dev
 ```
 
@@ -76,11 +81,11 @@ Aplikasi akan berjalan di `http://localhost:3000`.
 
 Gunakan kredensial berikut untuk login ke dalam sistem (hasil dari script `seed.ts`):
 
-| Role | NIM/ID | Password | Keterangan |
-|------|--------|----------|------------|
-| 👨‍💼 **Admin** | `ADMIN001` | `admin123` | Akses penuh dashboard admin |
-| 🎓 **Mahasiswa** | `H071211001` | `mahasiswa123` | Simulasi mhs dengan wallet PENDING |
-| 🎓 **Mahasiswa** | `H071211002` | `mahasiswa123` | Simulasi mhs dengan wallet VERIFIED |
+| Role | Email Login | Password | Keterangan |
+|------|-------------|----------|------------|
+| 👨‍💼 **Admin** | `admin@sijaga.ac.id` | `admin123` | Akses penuh dashboard admin |
+| 🎓 **Mahasiswa** | `budi@student.untad.ac.id` | `mahasiswa123` | Simulasi mhs dengan wallet PENDING |
+| 🎓 **Mahasiswa** | `siti@student.untad.ac.id` | `mahasiswa123` | Simulasi mhs dengan wallet VERIFIED |
 
 ---
 
@@ -97,7 +102,8 @@ sijaga/
 ├── components/             # Custom React components & GSAP animations
 │   └── ui/                 # 26 shadcn/ui generic components
 ├── lib/                    # Core business logic layer
-│   ├── auth.ts             # JWT session management
+│   ├── auth.ts             # Adapter untuk Neon Managed Better Auth
+│   ├── auth/               # Konfigurasi server & client Neon Auth
 │   ├── crypto.ts           # SHA-256 data hashing (Privacy)
 │   ├── metaplex.ts         # Solana NFT minting, revoking, restoring
 │   ├── pinata.ts           # IPFS orchestration & metadata JSON gen

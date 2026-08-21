@@ -26,6 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import ScrollExpand from "@/components/ScrollExpand";
 import { useGlobalLoading } from "@/components/LoadingContext";
+import AiChatBubble from "@/components/AiChatBubble";
 
 interface VerificationResult {
   verified: boolean;
@@ -250,10 +251,15 @@ export default function HomePage() {
     if (mobileTlRef.current) {
       if (isMobileMenuOpen) {
         mobileTlRef.current.play();
+        document.body.style.overflow = "hidden";
       } else {
         mobileTlRef.current.reverse();
+        document.body.style.overflow = "";
       }
     }
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [isMobileMenuOpen]);
 
   useEffect(() => {
@@ -314,11 +320,13 @@ export default function HomePage() {
       {/* Navbar */}
       <header
         ref={headerRef}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? "py-3" : "py-6"}`}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          isScrolled && !isMobileMenuOpen ? "py-3" : "py-6"
+        }`}
       >
         <div
           className={`mx-auto flex justify-between items-center transition-all duration-300 ${
-            isScrolled
+            isScrolled && !isMobileMenuOpen
               ? "max-w-5xl bg-white/80 backdrop-blur-md rounded-full border border-zinc-200 shadow-md px-6 md:px-8 py-3"
               : "max-w-7xl bg-transparent px-6 md:px-12 py-3"
           }`}
@@ -429,9 +437,9 @@ export default function HomePage() {
         {/* Hero Section */}
         <section
           id="verification"
-          className="pt-32 pb-24 px-6 md:px-12 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-16 items-center"
+          className="pt-28 md:pt-36 pb-20 md:pb-24 px-6 md:px-8 lg:px-12 max-w-7xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-8 lg:gap-16 items-center"
         >
-          <div className="flex flex-col gap-8 max-w-2xl">
+          <div className="flex flex-col gap-6 md:gap-8 max-w-2xl">
             <div className="hero-anim inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-50 border border-red-100 w-fit">
               <Badge
                 variant="secondary"
@@ -445,7 +453,7 @@ export default function HomePage() {
               <ArrowRight className="w-3 h-3 text-red-600" />
             </div>
 
-            <h1 className="hero-anim text-[3.5rem] md:text-[4.5rem] lg:text-[5rem] font-black text-foreground leading-[1.05] tracking-tighter">
+            <h1 className="hero-anim text-[2.75rem] sm:text-5xl md:text-4xl lg:text-[4.25rem] xl:text-[5rem] font-black text-foreground leading-[1.05] tracking-tighter">
               Make your
               <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-red-400">
@@ -467,9 +475,9 @@ export default function HomePage() {
             >
               <div className="absolute inset-0 bg-red-600/5 rounded-full blur-xl group-hover:bg-red-600/10 transition-colors"></div>
               <div className="relative flex items-center bg-white border-2 border-zinc-200 rounded-full p-1.5 shadow-sm focus-within:border-red-500 focus-within:ring-4 focus-within:ring-red-500/10 transition-all">
-                <Search className="w-5 h-5 text-zinc-400 ml-4" />
-                <Input
-                  className="border-0 focus-visible:ring-0 shadow-none h-12 text-base font-medium placeholder:text-zinc-400 pl-3"
+                <Search className="size-7 text-zinc-400 ml-4 flex-shrink-0" />
+                <input
+                  className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 shadow-none h-12 text-base font-medium placeholder:text-zinc-400 pl-3"
                   placeholder="Enter Student NIM or Wallet..."
                   type="text"
                   value={wallet}
@@ -601,8 +609,8 @@ export default function HomePage() {
           </div>
 
           {/* Right Side: Beside-like Floating Cards UI */}
-          <div className="relative h-[500px] lg:h-[600px] w-full hidden md:block perspective-1000">
-            <div className="floating-card absolute top-2 right-4 w-[420px] bg-white border border-zinc-200 rounded-3xl p-6 shadow-xl transform rotate-1 hover:rotate-0 transition-transform duration-500 z-20 overflow-hidden">
+          <div className="relative h-[480px] md:h-[500px] lg:h-[600px] w-full hidden md:block perspective-1000">
+            <div className="floating-card absolute top-2 right-0 md:right-2 lg:right-4 w-full max-w-[320px] md:max-w-[340px] lg:max-w-[420px] bg-white border border-zinc-200 rounded-3xl p-5 lg:p-6 shadow-xl transform rotate-1 hover:rotate-0 transition-transform duration-500 z-20 overflow-hidden">
               {/* Scan Line Element */}
               <div className="scan-line absolute left-0 w-full h-24 bg-gradient-to-b from-transparent via-red-500/10 to-red-500/30 border-b-2 border-red-500/60 pointer-events-none z-50 blur-[1px]"></div>
               
@@ -628,7 +636,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="floating-card absolute top-[180px] right-20 w-[380px] bg-white border border-zinc-200 rounded-3xl p-6 shadow-2xl transform -rotate-2 hover:rotate-0 transition-transform duration-500 z-30">
+            <div className="floating-card absolute top-[150px] md:top-[160px] lg:top-[180px] right-2 md:right-6 lg:right-20 w-full max-w-[300px] md:max-w-[320px] lg:max-w-[380px] bg-white border border-zinc-200 rounded-3xl p-5 lg:p-6 shadow-2xl transform -rotate-2 hover:rotate-0 transition-transform duration-500 z-30">
               <div className="flex items-center gap-3 mb-2">
                 <Award className="w-5 h-5 text-foreground" />
                 <span className="font-bold text-foreground">Budi Santoso</span>
@@ -662,7 +670,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="floating-card absolute top-[360px] right-8 w-[400px] bg-neutral-900 text-white rounded-3xl p-6 shadow-2xl transform rotate-1 hover:rotate-0 transition-transform duration-500 z-10">
+            <div className="floating-card absolute top-[290px] md:top-[310px] lg:top-[360px] right-0 md:right-3 lg:right-8 w-full max-w-[310px] md:max-w-[330px] lg:max-w-[400px] bg-neutral-900 text-white rounded-3xl p-5 lg:p-6 shadow-2xl transform rotate-1 hover:rotate-0 transition-transform duration-500 z-10">
               <div className="flex items-center gap-3 mb-4">
                 <Zap className="w-5 h-5 text-red-400" />
                 <span className="font-bold">Real-time Global Validation</span>
@@ -982,6 +990,7 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+      <AiChatBubble />
     </div>
   );
 }

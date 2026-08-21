@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { authClient } from "@/lib/auth/client";
 import { Shield, ArrowLeft, Eye, EyeOff, Link as LinkIcon, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +25,7 @@ export default function LoginPage() {
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [nim, setNim] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
@@ -45,24 +46,17 @@ function LoginForm() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nim, password }),
+      const { data, error: signInError } = await authClient.signIn.email({
+        email,
+        password,
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || "Login gagal");
+      if (signInError) {
+        setError(signInError.message || "Login gagal");
         return;
       }
 
-      if (data.user.role === "ADMIN") {
-        router.push("/dashboard");
-      } else {
-        router.push("/profil");
-      }
+      router.push("/dashboard"); // Better Auth will redirect but we push for fallback
     } catch {
       setError("Terjadi kesalahan. Silakan coba lagi.");
     } finally {
@@ -139,7 +133,7 @@ function LoginForm() {
           <div className="mb-8">
             <h2 className="text-3xl font-extrabold text-foreground tracking-tight mb-2">Masuk ke Portal</h2>
             <p className="text-muted-foreground">
-              Masukkan NIM dan password untuk mengakses akun Anda
+              Masukkan Email dan password untuk mengakses akun Anda
             </p>
           </div>
 
@@ -157,14 +151,14 @@ function LoginForm() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="nim" className="font-semibold">NIM</Label>
+              <Label htmlFor="email" className="font-semibold">Email</Label>
               <Input
-                id="nim"
-                name="nim"
-                type="text"
-                placeholder="Masukkan NIM Anda"
-                value={nim}
-                onChange={(e) => setNim(e.target.value.trim().toUpperCase())}
+                id="email"
+                name="email"
+                type="email"
+                placeholder="Masukkan Email Anda"
+                value={email}
+                onChange={(e) => setEmail(e.target.value.trim().toLowerCase())}
                 required
                 className="h-11"
               />
@@ -221,8 +215,8 @@ function LoginForm() {
           <div className="mt-8 p-4 bg-muted rounded-lg border border-border">
             <p className="text-xs text-muted-foreground font-semibold mb-2">Akun Test:</p>
             <div className="space-y-1 text-xs text-muted-foreground">
-              <p>Admin: <span className="font-mono font-semibold text-foreground">ADMIN001</span> / <span className="font-mono font-semibold text-foreground">admin123</span></p>
-              <p>Mahasiswa: <span className="font-mono font-semibold text-foreground">H071211001</span> / <span className="font-mono font-semibold text-foreground">mahasiswa123</span></p>
+              <p>Admin: <span className="font-mono font-semibold text-foreground">admin@sijaga.ac.id</span> / <span className="font-mono font-semibold text-foreground">admin123</span></p>
+              <p>Mahasiswa: <span className="font-mono font-semibold text-foreground">budi@student.untad.ac.id</span> / <span className="font-mono font-semibold text-foreground">mahasiswa123</span></p>
             </div>
           </div>
         </div>

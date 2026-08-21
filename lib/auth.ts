@@ -1,107 +1,55 @@
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import { auth } from "./auth/server";
 import { prisma } from "./prisma";
 import { Role } from "@prisma/client";
-
-const JWT_SECRET: string = process.env.JWT_SECRET ?? (() => {
-  throw new Error("JWT_SECRET tidak ditemukan di environment variables. Set di .env.local");
-})();
+import { headers } from "next/headers";
 
 export interface JWTPayload {
   userId: string;
   role: Role;
   nim: string;
+  email: string;
 }
 
 /**
- * Hash password dengan bcrypt
+ * Get authenticated user data mapping to the old JWT payload format.
+ * This function seamlessly bridges Neon Auth sessions with our Prisma User table.
  */
-export async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, 10);
-}
-
-/**
- * Compare password dengan hash
- */
-export async function comparePassword(
-  password: string,
-  hash: string
-): Promise<boolean> {
-  return bcrypt.compare(password, hash);
-}
-
-/**
- * Generate JWT token
- */
-export function generateToken(payload: JWTPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: "24h" });
-}
-
-/**
- * Verify JWT token
- */
-export function verifyToken(token: string): JWTPayload | null {
+export async function getAuthUser(): Promise<JWTPayload | null> {
   try {
-    return jwt.verify(token, JWT_SECRET) as JWTPayload;
-  } catch {
-    return null;
-  }
-}
+    const { data: session } = await auth.getSession();
 
-/**
- * Login user dengan NIM dan password
- */
-export async function loginUser(nim: string, password: string) {
-  const user = await prisma.user.findUnique({
-    where: { nim },
-  });
+    if (!session?.user) {
+      return null;
+    }
 
-  if (!user) {
-    return { error: "NIM tidak ditemukan" };
-  }
+    // Fetch the detailed Prisma user to get NIM and Role
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: session.user.email },
+          { id: session.user.id }
+        ]
+      },
+      select: {
+        id: true,
+        role: true,
+        nim: true,
+        email: true,
+      }
+    });
 
-  const isValid = await comparePassword(password, user.password);
-  if (!isValid) {
-    return { error: "Password salah" };
-  }
+    if (!user) {
+      return null;
+    }
 
-  const token = generateToken({
-    userId: user.id,
-    role: user.role,
-    nim: user.nim,
-  });
-
-  return {
-    user: {
-      id: user.id,
-      nama: user.nama,
+    return {
+      userId: user.id,
+      role: user.role,
       nim: user.nim,
       email: user.email,
-      role: user.role,
-    },
-    token,
-  };
-}
-
-/**
- * Get user dari JWT token di cookie
- */
-export async function getUserFromToken(token: string) {
-  const payload = verifyToken(token);
-  if (!payload) return null;
-
-  const user = await prisma.user.findUnique({
-    where: { id: payload.userId },
-    select: {
-      id: true,
-      nama: true,
-      nim: true,
-      email: true,
-      role: true,
-      prodi: true,
-      angkatan: true,
-    },
-  });
-
-  return user;
+    };
+  } catch (error) {
+    console.error("Auth adapter error:", error);
+    return null;
+  }
 }
