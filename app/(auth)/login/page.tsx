@@ -211,14 +211,6 @@ function LoginForm() {
             </Link>
           </div>
 
-          {/* Test credentials hint */}
-          <div className="mt-8 p-4 bg-muted rounded-lg border border-border">
-            <p className="text-xs text-muted-foreground font-semibold mb-2">Akun Test:</p>
-            <div className="space-y-1 text-xs text-muted-foreground">
-              <p>Admin: <span className="font-mono font-semibold text-foreground">admin@sijaga.ac.id</span> / <span className="font-mono font-semibold text-foreground">admin123</span></p>
-              <p>Mahasiswa: <span className="font-mono font-semibold text-foreground">budi@student.untad.ac.id</span> / <span className="font-mono font-semibold text-foreground">mahasiswa123</span></p>
-            </div>
-          </div>
         </div>
       </div>
     </div>
