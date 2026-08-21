@@ -39,6 +39,12 @@ interface User {
   role: string;
 }
 
+interface AdminStats {
+  walletPending: number;
+  readyToMint: number;
+  ijazahRevoked: number;
+}
+
 const navItems = [
   {
     href: "/dashboard",
@@ -71,7 +77,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<AdminStats | null>(null);
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
