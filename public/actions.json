@@ -1,0 +1,16 @@
+{
+  "rules": [
+    {
+      "pathPattern": "/klaim/*",
+      "apiPath": "/api/actions/claim?nim=*"
+    },
+    {
+      "pathPattern": "/verifikasi/*",
+      "apiPath": "/api/actions/verify?wallet=*"
+    },
+    {
+      "pathPattern": "/api/actions/**",
+      "apiPath": "/api/actions/**"
+    }
+  ]
+}
