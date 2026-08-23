@@ -1,17 +1,18 @@
 import { NextRequest } from "next/server";
 import { Connection, clusterApiUrl } from "@solana/web3.js";
-import { ACTIONS_CORS_HEADERS, optionsResponse, actionError } from "@/lib/actions-cors";
+import { actionJson, actionOptions, appUrl } from "@/lib/solana-actions";
 import { prisma } from "@/lib/prisma";
-import { createAuditLog } from "@/lib/audit";
 
-export async function OPTIONS() {
-  return optionsResponse();
+export const OPTIONS = actionOptions;
+
+function actionError(message: string, status = 400) {
+  return actionJson({ message }, status);
 }
 
 export async function POST(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const nim = searchParams.get("nim");
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin;
+  const origin = appUrl();
 
   if (!nim) return actionError("NIM tidak ditemukan");
 
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
   if (!signature) return actionError("Transaction signature tidak ditemukan");
 
   // VERIFIKASI: cek transaksi benar-benar ada di blockchain
-  const rpcUrl = process.env.NEXT_PUBLIC_SOLANA_RPC || clusterApiUrl("devnet");
+  const rpcUrl = process.env.SOLANA_RPC_URL || clusterApiUrl("devnet");
   const connection = new Connection(rpcUrl, "confirmed");
 
   try {
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest) {
   if (!user) return actionError("User tidak ditemukan", 404);
   if (user.certificate?.status === "CLAIMED") {
     // Sudah diklaim sebelumnya (idempotent — tidak error)
-    return respondCompleted(user.nama, appUrl);
+    return respondCompleted(user.nama, origin);
   }
 
   // Update status di database
@@ -68,8 +69,6 @@ export async function POST(request: NextRequest) {
       },
     });
     
-    // We can use createAuditLog since it just inserts to DB or we can insert directly via tx
-    // If createAuditLog doesn't use the prisma tx context, we can just use tx.auditLog.create
     await tx.auditLog.create({
       data: {
         userId: user.id,
@@ -81,18 +80,15 @@ export async function POST(request: NextRequest) {
   });
 
   // Return: CompletedAction — state final di blink UI
-  return respondCompleted(user.nama, appUrl);
+  return respondCompleted(user.nama, origin);
 }
 
-function respondCompleted(nama: string, appUrl: string) {
-  return Response.json(
-    {
-      type: "completed",
-      icon: `${appUrl}/web-app-manifest-512x512.png`,
-      title: "Ijazah Berhasil Diklaim! 🎓",
-      description: `Selamat ${nama}! Ijazah digital Anda telah berhasil diklaim dan tersimpan di wallet Anda. Ijazah ini tercatat permanen di blockchain Solana.`,
-      label: "Klaim Berhasil",
-    },
-    { headers: ACTIONS_CORS_HEADERS }
-  );
+function respondCompleted(nama: string, origin: string) {
+  return actionJson({
+    type: "completed",
+    icon: `${origin}/web-app-manifest-512x512.png`,
+    title: "Ijazah Berhasil Diklaim! 🎓",
+    description: `Selamat ${nama}! Ijazah digital Anda tercatat di Solana (${process.env.SOLANA_CLUSTER ?? "devnet"}).`,
+    label: "Klaim Berhasil",
+  });
 }

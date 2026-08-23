@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { ACTIONS_CORS_HEADERS, optionsResponse, actionError } from "@/lib/actions-cors";
+import { NextRequest } from "next/server";
+import { actionJson, actionOptions, appUrl } from "@/lib/solana-actions";
 import { prisma } from "@/lib/prisma";
 import {
   Connection,
@@ -9,16 +9,17 @@ import {
 } from "@solana/web3.js";
 import { createMemoInstruction } from "@solana/spl-memo";
 
-export async function OPTIONS() {
-  return optionsResponse();
+export const OPTIONS = actionOptions;
+
+function actionError(message: string, status = 400) {
+  return actionJson({ message }, status);
 }
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const nim = searchParams.get("nim");
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin;
-  const iconUrl = `${appUrl}/assets/sijaga-logo.png`; // Fallback to manifest if not exist
+  const origin = appUrl();
 
   if (!nim) {
     return actionError("Parameter NIM tidak ditemukan");
@@ -35,94 +36,79 @@ export async function GET(request: NextRequest) {
 
   // Kasus: NIM tidak ditemukan
   if (!user) {
-    return Response.json(
-      {
-        type: "action",
-        icon: `${appUrl}/web-app-manifest-512x512.png`,
-        title: "Ijazah Tidak Ditemukan",
-        description: `NIM ${nim} tidak terdaftar dalam sistem SIJAGA.`,
-        label: "Tidak Tersedia",
-        disabled: true,
-        error: { message: "NIM tidak ditemukan dalam sistem." },
-      },
-      { headers: ACTIONS_CORS_HEADERS }
-    );
+    return actionJson({
+      type: "action",
+      icon: `${origin}/web-app-manifest-512x512.png`,
+      title: "Ijazah Tidak Ditemukan",
+      description: `NIM ${nim} tidak terdaftar dalam sistem SIJAGA.`,
+      label: "Tidak Tersedia",
+      disabled: true,
+      error: { message: "NIM tidak ditemukan dalam sistem." },
+    });
   }
 
   // Kasus: Ijazah sudah diklaim
   if (user.certificate?.status === "CLAIMED") {
-    return Response.json(
-      {
-        type: "completed",
-        icon: `${appUrl}/web-app-manifest-512x512.png`,
-        title: "Ijazah Sudah Diklaim",
-        description: `Ijazah atas nama ${user.nama} sudah berhasil diklaim sebelumnya.`,
-        label: "Sudah Diklaim",
-      },
-      { headers: ACTIONS_CORS_HEADERS } // fixed typo
-    );
+    return actionJson({
+      type: "completed",
+      icon: `${origin}/web-app-manifest-512x512.png`,
+      title: `Ijazah Sudah Diklaim — ${user.nama}`,
+      description: `Ijazah atas nama ${user.nama} sudah berhasil diklaim sebelumnya.`,
+      label: "Sudah Diklaim",
+    });
   }
 
   // Kasus: Ijazah dicabut (revoked)
   if (user.certificate?.status === "REVOKED") {
-    return Response.json(
-      {
-        type: "action",
-        icon: `${appUrl}/web-app-manifest-512x512.png`,
-        title: "Ijazah Telah Dicabut",
-        description: `Ijazah atas nama ${user.nama} telah dicabut oleh institusi.`,
-        label: "Tidak Dapat Diklaim",
-        disabled: true,
-        error: {
-          message: `Alasan pencabutan: ${user.certificate.revokeReason ?? "Tidak disebutkan"}`,
-        },
+    return actionJson({
+      type: "action",
+      icon: `${origin}/web-app-manifest-512x512.png`,
+      title: "Ijazah Telah Dicabut",
+      description: `Ijazah atas nama ${user.nama} telah dicabut oleh institusi.`,
+      label: "Tidak Dapat Diklaim",
+      disabled: true,
+      error: {
+        message: `Alasan pencabutan: ${user.certificate.revokeReason ?? "Tidak disebutkan"}`,
       },
-      { headers: ACTIONS_CORS_HEADERS }
-    );
+    });
   }
 
   // Kasus: Belum diterbitkan
   if (!user.certificate?.nftAddress || user.certificate?.status === "NOT_ISSUED") {
-    return Response.json(
-      {
-        type: "action",
-        icon: `${appUrl}/web-app-manifest-512x512.png`,
-        title: "Ijazah Belum Diterbitkan",
-        description: `Ijazah untuk NIM ${nim} belum diterbitkan oleh admin.`,
-        label: "Belum Tersedia",
-        disabled: true,
-        error: { message: "Hubungi admin kampus untuk informasi lebih lanjut." },
-      },
-      { headers: ACTIONS_CORS_HEADERS }
-    );
+    return actionJson({
+      type: "action",
+      icon: `${origin}/web-app-manifest-512x512.png`,
+      title: "Ijazah Belum Diterbitkan",
+      description: `Ijazah untuk NIM ${nim} belum diterbitkan oleh admin.`,
+      label: "Belum Tersedia",
+      disabled: true,
+      error: { message: "Hubungi admin kampus untuk informasi lebih lanjut." },
+    });
   }
 
   // KASUS NORMAL: Ijazah sudah di-mint, siap diklaim
-  return Response.json(
-    {
-      type: "action",
-      icon: `${appUrl}/web-app-manifest-512x512.png`,
-      title: `Klaim Ijazah S1 — ${user.nama}`,
-      description: `Program Studi ${user.prodi ?? "-"} · Universitas Tadulako · ${user.certificate.issuedAt ? new Date(user.certificate.issuedAt).getFullYear() : "-"}`,
-      label: "Klaim Ijazah",
-      links: {
-        actions: [
-          {
-            type: "transaction",
-            label: "Klaim Ijazah Digital",
-            href: `/api/actions/claim?nim=${nim}`,
-          },
-        ],
-      },
+  return actionJson({
+    type: "action",
+    icon: `${origin}/web-app-manifest-512x512.png`,
+    title: `Klaim Ijazah S1 — ${user.nama}`,
+    description: `Program Studi ${user.prodi ?? "-"} · Universitas Tadulako · ${user.certificate.issuedAt ? new Date(user.certificate.issuedAt).getFullYear() : "-"}`,
+    label: "Klaim Ijazah",
+    links: {
+      actions: [
+        {
+          type: "transaction",
+          label: "Klaim Ijazah Digital",
+          href: `${origin}/api/actions/claim?nim=${nim}`,
+        },
+      ],
     },
-    { headers: ACTIONS_CORS_HEADERS }
-  );
+  });
 }
 
 export async function POST(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const nim = searchParams.get("nim");
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin;
+  const origin = appUrl();
 
   if (!nim) return actionError("Parameter NIM tidak ditemukan");
 
@@ -148,6 +134,8 @@ export async function POST(request: NextRequest) {
 
   if (!user) return actionError("NIM tidak ditemukan", 404);
   if (!user.certificate?.nftAddress) return actionError("NFT belum diterbitkan", 400);
+  
+  // NOTE: If already claimed, action shouldn't be executed again, but if it is, return disabled.
   if (user.certificate?.status === "CLAIMED") return actionError("Ijazah sudah diklaim", 400);
   if (user.certificate?.status === "REVOKED") return actionError("Ijazah telah dicabut", 400);
 
@@ -161,7 +149,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Buat transaksi Memo sebagai bukti klaim
-  const rpcUrl = process.env.NEXT_PUBLIC_SOLANA_RPC || clusterApiUrl("devnet");
+  const rpcUrl = process.env.SOLANA_RPC_URL || clusterApiUrl("devnet");
   const connection = new Connection(rpcUrl, "confirmed");
   const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
 
@@ -188,19 +176,16 @@ export async function POST(request: NextRequest) {
     .toString("base64");
 
   // ACTION CHAINING: setup callback URL
-  const callbackUrl = `${appUrl}/api/actions/claim-callback?nim=${nim}`;
+  const callbackUrl = `${origin}/api/actions/claim-callback?nim=${encodeURIComponent(nim)}`;
 
-  return Response.json(
-    {
-      transaction: serializedTransaction,
-      message: `Klaim ijazah atas nama ${user.nama} dari Universitas Tadulako`,
-      links: {
-        next: {
-          type: "post",
-          href: callbackUrl,
-        },
+  return actionJson({
+    transaction: serializedTransaction,
+    message: `Klaim ijazah atas nama ${user.nama} dari Universitas Tadulako`,
+    links: {
+      next: {
+        type: "post",
+        href: callbackUrl,
       },
     },
-    { headers: ACTIONS_CORS_HEADERS }
-  );
+  });
 }

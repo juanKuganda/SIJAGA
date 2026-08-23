@@ -11,8 +11,10 @@ const spaceGrotesk = Space_Grotesk({
   variable: "--font-main",
 });
 
+const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://sijaga-seven.vercel.app";
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://sijaga.untad.ac.id"),
+  metadataBase: new URL(appUrl),
   title: {
     default: "SIJAGA | Sistem Jaminan Autentikasi Gelar Akademik Universitas Tadulako",
     template: "%s | SIJAGA Universitas Tadulako"
@@ -52,11 +54,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: "SIJAGA | Universitas Tadulako",
     description: "Sistem Jaminan Autentikasi Gelar Akademik berbasis NFT di jaringan Solana.",
-    url: "https://sijaga.untad.ac.id",
+    url: appUrl,
     siteName: "SIJAGA Untad",
     images: [
       {
-        url: "/web-app-manifest-512x512.png",
+        url: `${appUrl}/web-app-manifest-512x512.png`,
         width: 512,
         height: 512,
         alt: "Logo SIJAGA Universitas Tadulako",
@@ -69,7 +71,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "SIJAGA | Universitas Tadulako",
     description: "Sistem Jaminan Autentikasi Gelar Akademik berbasis NFT di Solana.",
-    images: ["/web-app-manifest-512x512.png"],
+    images: [`${appUrl}/web-app-manifest-512x512.png`],
   },
 };
 
