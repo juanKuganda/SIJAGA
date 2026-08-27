@@ -76,7 +76,7 @@ export function DashboardCharts({ stats }: { stats: Stats }) {
           {walletData.length > 0 ? (
             <ChartContainer
               config={walletChartConfig}
-              className="mx-auto aspect-square max-h-[300px]"
+              className="mx-auto aspect-square max-h-[200px]"
             >
               <PieChart>
                 <ChartTooltip
@@ -87,8 +87,8 @@ export function DashboardCharts({ stats }: { stats: Stats }) {
                   data={walletData}
                   dataKey="count"
                   nameKey="status"
-                  innerRadius={70}
-                  strokeWidth={5}
+                  innerRadius={45}
+                  strokeWidth={4}
                 />
                 <ChartLegend
                   content={<ChartLegendContent />}
@@ -115,7 +115,7 @@ export function DashboardCharts({ stats }: { stats: Stats }) {
           {ijazahData.length > 0 ? (
             <ChartContainer
               config={ijazahChartConfig}
-              className="mx-auto aspect-square max-h-[300px]"
+              className="mx-auto aspect-square max-h-[200px]"
             >
               <PieChart>
                 <ChartTooltip
@@ -126,8 +126,8 @@ export function DashboardCharts({ stats }: { stats: Stats }) {
                   data={ijazahData}
                   dataKey="count"
                   nameKey="status"
-                  innerRadius={70}
-                  strokeWidth={5}
+                  innerRadius={45}
+                  strokeWidth={4}
                 />
                 <ChartLegend
                   content={<ChartLegendContent />}

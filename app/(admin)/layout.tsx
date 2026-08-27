@@ -14,6 +14,7 @@ import {
   Shield,
   Home,
   ScanLine,
+  History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -71,6 +72,11 @@ const navItems = [
     label: "Revoke",
     icon: XCircle,
   },
+  {
+    href: "/audit",
+    label: "Audit Log",
+    icon: History,
+  },
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
@@ -97,14 +103,22 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       .catch(() => router.push("/login"))
       .finally(() => setIsChecking(false));
 
-    fetch("/api/admin/stats")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.stats) {
-          setStats(data.stats);
-        }
-      })
-      .catch(console.error);
+    const fetchStats = () => {
+      fetch("/api/admin/stats")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.stats) {
+            setStats(data.stats);
+          }
+        })
+        .catch(console.error);
+    };
+
+    fetchStats(); // Fetch immediately on mount
+
+    // Polling every 10 seconds
+    const interval = setInterval(fetchStats, 10000);
+    return () => clearInterval(interval);
   }, [router]);
 
   const handleLogout = async () => {
@@ -228,7 +242,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </SidebarFooter>
         </Sidebar>
 
-        <SidebarInset className="bg-transparent">
+        <SidebarInset className="bg-transparent min-w-0">
           <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b border-white/20 bg-white/70 backdrop-blur-xl px-6 shadow-sm">
             <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
             

@@ -92,9 +92,9 @@ function extractNim(text: string): OcrField | null {
 
 function extractNama(text: string): OcrField | null {
   const patterns = [
-    /Nama\s*[:\-]?\s*\n*\s*([A-Za-z\s.,']+?)(?:\n|$)/i,
-    /(?:kepada|diberikan\s+kepada)\s*[:\-]?\s*\n*\s*([A-Za-z\s.,']+?)(?:\n|$)/i,
-    /(?:Nama\s+Lengkap|Nama\s+Mahasiswa)\s*[:\-]?\s*\n*\s*([A-Za-z\s.,']+?)(?:\n|$)/i,
+    /Nama\s*[.\-:]?\s*\n*\s*([A-Za-z\s.,']+?)(?:\n|$)/i,
+    /(?:kepada|diberikan\s+kepada)\s*[.\-:]?\s*\n*\s*([A-Za-z\s.,']+?)(?:\n|$)/i,
+    /(?:Nama\s+Lengkap|Nama\s+Mahasiswa)\s*[.\-:]?\s*\n*\s*([A-Za-z\s.,']+?)(?:\n|$)/i,
   ];
 
   for (let i = 0; i < patterns.length; i++) {
@@ -116,10 +116,11 @@ function extractNama(text: string): OcrField | null {
 
 function extractProdi(text: string): OcrField | null {
   const patterns = [
-    /Program\s+Studi\s*[:\-]?\s*\n*\s*([A-Za-z\s]+?)(?:\n|$)/i,
-    /Prodi\s*[:\-]?\s*\n*\s*([A-Za-z\s]+?)(?:\n|$)/i,
-    /Jurusan\s*[:\-]?\s*\n*\s*([A-Za-z\s]+?)(?:\n|$)/i,
-    /Fakultas\s+[A-Za-z\s]+?,?\s+Program\s+Studi\s*[:\-]?\s*\n*\s*([A-Za-z\s]+?)(?:\n|$)/i,
+    /(?:akademik\s+pada\s+Program\s+Studi)[.\-:]?\s*\n*\s*([A-Za-z\s]+?)(?:\n|$)/i,
+    /Program\s+Studi[.\-:]?\s*\n*\s*([A-Za-z\s]+?)(?:\n|$)/i,
+    /Prodi[.\-:]?\s*\n*\s*([A-Za-z\s]+?)(?:\n|$)/i,
+    /Jurusan[.\-:]?\s*\n*\s*([A-Za-z\s]+?)(?:\n|$)/i,
+    /Fakultas\s+[A-Za-z\s]+?,?\s+Program\s+Studi[.\-:]?\s*\n*\s*([A-Za-z\s]+?)(?:\n|$)/i,
   ];
 
   for (let i = 0; i < patterns.length; i++) {
