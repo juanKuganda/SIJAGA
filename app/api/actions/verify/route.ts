@@ -96,6 +96,10 @@ export async function GET(request: NextRequest) {
     ? `https://solscan.io/tx/${cert.txSignature}?cluster=devnet`
     : null;
 
+  const piiDeleted = !!user.dataDeletedAt;
+  const displayName = piiDeleted ? "[DATA DIHAPUS]" : user.nama;
+  const displayNim = piiDeleted ? "[DIHAPUS]" : user.nim;
+
   if (isRevoked) {
     return Response.json(
       {
@@ -103,8 +107,8 @@ export async function GET(request: NextRequest) {
         icon: `${appUrl}/web-app-manifest-512x512.png`,
         title: "⚠️ Ijazah Telah Dicabut",
         description: [
-          `Nama: ${user.nama}`,
-          `NIM: ${user.nim}`,
+          `Nama: ${displayName}`,
+          `NIM: ${displayNim}`,
           `Program Studi: ${user.prodi}`,
           `Dicabut: ${cert.revokedAt ? new Date(cert.revokedAt).toLocaleDateString("id-ID") : "-"}`,
           `Alasan: ${cert.revokeReason ?? "Tidak disebutkan"}`,
@@ -126,8 +130,8 @@ export async function GET(request: NextRequest) {
       icon: `${appUrl}/web-app-manifest-512x512.png`,
       title: `${statusEmoji} Ijazah Terverifikasi`,
       description: [
-        `Nama: ${user.nama}`,
-        `NIM: ${user.nim}`,
+        `Nama: ${displayName}`,
+        `NIM: ${displayNim}`,
         `Program Studi: ${user.prodi ?? "-"}`,
         `Institusi: Universitas Tadulako`,
         `Status: ${statusText}`,

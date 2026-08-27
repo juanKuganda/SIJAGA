@@ -33,10 +33,14 @@ export async function GET(
       );
     }
 
+    // SECURITY: Hormati Right to be Forgotten (UU PDP)
+    // Jika PII sudah dihapus, masking data sensitif
+    const piiDeleted = !!user.dataDeletedAt;
+
     return NextResponse.json({
       certificate: {
-        nama: user.nama,
-        nim: user.nim,
+        nama: piiDeleted ? "[DATA DIHAPUS]" : user.nama,
+        nim: piiDeleted ? "[DIHAPUS]" : user.nim,
         prodi: user.prodi || "Informatika",
         angkatan: user.angkatan || "-",
         status: user.certificate.status,
@@ -48,6 +52,7 @@ export async function GET(
         revokedAt: user.certificate.revokedAt,
         revokeReason: user.certificate.revokeReason,
         walletAddress: user.wallet?.walletAddress || null,
+        piiDeleted,
       },
     });
   } catch (error) {

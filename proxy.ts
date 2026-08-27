@@ -9,43 +9,61 @@ const rateLimitMap = new Map<string, { count: number; timestamp: number }>();
 const RATE_LIMIT_WINDOW_MS = 10000; // 10 detik
 const MAX_REQUESTS_PER_WINDOW = 20; // Maksimal 20 request per 10 detik
 
+// Rate limit lebih ketat untuk endpoint AI (publik tapi mahal)
+const AI_RATE_LIMIT_WINDOW_MS = 60000; // 1 menit
+const AI_MAX_REQUESTS_PER_WINDOW = 10; // Maksimal 10 request per menit
+const aiRateLimitMap = new Map<string, { count: number; timestamp: number }>();
+
+/**
+ * Security headers standar industri.
+ * Diterapkan pada setiap response yang melewati proxy.
+ */
+const SECURITY_HEADERS: Record<string, string> = {
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'X-XSS-Protection': '1; mode=block',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+};
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
   // 1. Rate Limiting untuk Endpoint Autentikasi
   if (pathname.startsWith('/api/auth') || pathname === '/login' || pathname === '/register') {
     const ip = request.headers.get('x-forwarded-for') ?? 'unknown-ip';
-    const now = Date.now();
-    const windowStart = now - RATE_LIMIT_WINDOW_MS;
+    const blocked = checkRateLimit(ip, rateLimitMap, RATE_LIMIT_WINDOW_MS, MAX_REQUESTS_PER_WINDOW);
     
-    const record = rateLimitMap.get(ip);
-    
-    if (record) {
-      if (record.timestamp < windowStart) {
-        // Reset window jika sudah lewat 10 detik
-        rateLimitMap.set(ip, { count: 1, timestamp: now });
-      } else {
-        // Increment count
-        record.count++;
-        if (record.count > MAX_REQUESTS_PER_WINDOW) {
-          // Jika ini request API, kembalikan JSON
-          if (pathname.startsWith('/api')) {
-            return NextResponse.json(
-              { error: "Terlalu banyak permintaan. Silakan coba lagi nanti." },
-              { status: 429, headers: { 'Retry-After': '10' } }
-            );
-          }
-          // Jika ini akses halaman (login/register), redirect ke halaman error atau beri pesan
-          const url = new URL('/?error=rate_limit', request.url);
-          return NextResponse.redirect(url);
-        }
+    if (blocked) {
+      if (pathname.startsWith('/api')) {
+        return addSecurityHeaders(
+          NextResponse.json(
+            { error: "Terlalu banyak permintaan. Silakan coba lagi nanti." },
+            { status: 429, headers: { 'Retry-After': '10' } }
+          )
+        );
       }
-    } else {
-      rateLimitMap.set(ip, { count: 1, timestamp: now });
+      const url = new URL('/?error=rate_limit', request.url);
+      return addSecurityHeaders(NextResponse.redirect(url));
     }
   }
 
-  // 2. Proteksi Halaman / Route Protection
+  // 2. Rate Limiting untuk Endpoint AI (publik tapi mahal per-request)
+  if (pathname === '/api/ask') {
+    const ip = request.headers.get('x-forwarded-for') ?? 'unknown-ip';
+    const blocked = checkRateLimit(ip, aiRateLimitMap, AI_RATE_LIMIT_WINDOW_MS, AI_MAX_REQUESTS_PER_WINDOW);
+    
+    if (blocked) {
+      return addSecurityHeaders(
+        NextResponse.json(
+          { error: "Terlalu banyak pertanyaan. Silakan coba lagi dalam 1 menit." },
+          { status: 429, headers: { 'Retry-After': '60' } }
+        )
+      );
+    }
+  }
+
+  // 3. Proteksi Halaman / Route Protection
   const protectedRoutes = [
     '/dashboard',
     '/profil',
@@ -62,20 +80,60 @@ export async function proxy(request: NextRequest) {
   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
 
   if (isProtectedRoute) {
-    // Periksa keberadaan token sesi auth di cookies.
-    // Neon Auth (Better Auth) secara default menggunakan session_token
+    // SECURITY FIX: Gunakan exact match untuk nama cookie Neon Auth (Better Auth),
+    // bukan string includes yang bisa di-bypass dengan cookie palsu.
     const hasSessionToken = request.cookies.getAll().some(c => 
-      c.name.includes('session_token') || c.name.includes('neon_auth')
+      c.name === 'better-auth.session_token' || 
+      c.name === '__Secure-better-auth.session_token'
     );
     
     if (!hasSessionToken) {
-      // Jika tidak ada sesi aktif, paksa login kembali
       const url = new URL('/login', request.url);
-      return NextResponse.redirect(url);
+      return addSecurityHeaders(NextResponse.redirect(url));
     }
   }
   
-  return NextResponse.next();
+  // Tambahkan security headers ke semua response
+  return addSecurityHeaders(NextResponse.next());
+}
+
+/**
+ * Cek rate limit untuk IP tertentu.
+ * Mengembalikan true jika IP telah melebihi batas.
+ */
+function checkRateLimit(
+  ip: string,
+  map: Map<string, { count: number; timestamp: number }>,
+  windowMs: number,
+  maxRequests: number
+): boolean {
+  const now = Date.now();
+  const windowStart = now - windowMs;
+  const record = map.get(ip);
+
+  if (record) {
+    if (record.timestamp < windowStart) {
+      // Reset window
+      map.set(ip, { count: 1, timestamp: now });
+      return false;
+    } else {
+      record.count++;
+      return record.count > maxRequests;
+    }
+  } else {
+    map.set(ip, { count: 1, timestamp: now });
+    return false;
+  }
+}
+
+/**
+ * Menambahkan security headers standar ke response.
+ */
+function addSecurityHeaders(response: NextResponse): NextResponse {
+  for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
+    response.headers.set(key, value);
+  }
+  return response;
 }
 
 export const config = {

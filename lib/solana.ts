@@ -4,7 +4,7 @@ import { Connection, clusterApiUrl, PublicKey } from "@solana/web3.js";
  * Koneksi ke Solana cluster
  */
 export const connection = new Connection(
-  process.env.NEXT_PUBLIC_SOLANA_RPC || clusterApiUrl("devnet"),
+  process.env.SOLANA_RPC_URL || process.env.NEXT_PUBLIC_SOLANA_RPC || clusterApiUrl("devnet"),
   "confirmed"
 );
 

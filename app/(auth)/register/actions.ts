@@ -3,6 +3,7 @@
 import { auth } from '@/lib/auth/server';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
+import { registerSchema } from '@/lib/validation';
 
 export async function registerWithEmail(
   _prevState: { error: string } | null,
@@ -16,8 +17,19 @@ export async function registerWithEmail(
   const password = formData.get('password') as string;
   const confirmPassword = formData.get('confirmPassword') as string;
 
-  if (password !== confirmPassword) {
-    return { error: 'Password dan konfirmasi password tidak cocok' };
+  // SECURITY: Validasi input menggunakan Zod schema
+  const validationResult = registerSchema.safeParse({
+    email,
+    nama: name,
+    nim,
+    prodi,
+    angkatan,
+    password,
+    confirmPassword
+  });
+
+  if (!validationResult.success) {
+    return { error: validationResult.error.issues[0]?.message || 'Data tidak valid' };
   }
 
   // Cek apakah email/NIM sudah terdaftar

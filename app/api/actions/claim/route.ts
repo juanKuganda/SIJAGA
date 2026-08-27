@@ -87,11 +87,15 @@ export async function GET(request: NextRequest) {
   }
 
   // KASUS NORMAL: Ijazah sudah di-mint, siap diklaim
+  const piiDeleted = !!user.dataDeletedAt;
+  const displayName = piiDeleted ? "[DATA DIHAPUS]" : user.nama;
+  const displayProdi = user.prodi ?? "-";
+
   return actionJson({
     type: "action",
     icon: `${origin}/web-app-manifest-512x512.png`,
-    title: `Klaim Ijazah S1 — ${user.nama}`,
-    description: `Program Studi ${user.prodi ?? "-"} · Universitas Tadulako · ${user.certificate.issuedAt ? new Date(user.certificate.issuedAt).getFullYear() : "-"}`,
+    title: `Klaim Ijazah S1 — ${displayName}`,
+    description: `Program Studi ${displayProdi} · Universitas Tadulako · ${user.certificate.issuedAt ? new Date(user.certificate.issuedAt).getFullYear() : "-"}`,
     label: "Klaim Ijazah",
     links: {
       actions: [
