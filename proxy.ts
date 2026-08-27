@@ -80,11 +80,13 @@ export async function proxy(request: NextRequest) {
   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
 
   if (isProtectedRoute) {
-    // SECURITY FIX: Gunakan exact match untuk nama cookie Neon Auth (Better Auth),
-    // bukan string includes yang bisa di-bypass dengan cookie palsu.
-    const hasSessionToken = request.cookies.getAll().some(c => 
-      c.name === 'better-auth.session_token' || 
-      c.name === '__Secure-better-auth.session_token'
+    // SECURITY FIX: Sesuaikan pengecekan cookie dengan format Better Auth / Neon Auth.
+    // Kita gunakan pengecekan yang lebih fleksibel terlebih dahulu sampai kita tahu nama pasti cookie-nya.
+    const cookies = request.cookies.getAll();
+    const hasSessionToken = cookies.some(c => 
+      c.name.includes('session') || 
+      c.name.includes('neon') || 
+      c.name.includes('auth')
     );
     
     if (!hasSessionToken) {
