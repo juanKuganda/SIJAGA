@@ -35,22 +35,30 @@ function createWalletAdapter(): ActionAdapter {
       const provider = getWalletProvider();
       if (!provider) throw new Error("Wallet tidak ditemukan");
 
+      // Import web3
+      const { Transaction, VersionedTransaction, Connection, clusterApiUrl } = await import("@solana/web3.js");
+      const rpcUrl = process.env.NEXT_PUBLIC_SOLANA_RPC || clusterApiUrl("devnet");
+      const connection = new Connection(rpcUrl, "confirmed");
+
       // Decode base64 transaction
       const txBytes = Uint8Array.from(atob(txBase64), (c) => c.charCodeAt(0));
 
-      // Import VersionedTransaction untuk sign
-      const { VersionedTransaction } = await import("@solana/web3.js");
-      const transaction = VersionedTransaction.deserialize(txBytes);
-
-      // Sign via wallet
-      const signedTx = await provider.signTransaction(transaction);
-      const signedBytes = signedTx.serialize();
+      let signedBytes: Uint8Array;
+      try {
+        const transaction = Transaction.from(txBytes);
+        const { blockhash } = await connection.getLatestBlockhash("confirmed");
+        transaction.recentBlockhash = blockhash;
+        const signedTx = await provider.signTransaction(transaction);
+        signedBytes = signedTx.serialize();
+      } catch {
+        const transaction = VersionedTransaction.deserialize(txBytes);
+        const { blockhash } = await connection.getLatestBlockhash("confirmed");
+        transaction.message.recentBlockhash = blockhash;
+        const signedTx = await provider.signTransaction(transaction);
+        signedBytes = signedTx.serialize();
+      }
 
       // Kirim transaksi ke Solana
-      const { Connection, clusterApiUrl } = await import("@solana/web3.js");
-      const rpcUrl =
-        process.env.NEXT_PUBLIC_SOLANA_RPC || clusterApiUrl("devnet");
-      const connection = new Connection(rpcUrl, "confirmed");
       const signature = await connection.sendRawTransaction(signedBytes, {
         skipPreflight: false,
         preflightCommitment: "confirmed",
