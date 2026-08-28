@@ -44,9 +44,6 @@ export default function PreviewBlinksPage() {
 
   useEffect(() => {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    // Prefix "solana-action:" memberitahu library bahwa ini sudah merupakan
-    // URL API langsung, sehingga ia TIDAK akan mencoba unfurl melalui
-    // proxy.dial.to -> actions.json -> URL mapping.
     setActionUrl(`solana-action:${origin}/api/actions/claim?nim=${nimInput}`);
   }, [nimInput]);
 
