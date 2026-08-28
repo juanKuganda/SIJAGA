@@ -20,14 +20,21 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { backupId } = body;
 
-    if (!backupId) {
+    // Validasi input
+    const recoverySchema = (await import("zod")).z.object({
+      backupId: (await import("zod")).z.string().min(1, "Backup ID wajib diisi"),
+    });
+    const result = recoverySchema.safeParse(body);
+    if (!result.success) {
+      const errorMessage = result.error.issues[0]?.message || "Validasi gagal";
       return NextResponse.json(
-        { error: "Backup ID wajib diisi" },
+        { error: errorMessage },
         { status: 400 }
       );
     }
+
+    const { backupId } = result.data;
 
     // Ambil data backup
     const backup = await prisma.certificateBackup.findUnique({

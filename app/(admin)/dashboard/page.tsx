@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Users, Clock, CheckCircle2, FileText, Award, XCircle, ExternalLink, Activity } from "lucide-react";
+import { Users, Clock, CheckCircle2, FileText, Award, XCircle, Activity, History, Target } from "lucide-react";
 import { DashboardCharts } from "@/components/DashboardCharts";
 
 interface Stats {
@@ -14,6 +14,18 @@ interface Stats {
   ijazahRevoked: number;
 }
 
+interface AuditLog {
+  id: string;
+  action: string;
+  detail: string | null;
+  ipAddress: string | null;
+  createdAt: string;
+  user: {
+    nama: string;
+    email: string;
+  };
+}
+
 export default function DashboardPage() {
   const [stats, setStats] = useState<Stats>({
     totalMahasiswa: 0,
@@ -23,28 +35,34 @@ export default function DashboardPage() {
     ijazahClaimed: 0,
     ijazahRevoked: 0,
   });
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/admin/stats")
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        return res.json();
-      })
-      .then((data) => {
-        if (data.stats) {
-          setStats(data.stats);
-        }
+    const fetchData = () => {
+      Promise.all([
+        fetch("/api/admin/stats").then(res => res.ok ? res.json() : Promise.reject(res)),
+        fetch("/api/admin/audit?limit=5").then(res => res.ok ? res.json() : Promise.reject(res))
+      ])
+      .then(([statsData, auditData]) => {
+        if (statsData.stats) setStats(statsData.stats);
+        if (auditData.logs) setAuditLogs(auditData.logs);
       })
       .catch((err) => {
-        console.error("Error fetching stats:", err);
-        setError("Gagal memuat data statistik");
+        console.error("Error fetching dashboard data:", err);
+        // Jangan timpa error state jika hanya polling gagal sesekali, biarkan UI tetap jalan
+        if (loading) setError("Gagal memuat data sistem");
       })
       .finally(() => setLoading(false));
-  }, []);
+    };
+
+    fetchData(); // Fetch awal
+
+    // Polling setiap 10 detik
+    const interval = setInterval(fetchData, 10000);
+    return () => clearInterval(interval);
+  }, [loading]);
 
   const statCards = [
     {
@@ -68,7 +86,7 @@ export default function DashboardPage() {
       borderColor: "border-amber-100"
     },
     {
-      title: "Wallet Terverifikasi",
+      title: "Terverifikasi",
       value: stats.walletVerified,
       icon: CheckCircle2,
       bg: "bg-gradient-to-br from-emerald-50 to-white",
@@ -78,7 +96,7 @@ export default function DashboardPage() {
       borderColor: "border-emerald-100"
     },
     {
-      title: "Ijazah Diterbitkan",
+      title: "Diterbitkan",
       value: stats.ijazahMinted,
       icon: FileText,
       bg: "bg-gradient-to-br from-indigo-50 to-white",
@@ -88,7 +106,7 @@ export default function DashboardPage() {
       borderColor: "border-indigo-100"
     },
     {
-      title: "Ijazah Diklaim",
+      title: "Diklaim",
       value: stats.ijazahClaimed,
       icon: Award,
       bg: "bg-gradient-to-br from-purple-50 to-white",
@@ -98,7 +116,7 @@ export default function DashboardPage() {
       borderColor: "border-purple-100"
     },
     {
-      title: "Ijazah Direvoke",
+      title: "Direvoke",
       value: stats.ijazahRevoked,
       icon: XCircle,
       bg: "bg-gradient-to-br from-red-50 to-white",
@@ -111,13 +129,21 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="p-6 md:p-10">
+      <div className="p-6 md:p-10 max-w-[1600px] mx-auto">
         <div className="h-10 w-48 bg-zinc-200/50 rounded-xl mb-3 animate-pulse"></div>
         <div className="h-5 w-72 bg-zinc-200/50 rounded-lg mb-12 animate-pulse"></div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-           {[1, 2, 3, 4, 5, 6].map((i) => (
-             <div key={i} className="h-32 bg-white rounded-3xl border border-zinc-100 shadow-sm animate-pulse"></div>
-           ))}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-8">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="h-24 bg-white rounded-2xl border border-zinc-100 shadow-sm animate-pulse"></div>
+              ))}
+            </div>
+            <div className="h-96 bg-white rounded-[2rem] border border-zinc-100 shadow-sm animate-pulse"></div>
+          </div>
+          <div className="lg:col-span-1 space-y-6">
+            <div className="h-[400px] bg-white rounded-[2rem] border border-zinc-100 shadow-sm animate-pulse"></div>
+          </div>
         </div>
       </div>
     );
@@ -125,7 +151,7 @@ export default function DashboardPage() {
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-[60vh] p-8">
+      <div className="flex flex-col items-center justify-center h-[60vh] p-8 max-w-[1600px] mx-auto">
         <div className="bg-red-50/50 text-red-900 p-10 rounded-[2rem] border border-red-100 flex flex-col items-center max-w-md text-center shadow-sm">
           <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mb-6">
             <XCircle className="w-8 h-8 text-red-600" />
@@ -143,10 +169,24 @@ export default function DashboardPage() {
     );
   }
 
+  const getActionBadge = (action: string) => {
+    const act = action.toUpperCase();
+    if (act.includes("REVOKE") || act.includes("DELETE") || act.includes("HAPUS")) {
+      return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 border border-red-200">{action}</span>;
+    }
+    if (act.includes("MINT") || act.includes("TERBIT") || act.includes("CREATE")) {
+      return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-200">{action}</span>;
+    }
+    if (act.includes("VERIFY") || act.includes("APPROVE")) {
+      return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 border border-blue-200">{action}</span>;
+    }
+    return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-100 text-zinc-700 border border-zinc-200">{action}</span>;
+  };
+
   return (
-    <div className="font-sans selection:bg-zinc-200">
+    <div className="font-sans selection:bg-zinc-200 max-w-[1600px] mx-auto pb-12">
       {/* Page Header */}
-      <div className="mb-10 flex flex-col md:flex-row md:justify-between md:items-end gap-6">
+      <div className="mb-8 flex flex-col md:flex-row md:justify-between md:items-end gap-6">
         <div>
           <h1 className="text-3xl md:text-4xl font-extrabold text-foreground tracking-tight">Admin Dashboard</h1>
           <p className="text-base text-muted-foreground mt-2 font-medium">
@@ -162,119 +202,192 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-        {statCards.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <div key={stat.title} className={`${stat.bg} border ${stat.borderColor} rounded-[2rem] p-7 flex flex-col transition-all duration-300 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] hover:-translate-y-1 cursor-default relative overflow-hidden group`}>
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white/40 rounded-bl-full -mr-10 -mt-10 transition-transform duration-500 group-hover:scale-110 blur-xl"></div>
-              
-              <div className="flex justify-between items-start mb-8 relative z-10">
-                <div className={`w-14 h-14 rounded-2xl ${stat.iconBg} ${stat.iconColor} flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3`}>
-                  <Icon className="w-7 h-7" />
-                </div>
-              </div>
-              <div className="relative z-10 mt-auto">
-                <p className="text-sm font-bold text-zinc-500/80 uppercase tracking-widest mb-1.5">{stat.title}</p>
-                <p className={`text-5xl font-black ${stat.textColor} tracking-tighter`}>{stat.value}</p>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Visualisasi Data (Charts) */}
-      <DashboardCharts stats={stats} />
-
-      {/* Quick Actions + System Info */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* MAIN BENTO GRID */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* Quick Actions */}
-        <div>
-          <h2 className="text-xl font-bold tracking-tight mb-6 text-foreground flex items-center gap-2">
-            <Activity className="w-5 h-5 text-red-500" />
-            Aksi Cepat
-          </h2>
-          <div className="flex flex-col gap-4">
-            
-            <Link href="/mahasiswa" className="block bg-white border border-zinc-100 rounded-[2rem] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 group">
-              <div className="flex justify-between items-center mb-3">
-                <h3 className="text-lg font-bold group-hover:text-blue-600 transition-colors flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300 shadow-sm">
+        {/* LEFT COLUMN: Actions, Data, Metrics */}
+        <div className="lg:col-span-2 space-y-8">
+          
+          {/* Aksi Cepat */}
+          <div>
+            <h2 className="text-xl font-bold tracking-tight mb-4 text-foreground flex items-center gap-2">
+              <Activity className="w-6 h-6 text-blue-600" />
+              Aksi Cepat
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Link href="/mahasiswa" className="block bg-white border border-zinc-100 rounded-2xl p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_10px_40px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 group">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300 shadow-sm shrink-0">
                     <Users className="w-5 h-5" />
                   </div>
-                  Kelola Mahasiswa
-                </h3>
-                <div className="bg-amber-50 text-amber-700 px-3 py-1.5 text-xs font-bold tracking-wide rounded-full border border-amber-200/50 shadow-sm">{stats.walletPending} pending</div>
-              </div>
-              <p className="text-sm text-muted-foreground font-medium pl-[3.25rem]">Verifikasi dan kelola pengajuan wallet mahasiswa baru.</p>
-            </Link>
+                  <div>
+                    <h3 className="text-base font-bold group-hover:text-blue-600 transition-colors">
+                      Kelola Mahasiswa
+                    </h3>
+                    <p className="text-xs text-muted-foreground font-medium mt-0.5">Verifikasi pengajuan wallet baru.</p>
+                  </div>
+                </div>
+              </Link>
 
-            <Link href="/terbitkan" className="block bg-white border border-zinc-100 rounded-[2rem] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 group">
-              <div className="flex justify-between items-center mb-3">
-                <h3 className="text-lg font-bold group-hover:text-emerald-600 transition-colors flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-300 shadow-sm">
+              <Link href="/terbitkan" className="block bg-white border border-zinc-100 rounded-2xl p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_10px_40px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 group">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-300 shadow-sm shrink-0">
                     <FileText className="w-5 h-5" />
                   </div>
-                  Terbitkan Ijazah
-                </h3>
-                <div className="bg-emerald-50 text-emerald-700 px-3 py-1.5 text-xs font-bold tracking-wide rounded-full border border-emerald-200/50 shadow-sm">{stats.walletVerified} siap</div>
-              </div>
-              <p className="text-sm text-muted-foreground font-medium pl-[3.25rem]">Mint NFT ijazah (Soulbound) untuk mahasiswa yang terverifikasi.</p>
-            </Link>
+                  <div>
+                    <h3 className="text-base font-bold group-hover:text-emerald-600 transition-colors">
+                      Terbitkan Ijazah
+                    </h3>
+                    <p className="text-xs text-muted-foreground font-medium mt-0.5">Mint NFT ijazah Soulbound.</p>
+                  </div>
+                </div>
+              </Link>
 
-            <Link href="/revoke" className="block bg-white border border-zinc-100 rounded-[2rem] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 group">
-              <div className="flex justify-between items-center mb-3">
-                <h3 className="text-lg font-bold group-hover:text-red-600 transition-colors flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center group-hover:bg-red-600 group-hover:text-white transition-colors duration-300 shadow-sm">
+              <Link href="/revoke" className="block bg-white border border-zinc-100 rounded-2xl p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_10px_40px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 group">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center group-hover:bg-red-600 group-hover:text-white transition-colors duration-300 shadow-sm shrink-0">
                     <XCircle className="w-5 h-5" />
                   </div>
-                  Revoke & Backup
-                </h3>
+                  <div>
+                    <h3 className="text-base font-bold group-hover:text-red-600 transition-colors">
+                      Revoke & Backup
+                    </h3>
+                    <p className="text-xs text-muted-foreground font-medium mt-0.5">Cabut validitas ijazah.</p>
+                  </div>
+                </div>
+              </Link>
+            </div>
+          </div>
+
+          {/* Inline Stat Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+            {statCards.map((stat) => {
+              const Icon = stat.icon;
+              return (
+                <div key={stat.title} className={`${stat.bg} border ${stat.borderColor} rounded-2xl p-4 flex items-center gap-4 transition-all duration-300 hover:shadow-md hover:-translate-y-1 relative overflow-hidden group`}>
+                  <div className={`w-12 h-12 shrink-0 rounded-xl ${stat.iconBg} ${stat.iconColor} flex items-center justify-center shadow-sm transition-transform duration-300 group-hover:scale-110`}>
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <div className="flex flex-col justify-center">
+                    <p className="text-[10px] font-bold text-zinc-500/90 uppercase tracking-widest">{stat.title}</p>
+                    <p className={`text-2xl font-black ${stat.textColor} tracking-tight leading-none mt-1`}>{stat.value}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Charts */}
+          <div>
+            <DashboardCharts stats={stats} />
+          </div>
+          
+        </div>
+
+        {/* RIGHT COLUMN: Sidebar (Audit & Progress) */}
+        <div className="lg:col-span-1 space-y-8">
+          
+          {/* Aktivitas Terbaru */}
+                   <div>
+            <h2 className="text-xl font-bold tracking-tight mb-5 text-foreground flex items-center gap-2">
+              <Target className="w-6 h-6 text-orange-500" />
+              Progres Pencapaian
+            </h2>
+            <div className="bg-white border border-zinc-100 rounded-[2rem] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-6">
+              
+              {/* Progress 1: Verifikasi Wallet */}
+              <div>
+                <div className="flex justify-between items-end mb-2">
+                  <div>
+                    <h3 className="text-sm font-bold text-zinc-800">Verifikasi Mahasiswa</h3>
+                    <p className="text-[11px] font-medium text-zinc-500 mt-0.5">Wallet diverifikasi</p>
+                  </div>
+                  <span className="text-sm font-bold text-emerald-600">
+                    {stats.walletVerified} / {stats.totalMahasiswa}
+                  </span>
+                </div>
+                <div className="h-3 w-full bg-zinc-100 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-emerald-500 rounded-full transition-all duration-1000"
+                    style={{ width: `${stats.totalMahasiswa > 0 ? (stats.walletVerified / stats.totalMahasiswa) * 100 : 0}%` }}
+                  ></div>
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground font-medium pl-[3.25rem]">Cabut validitas ijazah secara kriptografis jika terdapat anomali.</p>
-            </Link>
 
+              {/* Progress 2: Penerbitan */}
+              <div>
+                <div className="flex justify-between items-end mb-2">
+                  <div>
+                    <h3 className="text-sm font-bold text-zinc-800">Penerbitan Ijazah</h3>
+                    <p className="text-[11px] font-medium text-zinc-500 mt-0.5">Dari yang terverifikasi</p>
+                  </div>
+                  <span className="text-sm font-bold text-blue-600">
+                    {stats.ijazahMinted} / {stats.walletVerified}
+                  </span>
+                </div>
+                <div className="h-3 w-full bg-zinc-100 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-blue-500 rounded-full transition-all duration-1000"
+                    style={{ width: `${stats.walletVerified > 0 ? (stats.ijazahMinted / stats.walletVerified) * 100 : 0}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              {/* Progress 3: Klaim */}
+              <div>
+                <div className="flex justify-between items-end mb-2">
+                  <div>
+                    <h3 className="text-sm font-bold text-zinc-800">Klaim NFT</h3>
+                    <p className="text-[11px] font-medium text-zinc-500 mt-0.5">Dari yang diterbitkan</p>
+                  </div>
+                  <span className="text-sm font-bold text-purple-600">
+                    {stats.ijazahClaimed} / {stats.ijazahMinted}
+                  </span>
+                </div>
+                <div className="h-3 w-full bg-zinc-100 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-purple-500 rounded-full transition-all duration-1000"
+                    style={{ width: `${stats.ijazahMinted > 0 ? (stats.ijazahClaimed / stats.ijazahMinted) * 100 : 0}%` }}
+                  ></div>
+                </div>
+              </div>
+
+            </div>
           </div>
-        </div>
 
-        {/* System Info */}
-        <div>
-          <h2 className="text-lg font-bold tracking-tight mb-5 text-foreground flex items-center gap-2">
-            <Award className="w-5 h-5 text-zinc-400" />
-            Informasi Sistem
-          </h2>
-          <div className="bg-white border border-zinc-100 rounded-3xl p-2 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden">
-            <div className="absolute top-1/2 right-0 -translate-y-1/2 translate-x-1/4 opacity-[0.03] pointer-events-none">
-               <img src="/apple-touch-icon.png" alt="Watermark Untad" className="w-64 h-64 object-contain grayscale" />
+          <div>
+            <div className="flex justify-between items-end mb-5">
+              <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+                <History className="w-6 h-6 text-purple-600" />
+                Aktivitas Terbaru
+              </h2>
+              <Link href="/audit" className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100">
+                Lihat Semua &rarr;
+              </Link>
             </div>
-            <div className="relative z-10">
-              <div className="flex items-center justify-between p-4 border-b border-zinc-50">
-              <span className="text-sm font-semibold text-zinc-500">Blockchain</span>
-              <span className="text-sm font-bold text-foreground">Solana Devnet</span>
-            </div>
-            <div className="flex items-center justify-between p-4 border-b border-zinc-50 bg-zinc-50/50 rounded-xl m-1">
-              <span className="text-sm font-semibold text-zinc-500">Network</span>
-              <span className="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-lg text-xs font-bold border border-blue-100">Development</span>
-            </div>
-            <div className="flex items-center justify-between p-4 border-b border-zinc-50">
-              <span className="text-sm font-semibold text-zinc-500">IPFS Provider</span>
-              <span className="text-sm font-bold text-foreground">Pinata Cloud</span>
-            </div>
-            <div className="flex items-center justify-between p-4 border-b border-zinc-50 bg-zinc-50/50 rounded-xl m-1">
-              <span className="text-sm font-semibold text-zinc-500">NFT Standard</span>
-              <span className="text-sm font-bold text-foreground flex items-center gap-1.5">
-                Metaplex (SBT) <ExternalLink className="w-3.5 h-3.5 text-zinc-400" />
-              </span>
-            </div>
-            <div className="flex items-center justify-between p-4">
-              <span className="text-sm font-semibold text-zinc-500">Revoke System</span>
-              <span className="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-lg text-xs font-bold border border-emerald-100">OPERATIONAL</span>
-            </div>
+            <div className="bg-white border border-zinc-100 rounded-[2rem] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-4">
+              {auditLogs.length > 0 ? (
+                auditLogs.slice(0, 5).map((log) => (
+                  <div key={log.id} className="flex gap-4 items-start pb-4 border-b border-zinc-50 last:border-0 last:pb-0">
+                    <div className="mt-1 shrink-0">
+                      {getActionBadge(log.action)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-zinc-800 truncate">{log.user.nama}</p>
+                      <p className="text-xs text-zinc-500 line-clamp-2 mt-0.5 leading-relaxed">{log.detail || log.action}</p>
+                      <p className="text-[10px] text-zinc-400 mt-1.5 font-mono bg-zinc-50 inline-block px-1.5 py-0.5 rounded">
+                        {new Date(log.createdAt).toLocaleString("id-ID", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-zinc-500 text-center py-6 font-medium">Belum ada aktivitas</p>
+              )}
             </div>
           </div>
+          
         </div>
-
       </div>
     </div>
   );

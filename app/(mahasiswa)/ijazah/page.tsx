@@ -167,20 +167,29 @@ export default function IjazahPage() {
                     </p>
                     <p className="text-blue-800 text-sm">
                       Ijazah digital sudah siap diklaim. Klik tombol di bawah
-                      untuk mengklaim NFT ijazah ke wallet Anda melalui Solana
-                      Blinks.
+                      untuk mengklaim NFT ijazah ke wallet Anda. Pastikan
+                      Phantom Wallet sudah terinstall di browser.
                     </p>
                   </div>
                 </div>
-                <a
-                  href={blinksClaimUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-colors shadow-sm"
-                >
-                  <Award className="w-5 h-5" />
-                  Klaim Ijazah
-                </a>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <a
+                    href={`/claim/${user?.nim}`}
+                    className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-colors shadow-sm"
+                  >
+                    <Award className="w-5 h-5" />
+                    Klaim Ijazah
+                  </a>
+                  <a
+                    href={blinksClaimUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3 bg-white border border-zinc-200 hover:border-zinc-300 text-zinc-700 font-semibold rounded-lg transition-colors text-sm"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    Klaim via Dial.to
+                  </a>
+                </div>
               </div>
             )}
 

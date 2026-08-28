@@ -12,7 +12,7 @@ export function BlinksCopyButton({ nim }: { nim: string }) {
     const actionUrl = encodeURIComponent(
       `solana-action:${origin}/api/actions/claim?nim=${nim}`
     );
-    return `https://actions.dialect.to/?action=${actionUrl}`;
+    return `https://dial.to/?action=${actionUrl}`;
   };
 
   const copy = async () => {

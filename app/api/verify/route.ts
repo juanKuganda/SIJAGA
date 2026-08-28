@@ -130,7 +130,8 @@ export async function GET(request: NextRequest) {
         nftAddress: certificate.nftAddress,
         issuedAt: certificate.issuedAt,
         penerbit: "Universitas Tadulako",
-        dataHash: certificate.dataHash,
+        // SECURITY: dataHash dihapus dari response publik
+        // Hash adalah detail internal kriptografi yang tidak perlu diekspos
       },
       piiDeleted,
       explorerUrl: certificate.nftAddress

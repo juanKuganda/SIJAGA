@@ -86,9 +86,11 @@ function createFetchWithRetry(maxRetries = MAX_RETRIES) {
  */
 export function createUmiInstance() {
   const rpcUrl =
-    process.env.NEXT_PUBLIC_SOLANA_RPC || "https://api.devnet.solana.com";
+    process.env.SOLANA_RPC_URL || process.env.NEXT_PUBLIC_SOLANA_RPC || "https://api.devnet.solana.com";
 
-  console.log("[Metaplex] Using RPC:", rpcUrl);
+  if (process.env.NODE_ENV === "development") {
+    console.log("[Metaplex] Using RPC:", rpcUrl);
+  }
 
   const umi = createUmi(rpcUrl, {
     httpHeaders: {},
@@ -147,10 +149,12 @@ export async function mintSoulboundNFT(data: {
     const umi = createUmiInstance();
     const adminKeypair = getAdminKeypair();
 
-    console.log(
-      "[Metaplex] Admin wallet:",
-      adminKeypair.publicKey.toBase58()
-    );
+    if (process.env.NODE_ENV === "development") {
+      console.log(
+        "[Metaplex] Admin wallet:",
+        adminKeypair.publicKey.toBase58()
+      );
+    }
 
     // Convert keypair ke format Umi dan set sebagai identity
     const umiKeypair = umi.eddsa.createKeypairFromSecretKey(
