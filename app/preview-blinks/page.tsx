@@ -2,7 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { Blink, useAction, ActionAdapter } from '@dialectlabs/blinks';
+import { setProxyUrl } from '@dialectlabs/blinks-core';
 import '@dialectlabs/blinks/index.css';
+
+// KRUSIAL: Menonaktifkan proxy Dialect (proxy.dial.to) yang menyebabkan
+// ERR_TIMED_OUT / ERR_CERT_AUTHORITY_INVALID di environment non-localhost.
+// Library blinks secara default hanya skip proxy untuk localhost/127.0.0.1,
+// sehingga di Vercel preview/production, semua request diproxy melalui proxy.dial.to
+// yang sering timeout. Dengan menonaktifkannya, request langsung ke API kita sendiri.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+setProxyUrl(null as any);
 
 // Mock adapter agar preview UI bisa berjalan tanpa harus menghubungkan wallet asli
 const mockAdapter: ActionAdapter = {
@@ -35,7 +44,10 @@ export default function PreviewBlinksPage() {
 
   useEffect(() => {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    setActionUrl(`${origin}/api/actions/claim?nim=${nimInput}`);
+    // Prefix "solana-action:" memberitahu library bahwa ini sudah merupakan
+    // URL API langsung, sehingga ia TIDAK akan mencoba unfurl melalui
+    // proxy.dial.to -> actions.json -> URL mapping.
+    setActionUrl(`solana-action:${origin}/api/actions/claim?nim=${nimInput}`);
   }, [nimInput]);
 
   return (
@@ -85,11 +97,8 @@ export default function PreviewBlinksPage() {
   );
 }
 
-// Subkomponen untuk me-render Blink HANYA jika actionUrl sudah valid (mencegah error fetch HTML)
+// Subkomponen untuk me-render Blink HANYA jika actionUrl sudah valid
 function BlinkRenderer({ actionUrl }: { actionUrl: string }) {
-  // Note: di versi library ini, useAction tidak menerima parameter adapter.
-  // URL origin API sudah dibuat dinamis, sehingga request tidak akan terkena block CORS
-  // dari sisi Dialect Registry.
   const { action, isLoading } = useAction({ url: actionUrl });
 
   if (isLoading) {
