@@ -1,17 +1,18 @@
 import { NextRequest } from "next/server";
-import { ACTIONS_CORS_HEADERS, optionsResponse, actionError } from "@/lib/actions-cors";
+import { actionJson, actionOptions, appUrl } from "@/lib/solana-actions";
+import { ACTIONS_CORS_HEADERS, actionError } from "@/lib/actions-cors";
 import { prisma } from "@/lib/prisma";
 import { Connection, PublicKey, clusterApiUrl } from "@solana/web3.js";
 
 export async function OPTIONS() {
-  return optionsResponse();
+  return actionOptions();
 }
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const walletAddress = searchParams.get("wallet");
   const nim = searchParams.get("nim");
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin;
+  const appUrlVar = appUrl(request);
 
   // Bisa dicari via wallet atau NIM
   const where = walletAddress
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
     return Response.json(
       {
         type: "action",
-        icon: `${appUrl}/web-app-manifest-512x512.png`,
+        icon: `${appUrlVar}/web-app-manifest-512x512.png`,
         title: "Verifikasi Ijazah SIJAGA",
         description: "Masukkan NIM mahasiswa untuk memverifikasi keaslian ijazah.",
         label: "Verifikasi",
@@ -63,7 +64,7 @@ export async function GET(request: NextRequest) {
     return Response.json(
       {
         type: "action",
-        icon: `${appUrl}/web-app-manifest-512x512.png`,
+        icon: `${appUrlVar}/web-app-manifest-512x512.png`,
         title: "Ijazah Tidak Ditemukan",
         description: "Data ijazah tidak ditemukan dalam sistem SIJAGA.",
         label: "Tidak Ditemukan",
@@ -104,7 +105,7 @@ export async function GET(request: NextRequest) {
     return Response.json(
       {
         type: "action",
-        icon: `${appUrl}/web-app-manifest-512x512.png`,
+        icon: `${appUrlVar}/web-app-manifest-512x512.png`,
         title: "⚠️ Ijazah Telah Dicabut",
         description: [
           `Nama: ${displayName}`,
@@ -127,7 +128,7 @@ export async function GET(request: NextRequest) {
   return Response.json(
     {
       type: "completed",
-      icon: `${appUrl}/web-app-manifest-512x512.png`,
+      icon: `${appUrlVar}/web-app-manifest-512x512.png`,
       title: `${statusEmoji} Ijazah Terverifikasi`,
       description: [
         `Nama: ${displayName}`,

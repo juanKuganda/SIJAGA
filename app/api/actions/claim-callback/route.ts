@@ -12,7 +12,7 @@ function actionError(message: string, status = 400) {
 export async function POST(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const nim = searchParams.get("nim");
-  const origin = appUrl();
+  const origin = appUrl(request);
 
   if (!nim) return actionError("NIM tidak ditemukan");
 

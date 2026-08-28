@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const nim = searchParams.get("nim");
 
-  const origin = appUrl();
+  const origin = appUrl(request);
 
   if (!nim) {
     return actionError("Parameter NIM tidak ditemukan");
@@ -112,7 +112,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const nim = searchParams.get("nim");
-  const origin = appUrl();
+  const origin = appUrl(request);
 
   if (!nim) return actionError("Parameter NIM tidak ditemukan");
 

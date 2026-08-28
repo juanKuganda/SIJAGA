@@ -87,7 +87,9 @@ export default function PreviewBlinksPage() {
 
 // Subkomponen untuk me-render Blink HANYA jika actionUrl sudah valid (mencegah error fetch HTML)
 function BlinkRenderer({ actionUrl }: { actionUrl: string }) {
-  // Gunakan hook standar, tidak perlu adapter di sini
+  // Note: di versi library ini, useAction tidak menerima parameter adapter.
+  // URL origin API sudah dibuat dinamis, sehingga request tidak akan terkena block CORS
+  // dari sisi Dialect Registry.
   const { action, isLoading } = useAction({ url: actionUrl });
 
   if (isLoading) {

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 
 export const ACTION_VERSION = "2.4";
 
@@ -30,6 +30,13 @@ export function actionOptions() {
   return new NextResponse(null, { status: 204, headers: ACTION_CORS_HEADERS });
 }
 
-export function appUrl() {
+export function appUrl(request?: NextRequest) {
+  if (request) {
+    const host = request.headers.get("x-forwarded-host") || request.headers.get("host");
+    const protocol = request.headers.get("x-forwarded-proto") || "https";
+    if (host) return `${protocol}://${host}`;
+    return new URL(request.url).origin;
+  }
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
   return (process.env.NEXT_PUBLIC_APP_URL ?? "https://sijaga-seven.vercel.app").replace(/\/$/, "");
 }
