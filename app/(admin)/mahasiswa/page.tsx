@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Search, Pencil, Eye, Check, X, XCircle, Users, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
+import { Search, Pencil, Eye, Check, X, XCircle, Users, CheckCircle2, UserX, ShieldOff } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +31,7 @@ interface Mahasiswa {
   angkatan: string;
   dataConsent: boolean;
   consentGivenAt: string | null;
+  dataDeletedAt: string | null;
   wallet: {
     id: string;
     walletAddress: string;
@@ -73,6 +75,16 @@ export default function MahasiswaPage() {
   });
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState("");
+
+  // Delete PII modal state
+  const [deletePiiModal, setDeletePiiModal] = useState<{
+    userId: string;
+    nama: string;
+    nim: string;
+  } | null>(null);
+  const [deletePiiReason, setDeletePiiReason] = useState("");
+  const [deletePiiLoading, setDeletePiiLoading] = useState(false);
+  const [deletePiiError, setDeletePiiError] = useState("");
 
   const fetchMahasiswa = async () => {
     try {
@@ -161,6 +173,39 @@ export default function MahasiswaPage() {
       setEditError("Terjadi kesalahan");
     } finally {
       setEditLoading(false);
+    }
+  };
+
+  const handleDeletePiiSubmit = async () => {
+    if (!deletePiiModal || !deletePiiReason.trim()) return;
+    setDeletePiiLoading(true);
+    setDeletePiiError("");
+
+    try {
+      const response = await fetch("/api/admin/delete-pii", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: deletePiiModal.userId,
+          reason: deletePiiReason,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast.success(`Data pribadi ${deletePiiModal.nama} berhasil dihapus (UU PDP)`);
+        setDeletePiiModal(null);
+        setDeletePiiReason("");
+        fetchMahasiswa();
+      } else {
+        setDeletePiiError(data.error || "Gagal menghapus PII");
+      }
+    } catch (error) {
+      console.error("Error deleting PII:", error);
+      setDeletePiiError("Terjadi kesalahan server");
+    } finally {
+      setDeletePiiLoading(false);
     }
   };
 
@@ -319,7 +364,11 @@ export default function MahasiswaPage() {
                       {m.prodi || "-"}
                     </TableCell>
                     <TableCell>
-                      {m.dataConsent ? (
+                      {m.dataDeletedAt ? (
+                        <Badge variant="secondary" className="bg-red-50 text-red-700 border-red-200">
+                          <ShieldOff className="w-3 h-3 mr-1" /> PII Dihapus
+                        </Badge>
+                      ) : m.dataConsent ? (
                         <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-200">
                           <CheckCircle2 className="w-3 h-3 mr-1" /> {m.consentGivenAt ? new Date(m.consentGivenAt).toLocaleDateString("id-ID", { day: "numeric", month: "short" }) : ""}
                         </Badge>
@@ -348,13 +397,22 @@ export default function MahasiswaPage() {
                       <StatusBadge status={m.certificate?.status || "NOT_ISSUED"} type="certificate" />
                     </TableCell>
                     <TableCell>
-                      <div className="flex gap-2">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         <Link href={`/detail-ijazah/${m.nim}`}>
                           <Button size="sm" variant="outline">
                             <Eye className="w-3.5 h-3.5 mr-1" />
                             Detail
                           </Button>
                         </Link>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openEditModal(m)}
+                          disabled={!!m.dataDeletedAt}
+                        >
+                          <Pencil className="w-3.5 h-3.5 mr-1" />
+                          Edit
+                        </Button>
                         {m.wallet?.status === "PENDING" && (
                           <>
                             <Button
@@ -377,6 +435,21 @@ export default function MahasiswaPage() {
                               Tolak
                             </Button>
                           </>
+                        )}
+                        {!m.dataDeletedAt && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => {
+                              setDeletePiiModal({ userId: m.id, nama: m.nama, nim: m.nim });
+                              setDeletePiiReason("");
+                              setDeletePiiError("");
+                            }}
+                          >
+                            <UserX className="w-3.5 h-3.5 mr-1" />
+                            Hapus PII
+                          </Button>
                         )}
                       </div>
                     </TableCell>
@@ -495,6 +568,56 @@ export default function MahasiswaPage() {
               maxLength={4}
             />
           </div>
+        </div>
+      </ActionModal>
+
+      {/* Delete PII Modal (UU PDP - Hak untuk Dilupakan) */}
+      <ActionModal
+        isOpen={!!deletePiiModal}
+        onClose={() => {
+          if (!deletePiiLoading) {
+            setDeletePiiModal(null);
+            setDeletePiiReason("");
+            setDeletePiiError("");
+          }
+        }}
+        icon={ShieldOff}
+        iconBgColor="bg-red-50"
+        iconTextColor="text-red-600"
+        title="Hapus Data Pribadi (PII)"
+        subtitle={deletePiiModal ? `${deletePiiModal.nama} (${deletePiiModal.nim})` : ""}
+        confirmText="Hapus PII Permanen"
+        confirmVariant="destructive"
+        onConfirm={handleDeletePiiSubmit}
+        isConfirming={deletePiiLoading}
+        confirmDisabled={!deletePiiReason.trim()}
+      >
+        {deletePiiError && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+            {deletePiiError}
+          </div>
+        )}
+
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 space-y-1">
+          <p className="font-bold">⚠️ Perhatian (UU PDP No. 27 Tahun 2022):</p>
+          <p>
+            Tindakan ini akan menghapus Nama, NIM, dan Email mahasiswa secara permanen dari database lokal. Identitas di Blinks/Verify akan berubah menjadi <code>[DATA DIHAPUS]</code>.
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="pii-reason" className="font-semibold">
+            Alasan Penghapusan PII <span className="text-red-500">*</span>
+          </Label>
+          <textarea
+            id="pii-reason"
+            value={deletePiiReason}
+            onChange={(e) => setDeletePiiReason(e.target.value)}
+            placeholder="Masukkan alasan (contoh: Permintaan resmi mahasiswa sesuai Hak untuk Dilupakan)..."
+            className="w-full px-4 py-2.5 bg-white border border-input rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all resize-none shadow-sm text-sm"
+            rows={3}
+            disabled={deletePiiLoading}
+          />
         </div>
       </ActionModal>
     </div>
