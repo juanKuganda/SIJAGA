@@ -194,12 +194,12 @@ export default function MahasiswaPage() {
       const data = await response.json();
 
       if (response.ok) {
-        toast.success(`Data pribadi ${deletePiiModal.nama} berhasil dihapus (UU PDP)`);
+        toast.success(`Data pribadi ${deletePiiModal.nama} berhasil dianonimkan (UU PDP)`);
         setDeletePiiModal(null);
         setDeletePiiReason("");
         fetchMahasiswa();
       } else {
-        setDeletePiiError(data.error || "Gagal menghapus PII");
+        setDeletePiiError(data.error || "Gagal menganonimkan data");
       }
     } catch (error) {
       console.error("Error deleting PII:", error);
@@ -366,7 +366,7 @@ export default function MahasiswaPage() {
                     <TableCell>
                       {m.dataDeletedAt ? (
                         <Badge variant="secondary" className="bg-red-50 text-red-700 border-red-200">
-                          <ShieldOff className="w-3 h-3 mr-1" /> PII Dihapus
+                          <ShieldOff className="w-3 h-3 mr-1" /> Data Anonim
                         </Badge>
                       ) : m.dataConsent ? (
                         <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-200">
@@ -439,8 +439,8 @@ export default function MahasiswaPage() {
                         {!m.dataDeletedAt && (
                           <Button
                             size="sm"
-                            variant="ghost"
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            variant="outline"
+                            className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-300 shadow-sm font-semibold"
                             onClick={() => {
                               setDeletePiiModal({ userId: m.id, nama: m.nama, nim: m.nim });
                               setDeletePiiReason("");
@@ -448,7 +448,7 @@ export default function MahasiswaPage() {
                             }}
                           >
                             <UserX className="w-3.5 h-3.5 mr-1" />
-                            Hapus PII
+                            Anonimkan Data
                           </Button>
                         )}
                       </div>
@@ -584,9 +584,9 @@ export default function MahasiswaPage() {
         icon={ShieldOff}
         iconBgColor="bg-red-50"
         iconTextColor="text-red-600"
-        title="Hapus Data Pribadi (PII)"
+        title="Anonimkan Data Mahasiswa"
         subtitle={deletePiiModal ? `${deletePiiModal.nama} (${deletePiiModal.nim})` : ""}
-        confirmText="Hapus PII Permanen"
+        confirmText="Anonimkan Data Permanen"
         confirmVariant="destructive"
         onConfirm={handleDeletePiiSubmit}
         isConfirming={deletePiiLoading}
@@ -599,15 +599,15 @@ export default function MahasiswaPage() {
         )}
 
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 space-y-1">
-          <p className="font-bold">⚠️ Perhatian (UU PDP No. 27 Tahun 2022):</p>
+          <p className="font-bold">⚠️ Perhatian (Hak untuk Dilupakan - UU PDP No. 27 Tahun 2022):</p>
           <p>
-            Tindakan ini akan menghapus Nama, NIM, dan Email mahasiswa secara permanen dari database lokal. Identitas di Blinks/Verify akan berubah menjadi <code>[DATA DIHAPUS]</code>.
+            Tindakan ini akan meng-anonimkan Nama, NIM, dan Email mahasiswa secara permanen dari database lokal. Identitas di Blinks & Verifikasi akan berubah menjadi <code>[DATA DIHAPUS]</code>.
           </p>
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="pii-reason" className="font-semibold">
-            Alasan Penghapusan PII <span className="text-red-500">*</span>
+            Alasan Anonimisasi Data <span className="text-red-500">*</span>
           </Label>
           <textarea
             id="pii-reason"
