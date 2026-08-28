@@ -55,12 +55,13 @@ jobs:
           branch_name: preview/pr-${{ github.event.number }}-${{ needs.setup.outputs.branch }}
           api_key: ${{ secrets.NEON_API_KEY }}
           expires_at: ${{ env.EXPIRES_AT }}
+          prisma: 'true'
 
       - name: Run Prisma Migrations on New Branch
         run: npx prisma db push --accept-data-loss
         env:
           # Menggunakan pooled connection dari output Neon Action
-          DATABASE_URL: "${{ steps.create_neon_branch.outputs.db_url_with_pooler }}"
+          DATABASE_URL: "${{ steps.create_neon_branch.outputs.db_url_pooled }}"
 
   delete_neon_branch:
     name: Delete Neon Branch
