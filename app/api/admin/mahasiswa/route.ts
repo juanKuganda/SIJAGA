@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
             issuedAt: true,
             revokedAt: true,
             revokeReason: true,
+            dataHash: true,
           },
         },
       },

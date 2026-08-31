@@ -166,7 +166,7 @@ export async function POST(request: NextRequest) {
   const memoMessage = JSON.stringify({
     type: "SIJAGA_CLAIM",
     nftAddress: user.certificate.nftAddress,
-    nim: user.nim,
+    dataHash: user.certificate.dataHash,
     timestamp: new Date().toISOString(),
   });
   

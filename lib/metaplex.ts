@@ -1,15 +1,15 @@
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import {
-  createNft,
-  mplTokenMetadata,
-  updateV1,
-  fetchMetadataFromSeeds,
-} from "@metaplex-foundation/mpl-token-metadata";
+  create,
+  update,
+  fetchAsset,
+  mplCore,
+} from "@metaplex-foundation/mpl-core";
 import {
   keypairIdentity,
   publicKey,
-  percentAmount,
   generateSigner,
+  none,
 } from "@metaplex-foundation/umi";
 import { Keypair } from "@solana/web3.js";
 import bs58 from "bs58";
@@ -95,7 +95,7 @@ export function createUmiInstance() {
   const umi = createUmi(rpcUrl, {
     httpHeaders: {},
     fetch: createFetchWithRetry(MAX_RETRIES),
-  }).use(mplTokenMetadata());
+  }).use(mplCore());
 
   return umi;
 }
@@ -132,8 +132,8 @@ export function getAdminKeypair(): Keypair {
 }
 
 /**
- * Mint NFT Soulbound (non-transferable)
- * Menggunakan Metaplex UMI untuk mint NFT di Solana Devnet.
+ * Mint NFT "Soulbound" (Institution-Enforced Non-Transferable via PermanentFreezeDelegate)
+ * Menggunakan Metaplex UMI dan Metaplex Core di Solana Devnet.
  */
 export async function mintSoulboundNFT(data: {
   nama: string;
@@ -171,16 +171,19 @@ export async function mintSoulboundNFT(data: {
     console.log("[Metaplex] Recipient:", data.walletTujuan);
     console.log("[Metaplex] Metadata URI:", data.metadataUri);
 
-    // Create NFT dengan Metaplex
-    const result = await createNft(umi, {
-      mint: mintSigner,
+    // Create NFT dengan Metaplex Core
+    const result = await create(umi, {
+      asset: mintSigner,
       name: "Ijazah S1 - Universitas Tadulako",
-      symbol: "SIJAGA",
       uri: data.metadataUri,
-      sellerFeeBasisPoints: percentAmount(0), // Tidak ada royalti (Soulbound)
-      tokenOwner: recipient,
-      isMutable: true, // Metadata bisa diubah setelah mint (Visual Revoke)
-      primarySaleHappened: true, // Hide Primary Market tag
+      owner: recipient,
+      plugins: [
+        {
+          type: 'PermanentFreezeDelegate',
+          frozen: true,             // ← SOULBOUND: Langsung dibekukan atomik saat dicetak di wallet user
+          authority: { type: 'UpdateAuthority' }, // ← Admin (update authority) memegang kendali
+        },
+      ],
     }).sendAndConfirm(umi, {
       send: { commitment: "finalized" },
       confirm: { commitment: "finalized" },
@@ -251,11 +254,11 @@ export async function revokeSoulboundNFT(data: {
 
     const mint = publicKey(data.mintAddress);
     
-    // Ambil data metadata awal
-    const initialMetadata = await fetchMetadataFromSeeds(umi, { mint });
+    // Ambil data asset
+    const asset = await fetchAsset(umi, mint);
 
-    // Cek apakah metadata bisa diubah (mutable)
-    if (!initialMetadata.isMutable) {
+    // Cek apakah update authority di-set ke None (immutable)
+    if (asset.updateAuthority.type === 'None') {
       console.warn("[Metaplex] NFT is immutable. Skipping on-chain update, proceeding with database-only revoke.");
       return {
         success: true,
@@ -265,15 +268,10 @@ export async function revokeSoulboundNFT(data: {
     }
 
     // Update NFT
-    const result = await updateV1(umi, {
-      mint,
-      authority: umi.identity,
-      data: {
-        ...initialMetadata,
-        uri: data.metadataUri,
-        // Kita tidak mengubah 'name' on-chain karena batas maksimal Metaplex adalah 32 bytes.
-        // Penanda DIBATALKAN sudah ada di dalam JSON metadata (URI).
-      },
+    const result = await update(umi, {
+      asset: asset,
+      name: "[DIBATALKAN] Ijazah S1", // Visual Revoke
+      uri: data.metadataUri,
     }).sendAndConfirm(umi, {
       send: { commitment: "finalized" },
       confirm: { commitment: "finalized" },
@@ -325,9 +323,9 @@ export async function restoreSoulboundNFT(data: {
 
     const mint = publicKey(data.mintAddress);
     
-    const initialMetadata = await fetchMetadataFromSeeds(umi, { mint });
+    const asset = await fetchAsset(umi, mint);
 
-    if (!initialMetadata.isMutable) {
+    if (asset.updateAuthority.type === 'None') {
       console.warn("[Metaplex] NFT is immutable. Skipping on-chain update.");
       return {
         success: true,
@@ -336,13 +334,10 @@ export async function restoreSoulboundNFT(data: {
       };
     }
 
-    const result = await updateV1(umi, {
-      mint,
-      authority: umi.identity,
-      data: {
-        ...initialMetadata,
-        uri: data.metadataUri,
-      },
+    const result = await update(umi, {
+      asset: asset,
+      name: "Ijazah S1 - Universitas Tadulako",
+      uri: data.metadataUri,
     }).sendAndConfirm(umi, {
       send: { commitment: "finalized" },
       confirm: { commitment: "finalized" },

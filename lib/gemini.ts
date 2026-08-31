@@ -37,16 +37,21 @@ export interface RetrievedStudentData {
  * Build system prompt ketat untuk mencegah halusinasi.
  * Gemini HANYA boleh menjawab berdasarkan data yang disuntikkan.
  */
-function buildSystemPrompt(retrievedData: RetrievedStudentData[] | null): string {
+function buildSystemPrompt(retrievedData: RetrievedStudentData[] | null, searchTerms: { nim: string | null; nama: string | null }): string {
   const dataSection = retrievedData && retrievedData.length > 0
     ? `Data Mahasiswa Ditemukan:\n${JSON.stringify(retrievedData, null, 2)}`
     : 'Data Mahasiswa: TIDAK DITEMUKAN dalam sistem SIJAGA.';
+    
+  const searchContext = [];
+  if (searchTerms.nama) searchContext.push(`Nama: "${searchTerms.nama}"`);
+  if (searchTerms.nim) searchContext.push(`NIM: "${searchTerms.nim}"`);
+  const searchInfo = searchContext.length > 0 ? searchContext.join(' atau ') : 'parameter tidak valid';
 
   return `Anda adalah **SIJAGA Assistant**, asisten AI resmi untuk verifikasi ijazah digital Universitas Tadulako.
 
 ## ATURAN KETAT (WAJIB DIPATUHI):
 1. Gunakan **HANYA** data JSON berikut untuk menjawab pertanyaan. DILARANG KERAS mengarang atau berasumsi data apapun.
-2. Jika data tidak ditemukan atau tidak relevan, jawab: "Maaf, data untuk pencarian tersebut tidak ditemukan dalam sistem SIJAGA. Pastikan nama atau NIM yang Anda masukkan sudah benar."
+2. Jika data tidak ditemukan, berikan respons natural dan sopan yang menyebutkan apa yang pengguna cari. Contoh: "Maaf, saya tidak dapat menemukan data ijazah untuk pencarian **${searchInfo}** di dalam sistem SIJAGA."
 3. Jika sertifikat berstatus "REVOKED", **WAJIB** sampaikan bahwa ijazah tersebut telah **DICABUT/DIREVOKE** beserta alasannya.
 4. Jika sertifikat berstatus "MINTED" atau "CLAIMED", sampaikan bahwa ijazah tersebut **TERVERIFIKASI** dan valid.
 5. Jika status "NOT_ISSUED", sampaikan bahwa ijazah belum diterbitkan di blockchain.
@@ -56,11 +61,13 @@ function buildSystemPrompt(retrievedData: RetrievedStudentData[] | null): string
 9. Jawab dalam **Bahasa Indonesia** yang profesional, sopan, dan meyakinkan.
 10. Format respons menggunakan Markdown yang rapi (bold untuk nama, code block untuk NIM/hash, link untuk explorer).
 
-## DATA KONTEKS:
+## DATA KONTEKS PENCARIAN (Berdasarkan Ekstraksi Sistem):
+Yang dicari pengguna: ${searchInfo}
+
 ${dataSection}
 
 ## GAYA JAWABAN:
-- Mulai dengan konfirmasi: "Berdasarkan data di sistem SIJAGA, ..."
+- Jika data ditemukan, mulai dengan konfirmasi: "Berdasarkan data di sistem SIJAGA, ..."
 - Sertakan detail: Nama, NIM, Program Studi, Tahun Kelulusan, Status
 - Akhiri dengan link Solana Explorer (jika tersedia) dan kalimat penutup profesional`;
 }
@@ -70,14 +77,15 @@ ${dataSection}
  */
 export async function generateVerificationResponse(
   question: string,
-  retrievedData: RetrievedStudentData[] | null
+  retrievedData: RetrievedStudentData[] | null,
+  searchTerms: { nim: string | null; nama: string | null }
 ): Promise<string> {
   if (!genAI) {
     return 'Maaf, layanan AI Assistant sedang tidak tersedia. Silakan gunakan fitur verifikasi manual dengan memasukkan NIM atau alamat wallet di halaman utama.';
   }
 
   try {
-    const systemPrompt = buildSystemPrompt(retrievedData);
+    const systemPrompt = buildSystemPrompt(retrievedData, searchTerms);
 
     const model = genAI.getGenerativeModel({
       model: 'gemini-3.6-flash',
@@ -124,11 +132,11 @@ export function extractSearchTerms(question: string): { nim: string | null; nama
   let nim: string | null = null;
   let nama: string | null = null;
 
-  // Cari NIM pattern (contoh: A11.2020.12345, C101234, dll)
+  // 1. Ekstrak NIM
   const nimPatterns = [
     /\b([A-Z]\d{2,3}[.\s]?\d{2,4}[.\s]?\d{3,6})\b/i,
     /\bNIM\s*[:\-]?\s*([A-Z0-9]{5,20})\b/i,
-    /\b([A-Z]{1,3}\d{6,12})\b/i,
+    /\b([A-Z]{1,3}\d{6,12})\b/i, // contoh: F55123020
   ];
 
   for (const pattern of nimPatterns) {
@@ -139,33 +147,58 @@ export function extractSearchTerms(question: string): { nim: string | null; nama
     }
   }
 
-  // Cari nama (kata-kata kapital berurutan, minimal 2 kata)
-  // Exclude kata-kata umum bahasa Indonesia
+  // Jika pertanyaan hanya berisi NIM, langsung return
+  const isOnlyNim = nim && question.replace(new RegExp(nim, 'gi'), '').trim().length < 3;
+  if (isOnlyNim) {
+    return { nim, nama: null };
+  }
+
+  // 2. Ekstrak Nama (Rule-based yang lebih pintar)
+  // Bersihkan tanda baca
+  const cleanQuestion = question.replace(/[.,?!\'\"\(\)]/g, ' ').trim();
+  
+  // Kamus kata baku/tanya yang harus diabaikan
   const excludeWords = new Set([
-    'APAKAH', 'TOLONG', 'BENAR', 'CEK', 'CARI', 'VERIFIKASI', 'LULUSAN',
+    'APAKAH', 'TOLONG', 'BENAR', 'CEK', 'CARI', 'CARIKAN', 'VERIFIKASI', 'LULUSAN',
     'UNIVERSITAS', 'TADULAKO', 'UNTAD', 'PRODI', 'PROGRAM', 'STUDI',
     'TAHUN', 'DARI', 'YANG', 'DAN', 'ATAU', 'INI', 'ITU', 'SUDAH',
     'BELUM', 'BISA', 'DENGAN', 'UNTUK', 'ADA', 'TIDAK', 'MAHASISWA',
     'IJAZAH', 'SERTIFIKAT', 'NIM', 'NAMA', 'STATUS', 'BLOCKCHAIN',
     'SOLANA', 'NFT', 'WALLET', 'SIJAGA', 'SISTEM', 'INFORMASI',
+    'SIAPA', 'BAGAIMANA', 'KAPAN', 'DIMANA', 'MENGAPA', 'KENAPA',
+    'SAYA', 'DIA', 'KAMU', 'MEREKA', 'KITA', 'KAMI',
+    'MINTA', 'DATA', 'TENTANG', 'ATAS', 'BERNAMA', 'ADALAH', 'MERUPAKAN',
+    'TADI', 'BARUSAN', 'SEKARANG', 'KEMARIN', 'BESOK', 'HARI', 'INI',
+    'BANTU', 'BANTUAN', 'HALO', 'HAI', 'SELAMAT', 'PAGI', 'SIANG', 'SORE', 'MALAM'
   ]);
 
-  // Pattern: cari 2-4 kata kapitalisasi yang berdekatan (kemungkinan nama orang)
-  const namaMatch = question.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,4})\b/);
-  if (namaMatch && namaMatch[1]) {
-    const candidate = namaMatch[1];
+  // Coba cari pattern kapitalisasi lebih dulu (kini mendukung 1 kata)
+  const capitalizedMatch = cleanQuestion.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,4})\b/);
+  if (capitalizedMatch && capitalizedMatch[1]) {
+    const candidate = capitalizedMatch[1];
     const words = candidate.split(/\s+/);
     const filtered = words.filter(w => !excludeWords.has(w.toUpperCase()));
-    if (filtered.length >= 2) {
+    if (filtered.length >= 1) { 
       nama = filtered.join(' ');
     }
   }
 
-  // Fallback: cari pattern "nama X" dalam kalimat
+  // Fallback: Pattern "nama X"
   if (!nama) {
-    const namaLabelMatch = question.match(/(?:nama|bernama|atas nama)\s+([A-Za-z\s]{3,50})(?:\s+(?:benar|lulusan|dari|nim|mahasiswa|adalah)|[?.,]|$)/i);
+    const namaLabelMatch = cleanQuestion.match(/(?:nama|bernama|atas nama)\s+([A-Za-z\s]{3,50})(?:\s+(?:benar|lulusan|dari|nim|mahasiswa|adalah)|$)/i);
     if (namaLabelMatch && namaLabelMatch[1]) {
       nama = namaLabelMatch[1].trim();
+    }
+  }
+
+
+  if (!nama && !nim) {
+    const words = cleanQuestion.split(/\s+/);
+    if (words.length > 0 && words.length <= 4) {
+      const filtered = words.filter(w => !excludeWords.has(w.toUpperCase()));
+      if (filtered.length > 0) {
+        nama = filtered.join(' ');
+      }
     }
   }
 

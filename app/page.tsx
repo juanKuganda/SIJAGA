@@ -376,12 +376,12 @@ export default function HomePage() {
                 variant="ghost"
                 className="font-semibold text-muted-foreground hover:text-foreground"
               >
-                Log In
+                Masuk
               </Button>
             </Link>
             <a href="#verification">
               <Button className="font-bold bg-foreground text-white hover:bg-foreground/90 rounded-full px-6 shadow-md">
-                Try it live
+                Coba Sekarang
               </Button>
             </a>
           </div>
@@ -409,7 +409,7 @@ export default function HomePage() {
               { label: "Verifikasi", href: "#verification" },
               { label: "Fitur", href: "#features" },
               { label: "FAQ", href: "#faq" },
-              { label: "Log In", href: "/login" },
+              { label: "Masuk", href: "/login" },
             ].map((item) => (
               <a
                 key={item.label}
@@ -426,7 +426,7 @@ export default function HomePage() {
               className="mobile-nav-item mt-4"
             >
               <Button className="font-bold bg-foreground text-white hover:bg-foreground/90 rounded-full px-8 py-6 text-lg shadow-xl">
-                Try it live
+                Coba Sekarang
               </Button>
             </a>
           </nav>
@@ -445,28 +445,26 @@ export default function HomePage() {
                 variant="secondary"
                 className="bg-red-600 text-white hover:bg-red-600 rounded-full px-2 py-0.5 text-[10px]"
               >
-                New
+                Baru
               </Badge>
               <span className="text-xs font-semibold text-red-900 pr-1">
-                SIJAGA Beta 1.0 is live
+                Purwarupa SIJAGA Beta 1.0
               </span>
               <ArrowRight className="w-3 h-3 text-red-600" />
             </div>
 
             <h1 className="hero-anim text-[2.75rem] sm:text-5xl md:text-4xl lg:text-[4.25rem] xl:text-[5rem] font-black text-foreground leading-[1.05] tracking-tighter">
-              Make your
+              Amankan
               <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-red-400">
-                academic data
+                data akademik
               </span>
               <br />
-              work for you.
+              lebih transparan.
             </h1>
 
             <p className="hero-anim text-xl text-muted-foreground leading-relaxed max-w-lg font-medium">
-              Unlike traditional certificates, SIJAGA secures credentials on
-              Solana. Verifies instantly, prevents forgery, and keeps
-              institutions informed.
+              SIJAGA merupakan purwarupa sistem verifikasi ijazah berbasis Solana. Dirancang untuk menguji validasi instan dan mencegah pemalsuan dokumen secara digital.
             </p>
 
             <form
@@ -478,7 +476,7 @@ export default function HomePage() {
                 <Search className="size-7 text-zinc-400 ml-4 flex-shrink-0" />
                 <input
                   className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 shadow-none h-12 text-base font-medium placeholder:text-zinc-400 pl-3"
-                  placeholder="Enter Student NIM or Wallet..."
+                  placeholder="Masukkan NIM atau Dompet Digital..."
                   type="text"
                   value={wallet}
                   onChange={(e) => setWallet(e.target.value)}
@@ -489,7 +487,7 @@ export default function HomePage() {
                   type="submit"
                   className="h-12 px-8 rounded-full font-bold bg-foreground text-white hover:bg-foreground/90 shrink-0"
                 >
-                  {loading ? "..." : "Verify Now"}
+                  {loading ? "..." : "Verifikasi"}
                 </Button>
               </div>
             </form>
@@ -501,7 +499,7 @@ export default function HomePage() {
                   <XCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
                   <div>
                     <h4 className="text-sm font-bold text-red-900">
-                      Verification Failed
+                      Verifikasi Gagal
                     </h4>
                     <p className="text-sm text-red-700 mt-1">{error}</p>
                   </div>
@@ -518,7 +516,7 @@ export default function HomePage() {
                       </div>
                       <div>
                         <h4 className="text-base font-bold text-foreground">
-                          Certificate Revoked
+                          Ijazah Dibatalkan
                         </h4>
                         {result.data && (
                           <p className="text-sm font-medium text-muted-foreground mt-1">
@@ -526,7 +524,7 @@ export default function HomePage() {
                           </p>
                         )}
                         <p className="text-sm text-red-600 mt-2 bg-red-50 p-2 rounded-md inline-block">
-                          Reason: {result.revokeReason}
+                          Alasan: {result.revokeReason}
                         </p>
                       </div>
                     </div>
@@ -537,13 +535,13 @@ export default function HomePage() {
                       </div>
                       <div className="w-full">
                         <h4 className="text-base font-bold text-foreground">
-                          Verified Authentic
+                          Tervalidasi Asli
                         </h4>
                         {result.data && (
                           <div className="mt-3 bg-zinc-50 rounded-xl p-3 grid grid-cols-2 gap-y-3 gap-x-4 border border-zinc-100">
                             <div>
                               <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-0.5">
-                                Student
+                                Mahasiswa
                               </p>
                               <p className="text-sm font-semibold text-foreground">
                                 {result.data.nama}
@@ -551,7 +549,7 @@ export default function HomePage() {
                             </div>
                             <div>
                               <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-0.5">
-                                ID
+                                NIM
                               </p>
                               <p className="text-sm font-semibold text-foreground">
                                 {result.data.nim}
@@ -559,7 +557,7 @@ export default function HomePage() {
                             </div>
                             <div>
                               <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-0.5">
-                                Program
+                                Prodi
                               </p>
                               <p className="text-sm font-semibold text-foreground">
                                 {result.data.prodi}
@@ -582,7 +580,7 @@ export default function HomePage() {
                             rel="noopener noreferrer"
                             className="mt-3 text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 w-fit"
                           >
-                            View on Solana Explorer{" "}
+                            Lihat di Solana Explorer{" "}
                             <ExternalLink className="w-3 h-3" />
                           </a>
                         )}
@@ -595,7 +593,7 @@ export default function HomePage() {
                       </div>
                       <div>
                         <h4 className="text-base font-bold text-foreground">
-                          No Record Found
+                          Data Tidak Ditemukan
                         </h4>
                         <p className="text-sm font-medium text-muted-foreground mt-1">
                           {result.message}
@@ -619,7 +617,7 @@ export default function HomePage() {
                   <Shield className="w-4 h-4 text-red-600" />
                 </div>
                 <span className="font-bold text-sm text-foreground">
-                  Immutable Record Created
+                  Rekam Jejak Permanen
                 </span>
               </div>
               <div className="space-y-3 relative z-10">
@@ -630,7 +628,7 @@ export default function HomePage() {
                     TX: 8xKxtg...osgAsV
                   </span>
                   <Badge className="badge-glow bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-50 shadow-none">
-                    Minted
+                    Tercetak
                   </Badge>
                 </div>
               </div>
@@ -649,7 +647,7 @@ export default function HomePage() {
                 {/* Initial State: Verify Button */}
                 <div className="verify-btn-container absolute inset-0 flex items-center justify-center">
                   <div className="bg-foreground text-white rounded-xl px-8 py-2.5 text-sm font-bold shadow-md w-full text-center border border-zinc-800">
-                    Verify Credential
+                    Verifikasi Kredensial
                   </div>
                 </div>
 
@@ -658,7 +656,7 @@ export default function HomePage() {
                   <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 flex items-center justify-center gap-3 w-full h-full">
                     <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                     <span className="text-sm font-bold text-emerald-700">
-                      Verified by Universitas Tadulako
+                      Tervalidasi oleh Universitas Tadulako
                     </span>
                   </div>
                 </div>
@@ -673,11 +671,10 @@ export default function HomePage() {
             <div className="floating-card absolute top-[290px] md:top-[310px] lg:top-[360px] right-0 md:right-3 lg:right-8 w-full max-w-[310px] md:max-w-[330px] lg:max-w-[400px] bg-neutral-900 text-white rounded-3xl p-5 lg:p-6 shadow-2xl transform rotate-1 hover:rotate-0 transition-transform duration-500 z-10">
               <div className="flex items-center gap-3 mb-4">
                 <Zap className="w-5 h-5 text-red-400" />
-                <span className="font-bold">Real-time Global Validation</span>
+                <span className="font-bold">Validasi Real-time</span>
               </div>
               <p className="card-3-text text-sm text-zinc-300">
-                Employers can verify academic credentials instantly without
-                intermediaries or waiting times.
+                Memungkinkan verifikasi instan secara digital sebagai uji coba ekosistem tanpa perantara.
               </p>
             </div>
           </div>
@@ -687,10 +684,10 @@ export default function HomePage() {
         <section className="py-10 border-y border-zinc-100 bg-zinc-50/50 backdrop-blur-sm">
           <div className="max-w-7xl mx-auto px-6 md:px-12 flex flex-col items-center">
             <p className="text-sm font-bold text-muted-foreground mb-6 uppercase tracking-widest text-center">
-              Trusted by forward-thinking institutions
+              SIJAGA dibangun menggunakan teknologi:
             </p>
             <div className="flex flex-wrap justify-center items-center gap-12 md:gap-24 opacity-60">
-              {["DIKTI", "KEMDIKBUD", "SOLANA", "METAPLEX"].map((name) => (
+              {["SOLANA", "METAPLEX", "NEXT.JS", "PRISMA"].map((name) => (
                 <span
                   key={name}
                   className="text-2xl font-black text-foreground tracking-tight"
@@ -709,13 +706,12 @@ export default function HomePage() {
         >
           <div className="max-w-2xl mb-16">
             <h2 className="text-4xl md:text-5xl font-black text-foreground tracking-tighter leading-tight mb-4">
-              Build systems to
+              Sistem untuk
               <br />
-              grow trust.
+              membangun kepercayaan.
             </h2>
             <p className="text-lg text-muted-foreground font-medium">
-              Infrastructure to issue secure credentials, run agentic
-              verifications, and prevent academic fraud globally.
+              Infrastruktur purwarupa untuk menerbitkan kredensial aman dan menguji pencegahan pemalsuan akademik.
             </p>
           </div>
 
@@ -729,7 +725,7 @@ export default function HomePage() {
                   <Lock className="w-6 h-6 text-foreground" />
                 </div>
                 <h3 className="text-3xl font-black text-foreground tracking-tight mb-4">
-                  Cryptographic Security
+                  Keamanan Kriptografi
                 </h3>
                 <p className="text-muted-foreground text-lg max-w-md mb-8">
                   Setiap ijazah di-hash dengan SHA-256 dan dicetak sebagai
@@ -772,14 +768,14 @@ export default function HomePage() {
                   Metaplex Core
                 </h3>
                 <p className="text-zinc-400 text-lg mb-8">
-                  Standar aset digital tercanggih di jaringan Solana.
+                  Standar aset digital generasi baru di jaringan Solana.
                 </p>
                 <div className="mt-auto">
                   <a
-                    href="#"
+                    href="https://www.metaplex.com/docs/smart-contracts/core"
                     className="inline-flex items-center gap-2 text-sm font-bold hover:text-red-400 transition-colors"
-                  >
-                    Read the docs <ArrowRight className="w-4 h-4" />
+                  target="_blank" >
+                    Baca dokumentasi <ArrowRight className="w-4 h-4" />
                   </a>
                 </div>
               </div>
@@ -788,16 +784,15 @@ export default function HomePage() {
             <div className="bento-card md:col-span-2 bg-white rounded-[2rem] p-8 md:p-12 border border-zinc-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8">
               <div className="flex-1">
                 <h3 className="text-3xl font-black text-foreground tracking-tight mb-4">
-                  Ready for Scale
+                  Skalabilitas Jaringan
                 </h3>
                 <p className="text-muted-foreground text-lg mb-6">
-                  Mainnet Beta live dengan performa jaringan yang tak
-                  tertandingi.
+                  Berjalan di ekosistem Solana dengan performa transaksi yang cepat dan murah.
                 </p>
                 <div className="flex gap-6">
                   <div>
                     <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">
-                      Validators
+                      Validator
                     </p>
                     <p className="text-2xl font-black text-foreground font-mono">
                       1,432
@@ -805,7 +800,7 @@ export default function HomePage() {
                   </div>
                   <div>
                     <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">
-                      Avg TPS
+                      Rata-rata TPS
                     </p>
                     <p className="text-2xl font-black text-foreground font-mono">
                       3,140
@@ -832,8 +827,8 @@ export default function HomePage() {
           <ScrollExpand
             src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2000&auto=format&fit=crop"
             alt="Security Abstract"
-            title="Ship credentials that never break."
-            scrollHint="Scroll to explore"
+            title="Kredensial digital yang aman."
+            scrollHint="Gulir ke bawah"
             mediaZoom={1.2}
             useWindowScroll={true}
             overlayScrim={0.8}
@@ -841,15 +836,14 @@ export default function HomePage() {
             <div className="absolute inset-0 w-full h-full bg-neutral-900/60 backdrop-blur-md flex flex-col items-center justify-center px-4">
               <div className="max-w-4xl mx-auto flex flex-col items-center mt-12">
                 <h2 className="text-4xl md:text-[5rem] font-black text-white tracking-tighter mb-8 leading-[1.05] text-center drop-shadow-2xl">
-                  Ship credentials that
+                  Kredensial digital
                   <br />
-                  never{" "}
-                  <span className="italic font-light text-zinc-300">break</span>
+                  yang{" "}
+                  <span className="italic font-light text-zinc-300">aman</span>
                   .
                 </h2>
                 <p className="text-xl md:text-2xl text-zinc-200 max-w-3xl mb-12 text-center drop-shadow-lg font-medium">
-                  SIJAGA empowers institutions to issue cryptographic academic
-                  records with real-time global verifiability.
+                  Purwarupa SIJAGA membantu institusi menerbitkan rekam jejak akademik berbasis kriptografi yang dapat diverifikasi.
                 </p>
                 <div className="flex flex-col sm:flex-row items-center gap-5">
                   <Button
@@ -914,17 +908,18 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-6 md:px-12 w-full mb-16 grid grid-cols-1 md:grid-cols-2 gap-16 relative z-10">
           <div>
             <h3 className="text-4xl font-black tracking-tighter uppercase mb-6 text-white leading-tight">
-              Unlock The Future
+              Masa Depan
               <br />
-              of Credentials.
+              Kredensial Digital.
             </h3>
             <p className="text-lg text-zinc-400 font-medium max-w-sm mb-8">
-              Sistem Jaminan Autentikasi Gelar Akademik Universitas Tadulako.
-              Enterprise-grade academic verification built on Solana.
+              Purwarupa Sistem Jaminan Autentikasi Gelar Akademik Universitas Tadulako berbasis teknologi blockchain Solana.
             </p>
-            <Button className="h-14 px-8 rounded-none border-2 border-white text-base font-bold bg-white text-black hover:bg-red-600 hover:text-white hover:border-red-600 transition-colors uppercase tracking-widest">
-              Start Now
-            </Button>
+            <a href="#verification">
+              <Button className="h-14 px-8 rounded-none border-2 border-white text-base font-bold bg-white text-black hover:bg-red-600 hover:text-white hover:border-red-600 transition-colors uppercase tracking-widest">
+                Coba Sekarang
+              </Button>
+            </a>
           </div>
 
           <div className="grid grid-cols-2 gap-8">
@@ -985,7 +980,7 @@ export default function HomePage() {
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
             <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
-              All Systems Operational
+              Status Sistem Berjalan
             </span>
           </div>
         </div>

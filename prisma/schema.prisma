@@ -34,6 +34,8 @@ model User {
   wallet      Wallet?
   certificate Certificate?
   auditLogs   AuditLog[]
+
+  @@index([nama])
 }
 
 model Wallet {
@@ -68,6 +70,8 @@ model Certificate {
   dataSalt       String?     // salt unik per mahasiswa (JANGAN taruh di IPFS)
 
   user           User        @relation(fields: [userId], references: [id])
+
+  @@index([dataHash])
 }
 
 model CertificateBackup {

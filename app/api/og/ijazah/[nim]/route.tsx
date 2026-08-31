@@ -14,6 +14,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ nim: st
   });
 
   const cluster = process.env.SOLANA_CLUSTER ?? "devnet";
+  const piiDeleted = !!user?.dataDeletedAt;
+  const displayName = piiDeleted ? "[DATA DIHAPUS]" : (user?.nama ?? "Ijazah Digital");
+  const displayNim = piiDeleted ? "[DIHAPUS]" : nim;
 
   return new ImageResponse(
     (
@@ -33,10 +36,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ nim: st
         <div style={{ fontSize: 28, letterSpacing: 8, fontWeight: 700 }}>SIJAGA · UNTAD</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div style={{ fontSize: 56, fontWeight: 800 }}>
-            {user?.nama ?? "Ijazah Digital"}
+            {displayName}
           </div>
           <div style={{ fontSize: 28, opacity: 0.85 }}>
-            {user?.prodi ?? "Informatika"} · NIM {nim}
+            {user?.prodi ?? "Informatika"} · NIM {displayNim}
           </div>
         </div>
         <div style={{ fontSize: 22, opacity: 0.7 }}>

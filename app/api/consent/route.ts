@@ -90,21 +90,26 @@ export async function DELETE(request: NextRequest) {
       where: { userId: payload.userId },
     });
 
+    // Anonymize user data (Right to Erasure)
+    const updateData: import("@prisma/client").Prisma.UserUpdateInput = {
+      dataConsent: false,
+      consentGivenAt: null,
+      consentIpAddress: null,
+      consentVersion: null,
+      dataDeletedAt: new Date(),
+    };
+
     if (cert && cert.status !== "NOT_ISSUED") {
-      return NextResponse.json({
-        error: "CANNOT_WITHDRAW",
-        message: "Consent tidak dapat ditarik setelah ijazah diterbitkan.",
-      }, { status: 400 });
+      // Jika NFT sudah terbit, hapus/anonimkan PII dari DB Lokal.
+      // Metadata di blockchain tetap utuh karena sudah anonim (hanya DataHash).
+      updateData.nama = "[DIHAPUS]";
+      updateData.nim = "[DIHAPUS]";
+      updateData.email = `deleted_${Date.now()}@sijaga.local`; 
     }
 
     await prisma.user.update({
       where: { id: payload.userId },
-      data: {
-        dataConsent: false,
-        consentGivenAt: null,
-        consentIpAddress: null,
-        consentVersion: null,
-      },
+      data: updateData,
     });
 
     const ipAddress = request.headers.get("x-forwarded-for") || "unknown";

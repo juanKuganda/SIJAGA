@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     const skip = (validPage - 1) * validLimit;
 
     // Build Prisma where clause
-    const whereClause: any = {};
+    const whereClause: import("@prisma/client").Prisma.AuditLogWhereInput = {};
     if (action !== "all") {
       whereClause.action = { contains: action };
     }

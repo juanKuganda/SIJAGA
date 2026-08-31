@@ -17,6 +17,7 @@ export interface OcrExtractedData {
   nim: OcrField | null;
   prodi: OcrField | null;
   angkatan: OcrField | null;
+  dataHash: OcrField | null;
   rawText: string;
 }
 
@@ -60,6 +61,7 @@ export function extractEntities(rawText: string): OcrExtractedData {
     nim: extractNim(text),
     prodi: extractProdi(text),
     angkatan: extractAngkatan(text),
+    dataHash: extractDataHash(text),
     rawText: text,
   };
 }
@@ -157,6 +159,39 @@ function extractAngkatan(text: string): OcrField | null {
         return {
           value: year,
           confidence: i <= 1 ? 'high' : i === 2 ? 'medium' : 'low',
+        };
+      }
+    }
+  }
+
+  return null;
+}
+
+function extractDataHash(text: string): OcrField | null {
+  // Pattern 1: Data Hash (SHA-256) XXXXXXXXXXXXXXXX... (tolerate 16 to 64 chars, and some non-hex letters due to OCR errors)
+  const patterns = [
+    /(?:Hash|SHA-256|Data Hash)[\s\S]*?([A-Za-z0-9]{16,64})(?:\.\.\.|\b)/i,
+    // Fallback: Just look for exactly 16-64 chars followed by '...'
+    /([A-Za-z0-9]{16,64})\.\.\./,
+    // Fallback: 16-64 contiguous hex characters
+    /\b([A-Fa-f0-9]{16,64})\b/,
+  ];
+
+  for (let i = 0; i < patterns.length; i++) {
+    const match = text.match(patterns[i]);
+    if (match && match[1]) {
+      // Sanitize common OCR mistakes for hex strings
+      let hash = match[1]
+        .toLowerCase()
+        .replace(/o/g, '0')
+        .replace(/l/g, '1')
+        .replace(/i/g, '1');
+      
+      // Ensure it only contains valid hex after sanitization
+      if (/^[a-f0-9]+$/.test(hash)) {
+        return {
+          value: hash,
+          confidence: i === 0 ? 'high' : i === 1 ? 'medium' : 'low',
         };
       }
     }

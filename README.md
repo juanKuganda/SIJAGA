@@ -2,7 +2,7 @@
 
 **Sistem Jaminan Autentikasi Gelar Akademik**
 
-SIJAGA adalah platform verifikasi ijazah anti-pemalsuan tingkat enterprise untuk **Universitas Tadulako**, memanfaatkan teknologi **Soulbound NFT** pada blockchain Solana dan penyimpanan terdesentralisasi (IPFS) yang **100% patuh terhadap UU PDP** (Pelindungan Data Pribadi).
+SIJAGA adalah platform verifikasi ijazah anti-pemalsuan **arsitektur hibrida (Web2.5)** untuk **Universitas Tadulako**, menggunakan blockchain **Solana** sebagai lapisan verifikasi publik dan **IPFS** sebagai penyimpanan metadata terdesentralisasi, sementara logika penerbitan dan pencabutan dikendalikan oleh **backend terpusat universitas**. Patuh terhadap **UU PDP** (Pelindungan Data Pribadi).
 
 Tugas Akhir S1 Informatika — Universitas Tadulako.
 
@@ -10,8 +10,8 @@ Tugas Akhir S1 Informatika — Universitas Tadulako.
 
 ## ✨ Fitur Utama
 
-- **Soulbound NFT Certificates**: Ijazah di-minting sebagai aset digital on-chain yang tidak dapat ditransfer atau diperjualbelikan (Soulbound).
-- **2-Tier Privacy & UU PDP Compliance**: Tidak ada *Personally Identifiable Information* (PII) di public ledger/IPFS. PII (Nama, NIM) tetap aman di database lokal, sedangkan blockchain hanya menyimpan enkripsi *SHA-256 dataHash*. Memiliki fitur **Right to be Forgotten** (hapus PII).
+- **Institution-Enforced Soulbound NFT**: Ijazah di-minting sebagai aset digital on-chain. "Soulbound" diterapkan secara institusional (by policy) — admin memegang update authority, royalti 0%, dan tidak ada insentif ekonomi untuk transfer.
+- **2-Tier Privacy & UU PDP Compliance**: Tidak ada *Personally Identifiable Information* (PII) di public ledger/IPFS — baik di metadata JSON maupun di gambar sertifikat. PII (Nama, NIM) tetap aman di database server, sedangkan blockchain hanya menyimpan *SHA-256 dataHash* kriptografis. Memiliki fitur **Right to be Forgotten** (hapus PII).
 - **Visual Revocation**: Ijazah palsu/bermasalah dapat dibatalkan secara visual, memperbarui metadata on-chain menjadi *watermark* "DIBATALKAN".
 - **Disaster Recovery**: Backup periodik otomatis dan sistem pemulihan (*restore*) sertifikat terintegrasi ke dalam UI admin.
 - **Solana Blinks Integration**: Mahasiswa dapat melihat preview dan melakukan klaim Ijazah langsung via platform pendukung Blinks.
@@ -108,7 +108,7 @@ sijaga/
 │   ├── metaplex.ts         # Solana NFT minting, revoking, restoring
 │   ├── pinata.ts           # IPFS orchestration & metadata JSON gen
 │   └── certificate-image.tsx # Satori dynamic image generation
-├── prisma/                 # SQLite database schemas and seeders
+├── prisma/                 # PostgreSQL database schemas and seeders
 └── DESIGN.md               # UI/UX design specifications
 ```
 

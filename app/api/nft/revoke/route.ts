@@ -92,8 +92,11 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // 1. Generate Revoked PNG Image & Upload
-    const { gatewayUrl: revokedImageUrl } = await generateAndUploadCertificateImage(user, "REVOKED");
+    // 1. Generate Revoked PNG Image & Upload (TANPA PII)
+    const { gatewayUrl: revokedImageUrl } = await generateAndUploadCertificateImage({
+      prodi: user.prodi || "Informatika",
+      tahunLulus: user.angkatan || "2026",
+    }, "REVOKED");
 
     // 2. Generate Revoked Metadata with image
     const revokedMetadata = generateRevokedMetadata({

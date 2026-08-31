@@ -56,8 +56,6 @@ export async function uploadImageToPinata(file: File) {
 
 /**
  * Generate metadata JSON untuk NFT ijazah
- * PRIVACY: Tidak menyertakan nama atau NIM di metadata IPFS.
- * PII hanya disimpan di database lokal SIJAGA.
  */
 export function generateCertificateMetadata(data: {
   prodi: string;
@@ -128,24 +126,25 @@ import { generateCertificateImageBuffer } from "./certificate-image";
  * Helper terpusat untuk men-generate gambar sertifikat PNG lalu mengunggahnya ke Pinata.
  * Ini mengurangi duplikasi kode (Blob/File conversion) di berbagai API Routes.
  */
-export async function generateAndUploadCertificateImage(user: {
-  nama: string;
-  nim: string;
-  prodi?: string | null;
-  angkatan?: string | null;
+export async function generateAndUploadCertificateImage(data: {
+  prodi: string;
+  tahunLulus: string;
+  dataHash?: string;
 }, status: "MINTED" | "REVOKED" = "MINTED") {
   const imageBuffer = await generateCertificateImageBuffer({
-    nama: user.nama,
-    nim: user.nim,
-    prodi: user.prodi || "Informatika",
-    tahunLulus: user.angkatan || "2026",
+    prodi: data.prodi,
+    tahunLulus: data.tahunLulus,
+    dataHash: data.dataHash,
     status,
   });
 
   const imageBlob = new Blob([imageBuffer], { type: "image/png" });
-  const filename = status === "REVOKED" ? `ijazah-revoked-${user.nim}.png` : `ijazah-${user.nim}.png`;
+  // PRIVACY: Gunakan timestamp sebagai nama file, bukan NIM
+  const timestamp = Date.now();
+  const filename = status === "REVOKED" ? `ijazah-revoked-${timestamp}.png` : `ijazah-${timestamp}.png`;
   const imageFile = new File([imageBlob], filename, { type: "image/png" });
 
   return uploadImageToPinata(imageFile);
 }
+
 
