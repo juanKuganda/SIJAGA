@@ -247,7 +247,7 @@ export default function TerbitkanPage() {
                         >
                           {minting === m.id ? "Minting..." : !m.dataConsent ? "Perlu Consent" : "Terbitkan"}
                         </Button>
-                        <Link href={`/detail-ijazah/${m.nim}`}>
+                        <Link href={`/detail-ijazah/${m.id}`}>
                           <Button size="sm" variant="outline">
                             <Eye className="w-3.5 h-3.5 mr-1" />
                             Detail

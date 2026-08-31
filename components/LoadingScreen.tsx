@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
+import Image from "next/image";
 
 interface LoadingScreenProps {
   onComplete?: () => void;
@@ -49,10 +50,13 @@ export default function LoadingScreen({ onComplete }: LoadingScreenProps) {
     >
       <div className="flex flex-col items-center gap-8">
         <div className="flex flex-col items-center gap-4">
-          <img 
-            src="/apple-touch-icon.png" 
-            alt="Logo Untad" 
-            className="w-20 h-20 md:w-28 md:h-28 object-contain"
+          <Image
+            src="/logo.png"
+            alt="Logo Universitas Tadulako"
+            width={80}
+            height={80}
+            className="w-20 h-20 mx-auto opacity-20 drop-shadow-lg filter grayscale"
+            priority
           />
           <h2 className="text-4xl md:text-6xl font-black text-neutral-900 tracking-[0.2em] uppercase select-none">
             SIJAGA

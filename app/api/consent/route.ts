@@ -5,7 +5,7 @@ import { getAuthUser } from "@/lib/auth";
 /**
  * GET — Ambil status consent mahasiswa saat ini
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const payload = await getAuthUser();
     if (!payload) {
@@ -18,6 +18,11 @@ export async function GET(request: NextRequest) {
         dataConsent: true,
         consentGivenAt: true,
         consentVersion: true,
+        certificate: {
+          select: {
+            status: true,
+          },
+        },
       },
     });
 
@@ -29,6 +34,7 @@ export async function GET(request: NextRequest) {
       dataConsent: user.dataConsent,
       consentGivenAt: user.consentGivenAt,
       consentVersion: user.consentVersion,
+      certificateStatus: user.certificate?.status || "NOT_ISSUED",
     });
   } catch (error) {
     console.error("Consent GET error:", error);
@@ -90,27 +96,38 @@ export async function DELETE(request: NextRequest) {
       where: { userId: payload.userId },
     });
 
-    // Anonymize user data (Right to Erasure)
     const updateData: import("@prisma/client").Prisma.UserUpdateInput = {
       dataConsent: false,
       consentGivenAt: null,
       consentIpAddress: null,
       consentVersion: null,
-      dataDeletedAt: new Date(),
     };
 
     if (cert && cert.status !== "NOT_ISSUED") {
       // Jika NFT sudah terbit, hapus/anonimkan PII dari DB Lokal.
       // Metadata di blockchain tetap utuh karena sudah anonim (hanya DataHash).
-      updateData.nama = "[DIHAPUS]";
-      updateData.nim = "[DIHAPUS]";
-      updateData.email = `deleted_${Date.now()}@sijaga.local`; 
-    }
+      updateData.nama = "[DATA ANONIM]";
+      updateData.nim = `ANON-${Date.now()}`;
+      updateData.email = `deleted_${Date.now()}@sijaga.local`;
+      updateData.dataDeletedAt = new Date();
+      updateData.dataDeleteNote = "Dihapus oleh mahasiswa (Withdraw Consent)";
 
-    await prisma.user.update({
-      where: { id: payload.userId },
-      data: updateData,
-    });
+      await prisma.$transaction([
+        prisma.user.update({
+          where: { id: payload.userId },
+          data: updateData,
+        }),
+        prisma.certificate.update({
+          where: { userId: payload.userId },
+          data: { dataSalt: null },
+        }),
+      ]);
+    } else {
+      await prisma.user.update({
+        where: { id: payload.userId },
+        data: updateData,
+      });
+    }
 
     const ipAddress = request.headers.get("x-forwarded-for") || "unknown";
 

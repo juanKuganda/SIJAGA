@@ -6,6 +6,8 @@ import { setProxyUrl } from "@dialectlabs/blinks-core";
 import "@dialectlabs/blinks/index.css";
 import Link from "next/link";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
+import { toast } from "sonner";
 
 // Nonaktifkan proxy Dialect (proxy.dial.to) agar bisa jalan di Vercel
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -94,23 +96,54 @@ function createWalletAdapter(): ActionAdapter {
   };
 }
 
-function getWalletProvider(): any {
+// Typing for third-party injected wallets
+interface PhantomProvider {
+  isPhantom?: boolean;
+  connect: () => Promise<{ publicKey: { toString: () => string } }>;
+  signTransaction: (tx: any) => Promise<any>;
+  signMessage: (msg: Uint8Array) => Promise<{ signature: Uint8Array }>;
+}
+
+interface SolflareProvider {
+  isSolflare?: boolean;
+  connect: () => Promise<{ publicKey: { toString: () => string } }>;
+  signTransaction: (tx: any) => Promise<any>;
+  signMessage: (msg: Uint8Array) => Promise<{ signature: Uint8Array }>;
+}
+
+interface BackpackProvider {
+  isBackpack?: boolean;
+  connect: () => Promise<{ publicKey: { toString: () => string } }>;
+  signTransaction: (tx: any) => Promise<any>;
+  signMessage: (msg: Uint8Array) => Promise<{ signature: Uint8Array }>;
+}
+
+interface CustomWindow extends Window {
+  phantom?: { solana?: PhantomProvider };
+  solflare?: SolflareProvider;
+  backpack?: BackpackProvider;
+  solana?: PhantomProvider;
+}
+
+function getWalletProvider(): PhantomProvider | SolflareProvider | BackpackProvider | null {
   if (typeof window === "undefined") return null;
+  const customWindow = window as unknown as CustomWindow;
+
   // Phantom
-  if ((window as any).phantom?.solana?.isPhantom) {
-    return (window as any).phantom.solana;
+  if (customWindow.phantom?.solana?.isPhantom) {
+    return customWindow.phantom.solana;
   }
   // Solflare
-  if ((window as any).solflare?.isSolflare) {
-    return (window as any).solflare;
+  if (customWindow.solflare?.isSolflare) {
+    return customWindow.solflare;
   }
   // Backpack
-  if ((window as any).backpack?.isBackpack) {
-    return (window as any).backpack;
+  if (customWindow.backpack?.isBackpack) {
+    return customWindow.backpack;
   }
   // Generic window.solana (Phantom legacy)
-  if ((window as any).solana?.isPhantom) {
-    return (window as any).solana;
+  if (customWindow.solana?.isPhantom) {
+    return customWindow.solana;
   }
   return null;
 }
@@ -123,13 +156,13 @@ export default function ClaimPage({
   const resolvedParams = use(params);
   const [adapter, setAdapter] = useState<ActionAdapter | null>(null);
   const [noWallet, setNoWallet] = useState(false);
-  const [actionUrl, setActionUrl] = useState("");
+  const [isMounted, setIsMounted] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const actionUrl = `${process.env.NEXT_PUBLIC_APP_URL || ""}/api/actions/claim?nim=${resolvedParams.nim}`;
 
   useEffect(() => {
-    const origin = window.location.origin;
-    setActionUrl(
-      `solana-action:${origin}/api/actions/claim?nim=${resolvedParams.nim}`
-    );
+    setIsMounted(true);
 
     // Cek wallet availability
     const provider = getWalletProvider();
@@ -169,6 +202,17 @@ export default function ClaimPage({
               </a>{" "}
               untuk mengklaim ijazah. Setelah install, refresh halaman ini.
             </p>
+            
+            {isMounted && (
+              <div className="mt-4 flex justify-center p-4 bg-white rounded-xl shadow-inner border">
+                <QRCodeSVG
+                  value={`solana-action:${window.location.origin}/api/actions/claim?nim=${resolvedParams.nim}`}
+                  size={180}
+                  level="H"
+                  includeMargin
+                />
+              </div>
+            )}
           </div>
         )}
 

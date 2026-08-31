@@ -32,7 +32,7 @@ const mockAdapter: ActionAdapter = {
   confirmTransaction: async (sig: string) => {
     console.log('Mock Transaction Confirmed', sig);
   },
-  signMessage: async (data: string | any) => {
+  signMessage: async (data: unknown) => {
     console.log('Mock Message Signed', data);
     return { signature: 'mock_signature_msg' };
   },
@@ -42,10 +42,13 @@ export default function PreviewBlinksPage() {
   const [nimInput, setNimInput] = useState('F55123061');
   const [actionUrl, setActionUrl] = useState('');
 
+  const [isMounted, setIsMounted] = useState(false);
+
   useEffect(() => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    setActionUrl(`solana-action:${origin}/api/actions/claim?nim=${nimInput}`);
-  }, [nimInput]);
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) return null;
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 p-8 flex flex-col items-center font-sans">
@@ -70,18 +73,27 @@ export default function PreviewBlinksPage() {
                 className="flex-1 bg-zinc-100 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-lg px-4 py-2 focus:ring-2 focus:ring-brand-500 outline-none transition-all"
                 placeholder="Masukkan NIM..."
               />
+              <button 
+                onClick={() => {
+                  const origin = window.location.origin;
+                  window.open(`https://dial.to/?action=solana-action:${origin}/api/actions/claim?nim=${nimInput}`, '_blank');
+                }}
+                className="bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap text-sm"
+              >
+                Uji di dial.to
+              </button>
             </div>
           </div>
           
           <div className="p-3 bg-zinc-100 dark:bg-black rounded-lg border border-zinc-200 dark:border-zinc-800 text-xs overflow-x-auto text-zinc-500">
-            <strong>Action URL:</strong> {actionUrl || 'Menyiapkan URL...'}
+            <strong>Action URL:</strong> {`solana-action:${window.location.origin}/api/actions/claim?nim=${nimInput}`}
           </div>
         </div>
 
         {/* Blink Render Area */}
         <div className="flex justify-center mt-10">
           <div className="w-full max-w-md">
-            {actionUrl ? <BlinkRenderer actionUrl={actionUrl} /> : (
+            {isMounted ? <BlinkRenderer actionUrl={`${window.location.origin}/api/actions/claim?nim=${nimInput}`} /> : (
                <div className="h-64 flex items-center justify-center border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-2xl text-zinc-500 animate-pulse">
                  Menyiapkan Preview...
                </div>

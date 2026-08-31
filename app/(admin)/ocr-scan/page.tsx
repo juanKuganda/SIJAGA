@@ -634,7 +634,7 @@ export default function OcrScanPage() {
                             className="text-xs h-8"
                             onClick={() =>
                               window.open(
-                                `/detail-ijazah/${m.nim}`,
+                                `/detail-ijazah/${m.id}`,
                                 "_blank"
                               )
                             }

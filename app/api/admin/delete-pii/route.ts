@@ -60,8 +60,8 @@ export async function POST(request: NextRequest) {
       prisma.user.update({
         where: { id: userId },
         data: {
-          nama: "[DATA DIHAPUS]",
-          nim: `DEL-${Date.now()}`, // NIM unik agar tidak melanggar constraint @unique
+          nama: "[DATA ANONIM]",
+          nim: `ANON-${Date.now()}`, // NIM unik agar tidak melanggar constraint @unique
           email: `deleted-${Date.now()}@sijaga.removed`,
           dataDeletedAt: new Date(),
           dataDeleteNote: reason,

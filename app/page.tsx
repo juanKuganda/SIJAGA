@@ -15,14 +15,12 @@ import {
   Lock,
   Zap,
   Award,
-  ChevronRight,
   Check,
   Menu,
   X,
   MousePointer2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import ScrollExpand from "@/components/ScrollExpand";
 import { useGlobalLoading } from "@/components/LoadingContext";

@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
 
   // Blink client mengirim: { signature, account }
   const body = await request.json();
-  const { signature, account } = body;
+  const { signature } = body;
 
   if (!signature) return actionError("Transaction signature tidak ditemukan");
 

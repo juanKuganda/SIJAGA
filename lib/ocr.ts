@@ -181,7 +181,7 @@ function extractDataHash(text: string): OcrField | null {
     const match = text.match(patterns[i]);
     if (match && match[1]) {
       // Sanitize common OCR mistakes for hex strings
-      let hash = match[1]
+      const hash = match[1]
         .toLowerCase()
         .replace(/o/g, '0')
         .replace(/l/g, '1')

@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 import { updateMahasiswaSchema } from "@/lib/validation";
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const payload = await getAuthUser();
     if (!payload || payload.role !== "ADMIN") {
@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
         dataConsent: true,
         consentGivenAt: true,
         dataDeletedAt: true,
+        createdAt: true,
         wallet: {
           select: {
             id: true,

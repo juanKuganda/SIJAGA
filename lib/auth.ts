@@ -1,7 +1,6 @@
 import { auth } from "./auth/server";
 import { prisma } from "./prisma";
 import { Role } from "@prisma/client";
-import { headers } from "next/headers";
 
 export interface JWTPayload {
   userId: string;

@@ -11,10 +11,6 @@ export async function generateCertificateImageBuffer(data: {
 }): Promise<ArrayBuffer> {
   const isRevoked = data.status === "REVOKED";
 
-  const hashDisplay = data.dataHash
-    ? data.dataHash.replace(/^sha256:/, "").substring(0, 16) + "..."
-    : "—";
-
   // Satori JSX definition
   const response = new ImageResponse(
       <CertificateUI

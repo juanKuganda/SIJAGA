@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
   // Buat transaksi Memo sebagai bukti klaim
   const rpcUrl = process.env.SOLANA_RPC_URL || clusterApiUrl("devnet");
   const connection = new Connection(rpcUrl, "confirmed");
-  const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+  const { blockhash } = await connection.getLatestBlockhash();
 
   const transaction = new Transaction({
     feePayer: walletPublicKey,

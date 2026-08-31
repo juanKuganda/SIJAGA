@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifySchema } from "@/lib/validation";
-import { isValidSolanaAddress } from "@/lib/solana";
 import { verifyDataHash } from "@/lib/crypto";
 
 export async function GET(request: NextRequest) {

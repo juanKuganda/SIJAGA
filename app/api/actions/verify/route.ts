@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { actionJson, actionOptions, appUrl } from "@/lib/solana-actions";
-import { ACTIONS_CORS_HEADERS, actionError } from "@/lib/actions-cors";
+import { actionError } from "@/lib/actions-cors";
 import { prisma } from "@/lib/prisma";
 import { Connection, PublicKey, clusterApiUrl } from "@solana/web3.js";
 

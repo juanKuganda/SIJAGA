@@ -22,6 +22,7 @@ interface ConsentStatus {
   dataConsent: boolean;
   consentGivenAt: string | null;
   consentVersion: string | null;
+  certificateStatus: string;
 }
 
 export default function ConsentPage() {
@@ -263,17 +264,15 @@ export default function ConsentPage() {
               <ul className="space-y-2 text-sm text-purple-700 ml-6">
                 <li className="flex items-start gap-2">
                   <span className="text-purple-400 mt-0.5">•</span>
-                  Saya dapat menarik persetujuan ini SEBELUM ijazah diterbitkan
+                  Saya dapat menarik persetujuan ini KAPAN SAJA (Hak untuk Dilupakan)
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-purple-400 mt-0.5">•</span>
-                  Setelah ijazah diterbitkan, data non-PII di blockchain
-                  bersifat permanen
+                  Jika ditarik setelah ijazah diterbitkan, nama dan NIM saya akan dianonimkan dari SIJAGA
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-purple-400 mt-0.5">•</span>
-                  Saya dapat meminta penghapusan data nama dan NIM dari server
-                  SIJAGA
+                  Setelah ijazah diterbitkan, data non-PII di blockchain bersifat permanen
                 </li>
               </ul>
             </div>
@@ -335,10 +334,7 @@ export default function ConsentPage() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-amber-700 mb-4 leading-relaxed">
-              Anda dapat menarik kembali persetujuan ini{" "}
-              <strong>hanya jika</strong> ijazah digital Anda{" "}
-              <strong>belum diterbitkan</strong>. Setelah ijazah diterbitkan ke
-              blockchain, persetujuan tidak dapat ditarik.
+              Anda dapat menarik kembali persetujuan ini kapan saja (Hak untuk Dilupakan / Right to Erasure). Jika ijazah digital Anda <strong>sudah diterbitkan</strong>, menarik persetujuan akan meng-anonimkan data pribadi Anda (Nama dan NIM) dari sistem SIJAGA secara permanen, sementara data ijazah anonim di blockchain tetap utuh.
             </p>
             <Button
               variant="outline"

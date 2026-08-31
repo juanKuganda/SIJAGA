@@ -12,12 +12,12 @@ import { logoBase64 } from "@/lib/logo-base64";
 export default async function DetailIjazahPage({
   params,
 }: {
-  params: Promise<{ nim: string }>;
+  params: Promise<{ id: string }>;
 }) {
-  const { nim } = await params;
+  const { id } = await params;
 
   const user = await prisma.user.findUnique({
-    where: { nim },
+    where: { id },
     include: {
       wallet: true,
       certificate: true,
@@ -55,7 +55,7 @@ export default async function DetailIjazahPage({
           <div>
             <h1 className="text-3xl font-extrabold text-foreground tracking-tight">Detail Ijazah</h1>
             <p className="text-muted-foreground mt-1">
-              Data ijazah untuk NIM: {user.nim}
+              Data ijazah untuk NIM: {user.dataDeletedAt ? <span className="text-red-500 font-semibold">[DATA ANONIM]</span> : user.nim}
             </p>
           </div>
         </div>

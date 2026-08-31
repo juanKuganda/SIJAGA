@@ -9,7 +9,6 @@ import {
   keypairIdentity,
   publicKey,
   generateSigner,
-  none,
 } from "@metaplex-foundation/umi";
 import { Keypair } from "@solana/web3.js";
 import bs58 from "bs58";

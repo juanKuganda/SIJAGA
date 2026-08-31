@@ -5,7 +5,7 @@ import { getAuthUser } from "@/lib/auth";
 /**
  * GET — List semua backup sertifikat
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const payload = await getAuthUser();
     if (!payload || payload.role !== "ADMIN") {
