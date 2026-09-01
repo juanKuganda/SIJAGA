@@ -23,7 +23,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import ScrollExpand from "@/components/ScrollExpand";
-import { useGlobalLoading } from "@/components/LoadingContext";
 import AiChatBubble from "@/components/AiChatBubble";
 
 interface VerificationResult {
@@ -53,7 +52,6 @@ export default function HomePage() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const { isLoaded } = useGlobalLoading();
 
   const faqs = [
     {
@@ -81,7 +79,6 @@ export default function HomePage() {
   const bentoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!isLoaded) return;
     const ctx = gsap.context(() => {
       // Initial Load Animation
       const tl = gsap.timeline();
@@ -185,7 +182,7 @@ export default function HomePage() {
 
     }, containerRef);
     return () => ctx.revert();
-  }, [isLoaded]);
+  }, []);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -336,6 +333,7 @@ export default function HomePage() {
               width={40}
               height={40}
               className="object-contain drop-shadow-sm"
+              priority
             />
             <div className="flex flex-col">
               <span className="text-xl font-black text-foreground tracking-tight leading-none">
@@ -473,7 +471,7 @@ export default function HomePage() {
               <div className="relative flex items-center bg-white border-2 border-zinc-200 rounded-full p-1.5 shadow-sm focus-within:border-red-500 focus-within:ring-4 focus-within:ring-red-500/10 transition-all">
                 <Search className="size-7 text-zinc-400 ml-4 flex-shrink-0" />
                 <input
-                  className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 shadow-none h-12 text-base font-medium placeholder:text-zinc-400 pl-3"
+                  className="w-full flex-1 min-w-0 bg-transparent border-0 outline-none focus:outline-none focus:ring-0 shadow-none h-12 text-base font-medium placeholder:text-zinc-400 pl-3 pr-4 text-ellipsis"
                   placeholder="Masukkan NIM atau Dompet Digital..."
                   type="text"
                   value={wallet}
