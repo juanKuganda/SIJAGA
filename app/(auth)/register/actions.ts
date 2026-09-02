@@ -73,7 +73,7 @@ export async function registerWithEmail(
   // Auto-backup initial registration data
   await prisma.certificateBackup.create({
     data: {
-      certificateId: undefined,
+      certificateId: null,
       userId: user.id,
       backupData: JSON.stringify({
         certificate: null,

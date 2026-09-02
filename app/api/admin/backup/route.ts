@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
     // Buat backup
     const backup = await prisma.certificateBackup.create({
       data: {
-        certificateId: user.certificate?.id,
+        certificateId: user.certificate?.id ?? null,
         userId: userId,
         backupData: JSON.stringify({
           certificate: user.certificate,
@@ -122,9 +122,9 @@ export async function POST(request: NextRequest) {
           },
           wallet: user.wallet,
         }),
-        nftAddress: user.certificate?.nftAddress,
-        metadataUri: user.certificate?.metadataUri,
-        txSignature: user.certificate?.txSignature,
+        nftAddress: user.certificate?.nftAddress ?? null,
+        metadataUri: user.certificate?.metadataUri ?? null,
+        txSignature: user.certificate?.txSignature ?? null,
         reason: reason || "Manual backup",
         createdBy: payload.userId,
       },
