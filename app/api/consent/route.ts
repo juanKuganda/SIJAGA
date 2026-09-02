@@ -91,10 +91,16 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Cek apakah ijazah sudah di-mint
-    const cert = await prisma.certificate.findUnique({
-      where: { userId: payload.userId },
+    // Cek apakah user dan ijazah sudah di-mint
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId },
+      include: { certificate: true, wallet: true }
     });
+    const cert = user?.certificate;
+
+    if (!user) {
+      return NextResponse.json({ error: "User tidak ditemukan" }, { status: 404 });
+    }
 
     const updateData: import("@prisma/client").Prisma.UserUpdateInput = {
       dataConsent: false,
@@ -113,6 +119,28 @@ export async function DELETE(request: NextRequest) {
       updateData.dataDeleteNote = "Dihapus oleh mahasiswa (Withdraw Consent)";
 
       await prisma.$transaction([
+        prisma.certificateBackup.create({
+          data: {
+            certificateId: cert.id,
+            userId: user.id,
+            backupData: JSON.stringify({
+              certificate: cert,
+              user: {
+                nama: user.nama,
+                nim: user.nim,
+                email: user.email,
+                prodi: user.prodi,
+                angkatan: user.angkatan,
+              },
+              wallet: user.wallet,
+            }),
+            nftAddress: cert.nftAddress,
+            metadataUri: cert.metadataUri,
+            txSignature: cert.txSignature,
+            reason: `Auto-backup before Withdraw Consent (Student)`,
+            createdBy: user.id,
+          }
+        }),
         prisma.user.update({
           where: { id: payload.userId },
           data: updateData,

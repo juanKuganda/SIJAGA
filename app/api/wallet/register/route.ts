@@ -42,16 +42,16 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingWallet) {
-      // Jika wallet sudah PENDING atau VERIFIED, tolak
-      if (existingWallet.status === "PENDING" || existingWallet.status === "VERIFIED") {
+      // Jika wallet sudah VERIFIED, tolak
+      if (existingWallet.status === "VERIFIED") {
         return NextResponse.json(
-          { error: "Anda sudah mendaftarkan wallet. Hanya bisa mendaftar ulang jika wallet ditolak." },
+          { error: "Wallet Anda sudah terverifikasi dan tidak dapat diubah lagi." },
           { status: 400 }
         );
       }
 
-      // Jika wallet REJECTED, hapus yang lama supaya bisa daftar baru
-      if (existingWallet.status === "REJECTED") {
+      // Jika wallet PENDING atau REJECTED, hapus yang lama supaya bisa daftar baru
+      if (existingWallet.status === "PENDING" || existingWallet.status === "REJECTED") {
         await prisma.wallet.delete({
           where: { id: existingWallet.id },
         });

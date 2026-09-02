@@ -76,7 +76,7 @@ model Certificate {
 
 model CertificateBackup {
   id             String    @id @default(cuid())
-  certificateId  String
+  certificateId  String?
   userId         String
   backupData     String    // JSON string dari semua data sertifikat
   nftAddress     String?

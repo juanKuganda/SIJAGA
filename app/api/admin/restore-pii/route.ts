@@ -73,6 +73,16 @@ export async function POST(request: NextRequest) {
         },
       }),
 
+      // 1.5. Pulihkan dataSalt ke tabel Certificate agar verifikasi hash kembali berfungsi
+      ...(backupData.certificate && backupData.certificate.dataSalt
+        ? [
+            prisma.certificate.update({
+              where: { userId },
+              data: { dataSalt: backupData.certificate.dataSalt },
+            }),
+          ]
+        : []),
+
       // 2. Audit log
       prisma.auditLog.create({
         data: {

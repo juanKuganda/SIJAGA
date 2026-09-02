@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     // Cek apakah user ada
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      include: { certificate: true },
+      include: { certificate: true, wallet: true },
     });
 
     if (!user) {
@@ -56,6 +56,30 @@ export async function POST(request: NextRequest) {
 
     // Eksekusi penghapusan PII dalam satu transaksi
     await prisma.$transaction([
+      // 0. Auto-Backup sebelum PII dihapus (selalu dieksekusi)
+      prisma.certificateBackup.create({
+        data: {
+          certificateId: user.certificate?.id,
+          userId: user.id,
+          backupData: JSON.stringify({
+            certificate: user.certificate,
+            user: {
+              nama: user.nama,
+              nim: user.nim,
+              email: user.email,
+              prodi: user.prodi,
+              angkatan: user.angkatan,
+            },
+            wallet: user.wallet,
+          }),
+          nftAddress: user.certificate?.nftAddress,
+          metadataUri: user.certificate?.metadataUri,
+          txSignature: user.certificate?.txSignature,
+          reason: `Auto-backup before PII deletion. Reason: ${reason}`,
+          createdBy: payload.userId,
+        },
+      }),
+      
       // 1. Hapus PII dari User
       prisma.user.update({
         where: { id: userId },

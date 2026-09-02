@@ -104,17 +104,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!user.certificate) {
-      return NextResponse.json(
-        { error: "Sertifikat tidak ditemukan" },
-        { status: 404 }
-      );
-    }
+    // Validasi dihapus agar bisa backup semua mahasiswa
 
     // Buat backup
     const backup = await prisma.certificateBackup.create({
       data: {
-        certificateId: user.certificate.id,
+        certificateId: user.certificate?.id,
         userId: userId,
         backupData: JSON.stringify({
           certificate: user.certificate,
@@ -127,9 +122,9 @@ export async function POST(request: NextRequest) {
           },
           wallet: user.wallet,
         }),
-        nftAddress: user.certificate.nftAddress,
-        metadataUri: user.certificate.metadataUri,
-        txSignature: user.certificate.txSignature,
+        nftAddress: user.certificate?.nftAddress,
+        metadataUri: user.certificate?.metadataUri,
+        txSignature: user.certificate?.txSignature,
         reason: reason || "Manual backup",
         createdBy: payload.userId,
       },

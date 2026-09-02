@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { Search, Pencil, Eye, Check, X, XCircle, Users, CheckCircle2, UserX, ShieldOff, MoreHorizontal, RefreshCcw } from "lucide-react";
+import { Search, Pencil, Eye, Check, X, XCircle, Users, CheckCircle2, UserX, ShieldOff, MoreHorizontal, RefreshCcw, DownloadCloud, Save } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -40,6 +40,7 @@ interface Mahasiswa {
   dataConsent: boolean;
   consentGivenAt: string | null;
   dataDeletedAt: string | null;
+  lastBackupAt: string | null;
   createdAt?: string;
   wallet: {
     id: string;
@@ -89,6 +90,8 @@ export default function MahasiswaPage() {
   } | null>(null);
   const [restorePiiLoading, setRestorePiiLoading] = useState(false);
   const [restorePiiError, setRestorePiiError] = useState("");
+
+  const [backupLoading, setBackupLoading] = useState<string | null>(null);
 
   // Edit modal state
   const [editModal, setEditModal] = useState<Mahasiswa | null>(null);
@@ -255,6 +258,28 @@ export default function MahasiswaPage() {
     }
   };
 
+  const handleManualBackup = async (userId: string, nama: string) => {
+    setBackupLoading(userId);
+    try {
+      const response = await fetch("/api/admin/backup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, reason: "Manual backup triggered from dashboard" }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        toast.success(`Data ${nama} berhasil di-backup`);
+        fetchMahasiswa();
+      } else {
+        toast.error(data.error || "Gagal melakukan backup");
+      }
+    } catch {
+      toast.error("Terjadi kesalahan sistem saat backup");
+    } finally {
+      setBackupLoading(null);
+    }
+  };
+
   const filteredMahasiswa = mahasiswa.filter((m) => {
     const matchesSearch =
       m.nama.toLowerCase().includes(search.toLowerCase()) ||
@@ -400,6 +425,15 @@ export default function MahasiswaPage() {
                 <option value="nama-asc">Nama (A-Z)</option>
                 <option value="nama-desc">Nama (Z-A)</option>
               </select>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open("/api/admin/backup", "_blank")}
+                className="ml-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200"
+              >
+                <DownloadCloud className="w-4 h-4 mr-2" />
+                Unduh Semua Backup
+              </Button>
             </div>
           </div>
         </CardHeader>
@@ -414,6 +448,7 @@ export default function MahasiswaPage() {
                 <TableHead>Wallet</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Ijazah</TableHead>
+                <TableHead>Backup</TableHead>
                 <TableHead>Aksi</TableHead>
               </TableRow>
             </TableHeader>
@@ -473,6 +508,16 @@ export default function MahasiswaPage() {
                       <StatusBadge status={m.certificate?.status || "NOT_ISSUED"} type="certificate" />
                     </TableCell>
                     <TableCell>
+                      {m.lastBackupAt ? (
+                        <div className="flex flex-col">
+                          <span className="text-xs font-semibold text-emerald-600">Tersedia</span>
+                          <span className="text-[10px] text-muted-foreground">{new Date(m.lastBackupAt).toLocaleDateString("id-ID")}</span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground h-8 w-8 p-0 outline-none">
                           <span className="sr-only">Buka menu</span>
@@ -495,6 +540,16 @@ export default function MahasiswaPage() {
                           >
                             <Pencil className="w-4 h-4 mr-2" />
                             Edit
+                          </DropdownMenuItem>
+
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => handleManualBackup(m.id, m.nama)}
+                            disabled={backupLoading === m.id}
+                            className="cursor-pointer text-emerald-600 focus:text-emerald-700 flex items-center"
+                          >
+                            <Save className="w-4 h-4 mr-2" />
+                            {backupLoading === m.id ? "Memproses Backup..." : "Backup Data Sekarang"}
                           </DropdownMenuItem>
 
                           {m.wallet?.status === "PENDING" && (
@@ -736,9 +791,12 @@ export default function MahasiswaPage() {
             <p className="text-sm text-red-600">{restorePiiError}</p>
           </div>
         )}
-        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-700">
-            Tindakan ini akan mengembalikan nama dan NIM asli mahasiswa yang sebelumnya telah dianonimkan, dengan menggunakan data dari tabel backup.
+        <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+          <p className="text-sm font-semibold text-amber-800 mb-1">
+            Peringatan Konsekuensi Pemulihan (Restore)
+          </p>
+          <p className="text-sm text-amber-700 leading-relaxed">
+            Tindakan ini akan <strong>secara publik</strong> memunculkan kembali Nama dan NIM mahasiswa yang sebelumnya telah dianonimkan (dicabut consent-nya). Pastikan Anda memiliki persetujuan baru yang sah dari mahasiswa untuk memulihkan data pribadi mereka dari cadangan (backup).
           </p>
         </div>
       </ActionModal>
