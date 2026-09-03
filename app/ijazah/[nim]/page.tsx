@@ -3,6 +3,8 @@
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { ArrowLeft, Printer, ExternalLink, ShieldCheck, XCircle, FileText } from "lucide-react";
+import { CertificateUI } from "@/components/certificate-ui";
+import { logoBase64 } from "@/lib/logo-base64";
 
 interface CertificateData {
   nama: string;
@@ -18,6 +20,7 @@ interface CertificateData {
   revokedAt: string | null;
   revokeReason: string | null;
   walletAddress: string | null;
+  dataHash: string | null;
 }
 
 export default function IjazahPreviewPage({
@@ -138,62 +141,15 @@ export default function IjazahPreviewPage({
         {/* Main Certificate View */}
         <div className="bg-white rounded-[2rem] border border-zinc-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 md:p-12 print:border-none print:shadow-none print:p-0">
           
-          {/* Certificate CSS-based Preview (Copied from Dashboard Detail) */}
-          <div className={`w-full aspect-[1.414] bg-[#F8F9FA] rounded-md border-[8px] ${isRevoked ? 'border-red-200' : 'border-[#D1D5DB]'} p-4 sm:p-8 flex flex-col items-center justify-center text-center shadow-inner relative overflow-hidden print:aspect-auto print:h-screen print:border-none print:shadow-none`}>
-            {/* Ornamen / Latar Belakang Garis */}
-            <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'repeating-linear-gradient(45deg, #000 0, #000 1px, transparent 1px, transparent 10px)' }}></div>
-            <div className={`absolute inset-4 border-2 ${isRevoked ? 'border-red-200' : 'border-[#E5E7EB]'} rounded pointer-events-none`}></div>
-            
-            {/* Logo Untad */}
-            <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center mb-8 z-10 drop-shadow-lg">
-              <img
-                src="/web-app-manifest-512x512.png"
-                alt="Logo Universitas Tadulako"
-                className="w-full h-full object-contain"
-              />
-            </div>
-
-            <div className="space-y-6 z-10 w-full max-w-2xl mx-auto">
-              <div>
-                <h3 className="text-gray-900 font-serif text-2xl sm:text-3xl font-bold uppercase tracking-[0.2em]">
-                  Universitas Tadulako
-                </h3>
-                <p className="text-gray-500 text-sm sm:text-base font-medium mt-2 uppercase tracking-widest">
-                  Sertifikat Ijazah Kelulusan
-                </p>
-              </div>
-
-              <div className="py-6 border-y border-zinc-200 border-dashed">
-                <p className="text-gray-500 text-sm italic mb-4">Diberikan Kepada</p>
-                <h2 className="text-3xl sm:text-5xl font-serif text-gray-900 font-bold tracking-tight">
-                  {cert.nama}
-                </h2>
-                <p className="text-gray-600 font-mono mt-3 text-base font-medium">
-                  NIM: {cert.nim}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-gray-500 text-sm mb-2">
-                  Telah menyelesaikan semua persyaratan akademik<br/>pada Program Studi:
-                </p>
-                <p className="text-gray-900 font-bold uppercase tracking-[0.15em] text-lg sm:text-xl">
-                  {cert.prodi || "INFORMATIKA"}
-                </p>
-                <p className="text-gray-500 text-sm mt-3 font-medium">
-                  Tahun Kelulusan: {cert.angkatan || "2024"}
-                </p>
-              </div>
-            </div>
-            
-            {/* Watermark REVOKED / DIBATALKAN */}
-            {isRevoked && (
-              <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none overflow-hidden">
-                <div className="text-red-500/25 text-5xl sm:text-7xl md:text-[140px] font-black uppercase tracking-[0.2em] -rotate-[30deg] border-[8px] md:border-[12px] border-red-500/25 px-8 py-4 md:px-16 md:py-6 rounded-3xl select-none">
-                  DIBATALKAN
-                </div>
-              </div>
-            )}
+          {/* Certificate Component Preview */}
+          <div className="w-full aspect-[1.414] overflow-hidden rounded-md border border-zinc-200 print:aspect-auto print:h-screen print:border-none print:shadow-none">
+            <CertificateUI
+              prodi={cert.prodi || ""}
+              tahunLulus={cert.angkatan || ""}
+              dataHash={cert.dataHash || undefined}
+              isRevoked={isRevoked}
+              logoBase64={logoBase64}
+            />
           </div>
 
           {/* Modern Detail Block */}

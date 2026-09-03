@@ -81,8 +81,12 @@ export async function POST(request: NextRequest) {
       user.prodi || "Informatika"
     );
 
-    // Generate & upload PNG certificate image to IPFS
-    const { gatewayUrl: imageUrl } = await generateAndUploadCertificateImage(user, "MINTED");
+    // Generate & upload PNG certificate image to IPFS (TANPA PII)
+    const { gatewayUrl: imageUrl } = await generateAndUploadCertificateImage({
+      prodi: user.prodi || "Informatika",
+      tahunLulus: user.angkatan || "2026",
+      dataHash,
+    }, "MINTED");
 
     // Generate metadata TANPA PII (Privacy Architecture)
     const metadata = generateCertificateMetadata({

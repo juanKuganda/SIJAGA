@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
   // Buat transaksi Memo sebagai bukti klaim
   const rpcUrl = process.env.SOLANA_RPC_URL || clusterApiUrl("devnet");
   const connection = new Connection(rpcUrl, "confirmed");
-  const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+  const { blockhash } = await connection.getLatestBlockhash();
 
   const transaction = new Transaction({
     feePayer: walletPublicKey,
@@ -166,7 +166,7 @@ export async function POST(request: NextRequest) {
   const memoMessage = JSON.stringify({
     type: "SIJAGA_CLAIM",
     nftAddress: user.certificate.nftAddress,
-    nim: user.nim,
+    dataHash: user.certificate.dataHash,
     timestamp: new Date().toISOString(),
   });
   

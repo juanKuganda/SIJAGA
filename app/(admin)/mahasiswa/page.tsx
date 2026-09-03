@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { Search, Pencil, Eye, Check, X, XCircle, Users, CheckCircle2, UserX, ShieldOff } from "lucide-react";
+import { Search, Pencil, Eye, Check, X, XCircle, Users, CheckCircle2, UserX, ShieldOff, MoreHorizontal, RefreshCcw, DownloadCloud, Save } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,14 @@ import { DataTablePagination } from "@/components/ui/data-table-pagination";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { ActionModal } from "@/components/ui/action-modal";
 import { EmptyState } from "@/components/ui/empty-state";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Mahasiswa {
   id: string;
@@ -32,6 +40,8 @@ interface Mahasiswa {
   dataConsent: boolean;
   consentGivenAt: string | null;
   dataDeletedAt: string | null;
+  lastBackupAt: string | null;
+  createdAt?: string;
   wallet: {
     id: string;
     walletAddress: string;
@@ -62,7 +72,26 @@ export default function MahasiswaPage() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("terbaru");
   const [verifyError, setVerifyError] = useState<string | null>(null);
+
+  const [deletePiiModal, setDeletePiiModal] = useState<{
+    userId: string;
+    nama: string;
+    nim: string;
+  } | null>(null);
+  const [deletePiiReason, setDeletePiiReason] = useState("");
+  const [deletePiiLoading, setDeletePiiLoading] = useState(false);
+  const [deletePiiError, setDeletePiiError] = useState("");
+  const [restorePiiModal, setRestorePiiModal] = useState<{
+    userId: string;
+    nama: string;
+    nim: string;
+  } | null>(null);
+  const [restorePiiLoading, setRestorePiiLoading] = useState(false);
+  const [restorePiiError, setRestorePiiError] = useState("");
+
+  const [backupLoading, setBackupLoading] = useState<string | null>(null);
 
   // Edit modal state
   const [editModal, setEditModal] = useState<Mahasiswa | null>(null);
@@ -75,16 +104,6 @@ export default function MahasiswaPage() {
   });
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState("");
-
-  // Delete PII modal state
-  const [deletePiiModal, setDeletePiiModal] = useState<{
-    userId: string;
-    nama: string;
-    nim: string;
-  } | null>(null);
-  const [deletePiiReason, setDeletePiiReason] = useState("");
-  const [deletePiiLoading, setDeletePiiLoading] = useState(false);
-  const [deletePiiError, setDeletePiiError] = useState("");
 
   const fetchMahasiswa = async () => {
     try {
@@ -194,7 +213,6 @@ export default function MahasiswaPage() {
       const data = await response.json();
 
       if (response.ok) {
-        toast.success(`Data pribadi ${deletePiiModal.nama} berhasil dianonimkan (UU PDP)`);
         setDeletePiiModal(null);
         setDeletePiiReason("");
         fetchMahasiswa();
@@ -206,6 +224,59 @@ export default function MahasiswaPage() {
       setDeletePiiError("Terjadi kesalahan server");
     } finally {
       setDeletePiiLoading(false);
+    }
+  };
+
+  const handleRestorePii = async () => {
+    if (!restorePiiModal) return;
+
+    setRestorePiiLoading(true);
+    setRestorePiiError("");
+
+    try {
+      const response = await fetch("/api/admin/restore-pii", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: restorePiiModal.userId,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setRestorePiiModal(null);
+        fetchMahasiswa();
+      } else {
+        setRestorePiiError(data.error || "Gagal melakukan restore data");
+      }
+    } catch (error) {
+      console.error("Error restoring PII:", error);
+      setRestorePiiError("Terjadi kesalahan sistem saat me-restore data");
+    } finally {
+      setRestorePiiLoading(false);
+    }
+  };
+
+  const handleManualBackup = async (userId: string, nama: string) => {
+    setBackupLoading(userId);
+    try {
+      const response = await fetch("/api/admin/backup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, reason: "Manual backup triggered from dashboard" }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        toast.success(`Data ${nama} berhasil di-backup`);
+        fetchMahasiswa();
+      } else {
+        toast.error(data.error || "Gagal melakukan backup");
+      }
+    } catch {
+      toast.error("Terjadi kesalahan sistem saat backup");
+    } finally {
+      setBackupLoading(null);
     }
   };
 
@@ -224,11 +295,27 @@ export default function MahasiswaPage() {
     return matchesSearch;
   });
 
+  const sortedMahasiswa = [...filteredMahasiswa].sort((a, b) => {
+    if (sortBy === "terbaru") {
+      return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+    }
+    if (sortBy === "terlama") {
+      return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
+    }
+    if (sortBy === "nama-asc") {
+      return a.nama.localeCompare(b.nama);
+    }
+    if (sortBy === "nama-desc") {
+      return b.nama.localeCompare(a.nama);
+    }
+    return 0;
+  });
+
   // Pagination Logic
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
-  const totalPages = Math.ceil(filteredMahasiswa.length / ITEMS_PER_PAGE);
-  const paginatedMahasiswa = filteredMahasiswa.slice(
+  const totalPages = Math.ceil(sortedMahasiswa.length / ITEMS_PER_PAGE);
+  const paginatedMahasiswa = sortedMahasiswa.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
@@ -324,6 +411,29 @@ export default function MahasiswaPage() {
                   {f.label}
                 </Button>
               ))}
+              <div className="border-l mx-1 border-border"></div>
+              <select
+                value={sortBy}
+                onChange={(e) => {
+                  setSortBy(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="h-9 w-[140px] rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="terbaru">Terbaru</option>
+                <option value="terlama">Terlama</option>
+                <option value="nama-asc">Nama (A-Z)</option>
+                <option value="nama-desc">Nama (Z-A)</option>
+              </select>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open("/api/admin/backup", "_blank")}
+                className="ml-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200"
+              >
+                <DownloadCloud className="w-4 h-4 mr-2" />
+                Unduh Semua Backup
+              </Button>
             </div>
           </div>
         </CardHeader>
@@ -338,6 +448,7 @@ export default function MahasiswaPage() {
                 <TableHead>Wallet</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Ijazah</TableHead>
+                <TableHead>Backup</TableHead>
                 <TableHead>Aksi</TableHead>
               </TableRow>
             </TableHeader>
@@ -397,61 +508,101 @@ export default function MahasiswaPage() {
                       <StatusBadge status={m.certificate?.status || "NOT_ISSUED"} type="certificate" />
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <Link href={`/detail-ijazah/${m.nim}`}>
-                          <Button size="sm" variant="outline">
-                            <Eye className="w-3.5 h-3.5 mr-1" />
-                            Detail
-                          </Button>
-                        </Link>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => openEditModal(m)}
-                          disabled={!!m.dataDeletedAt}
-                        >
-                          <Pencil className="w-3.5 h-3.5 mr-1" />
-                          Edit
-                        </Button>
-                        {m.wallet?.status === "PENDING" && (
-                          <>
-                            <Button
-                              size="sm"
-                              onClick={() =>
-                                handleVerify(m.wallet!.id, "VERIFIED")
-                              }
-                            >
-                              <Check className="w-3.5 h-3.5 mr-1" />
-                              Setujui
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() =>
-                                handleVerify(m.wallet!.id, "REJECTED")
-                              }
-                            >
-                              <X className="w-3.5 h-3.5 mr-1" />
-                              Tolak
-                            </Button>
-                          </>
-                        )}
-                        {!m.dataDeletedAt && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-300 shadow-sm font-semibold"
-                            onClick={() => {
-                              setDeletePiiModal({ userId: m.id, nama: m.nama, nim: m.nim });
-                              setDeletePiiReason("");
-                              setDeletePiiError("");
-                            }}
+                      {m.lastBackupAt ? (
+                        <div className="flex flex-col">
+                          <span className="text-xs font-semibold text-emerald-600">Tersedia</span>
+                          <span className="text-[10px] text-muted-foreground">{new Date(m.lastBackupAt).toLocaleDateString("id-ID")}</span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground h-8 w-8 p-0 outline-none">
+                          <span className="sr-only">Buka menu</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Aksi</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem>
+                            <Link href={`/detail-ijazah/${m.id}`} className="cursor-pointer flex items-center w-full">
+                              <Eye className="w-4 h-4 mr-2" />
+                              Detail
+                            </Link>
+                          </DropdownMenuItem>
+                          
+                          <DropdownMenuItem
+                            onClick={() => openEditModal(m)}
+                            disabled={!!m.dataDeletedAt}
+                            className="cursor-pointer flex items-center"
                           >
-                            <UserX className="w-3.5 h-3.5 mr-1" />
-                            Anonimkan Data
-                          </Button>
-                        )}
-                      </div>
+                            <Pencil className="w-4 h-4 mr-2" />
+                            Edit
+                          </DropdownMenuItem>
+
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => handleManualBackup(m.id, m.nama)}
+                            disabled={backupLoading === m.id}
+                            className="cursor-pointer text-emerald-600 focus:text-emerald-700 flex items-center"
+                          >
+                            <Save className="w-4 h-4 mr-2" />
+                            {backupLoading === m.id ? "Memproses Backup..." : "Backup Data Sekarang"}
+                          </DropdownMenuItem>
+
+                          {m.wallet?.status === "PENDING" && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => handleVerify(m.wallet!.id, "VERIFIED")}
+                                className="cursor-pointer text-emerald-600 flex items-center"
+                              >
+                                <Check className="w-4 h-4 mr-2" />
+                                Setujui Wallet
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleVerify(m.wallet!.id, "REJECTED")}
+                                className="cursor-pointer text-red-600 flex items-center"
+                              >
+                                <X className="w-4 h-4 mr-2" />
+                                Tolak Wallet
+                              </DropdownMenuItem>
+                            </>
+                          )}
+
+                          {!m.dataDeletedAt ? (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setDeletePiiModal({ userId: m.id, nama: m.nama, nim: m.nim });
+                                  setDeletePiiReason("");
+                                  setDeletePiiError("");
+                                }}
+                                className="cursor-pointer text-red-600 focus:text-red-700 flex items-center"
+                              >
+                                <UserX className="w-4 h-4 mr-2" />
+                                Anonimkan Data
+                              </DropdownMenuItem>
+                            </>
+                          ) : (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setRestorePiiModal({ userId: m.id, nama: m.nama, nim: m.nim });
+                                }}
+                                className="cursor-pointer text-blue-600 focus:text-blue-700 flex items-center"
+                              >
+                                <RefreshCcw className="w-4 h-4 mr-2" />
+                                Restore Data
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))
@@ -571,7 +722,6 @@ export default function MahasiswaPage() {
         </div>
       </ActionModal>
 
-      {/* Delete PII Modal (UU PDP - Hak untuk Dilupakan) */}
       <ActionModal
         isOpen={!!deletePiiModal}
         onClose={() => {
@@ -606,18 +756,48 @@ export default function MahasiswaPage() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="pii-reason" className="font-semibold">
+          <label className="text-sm font-medium text-foreground">
             Alasan Anonimisasi Data <span className="text-red-500">*</span>
-          </Label>
+          </label>
           <textarea
-            id="pii-reason"
             value={deletePiiReason}
-            onChange={(e) => setDeletePiiReason(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDeletePiiReason(e.target.value)}
             placeholder="Masukkan alasan (contoh: Permintaan resmi mahasiswa sesuai Hak untuk Dilupakan)..."
             className="w-full px-4 py-2.5 bg-white border border-input rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all resize-none shadow-sm text-sm"
             rows={3}
             disabled={deletePiiLoading}
           />
+        </div>
+      </ActionModal>
+
+      <ActionModal
+        isOpen={!!restorePiiModal}
+        onClose={() => {
+          if (!restorePiiLoading) {
+            setRestorePiiModal(null);
+          }
+        }}
+        icon={RefreshCcw}
+        iconBgColor="bg-blue-50"
+        iconTextColor="text-blue-600"
+        title="Restore Data Mahasiswa"
+        subtitle={restorePiiModal ? "Mengembalikan data dari status anonim" : ""}
+        confirmText="Ya, Restore Data"
+        onConfirm={handleRestorePii}
+        isConfirming={restorePiiLoading}
+      >
+        {restorePiiError && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-600">{restorePiiError}</p>
+          </div>
+        )}
+        <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+          <p className="text-sm font-semibold text-amber-800 mb-1">
+            Peringatan Konsekuensi Pemulihan (Restore)
+          </p>
+          <p className="text-sm text-amber-700 leading-relaxed">
+            Tindakan ini akan <strong>secara publik</strong> memunculkan kembali Nama dan NIM mahasiswa yang sebelumnya telah dianonimkan (dicabut consent-nya). Pastikan Anda memiliki persetujuan baru yang sah dari mahasiswa untuk memulihkan data pribadi mereka dari cadangan (backup).
+          </p>
         </div>
       </ActionModal>
     </div>

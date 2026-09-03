@@ -52,6 +52,7 @@ export async function GET(
         revokedAt: user.certificate.revokedAt,
         revokeReason: user.certificate.revokeReason,
         walletAddress: user.wallet?.walletAddress || null,
+        dataHash: user.certificate.dataHash,
         piiDeleted,
       },
     });

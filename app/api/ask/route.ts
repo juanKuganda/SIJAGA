@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ═══ STEP 2: AUGMENTATION + GENERATION — Kirim ke Gemini ═══
-    const answer = await generateVerificationResponse(question, retrievedData);
+    const answer = await generateVerificationResponse(question, retrievedData, { nim, nama });
 
     return NextResponse.json({
       answer,

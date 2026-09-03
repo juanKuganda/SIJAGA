@@ -145,10 +145,23 @@ export default function WalletPage() {
                       <p className="text-amber-800 font-bold text-sm mb-1">
                         Menunggu Verifikasi
                       </p>
-                      <p className="text-amber-700 text-sm">
+                      <p className="text-amber-700 text-sm mb-3">
                         Wallet Anda sedang diverifikasi oleh admin fakultas. Proses ini
                         biasanya memakan waktu 1-2 hari kerja.
                       </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-amber-300 text-amber-800 hover:bg-amber-100"
+                        onClick={() => {
+                          setWallet(null);
+                          setWalletAddress("");
+                          setError("");
+                          setSuccess("");
+                        }}
+                      >
+                        Batalkan & Ganti Wallet <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                      </Button>
                     </div>
                   </div>
                 )}

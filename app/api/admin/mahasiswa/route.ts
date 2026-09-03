@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 import { updateMahasiswaSchema } from "@/lib/validation";
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const payload = await getAuthUser();
     if (!payload || payload.role !== "ADMIN") {
@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
         dataConsent: true,
         consentGivenAt: true,
         dataDeletedAt: true,
+        createdAt: true,
         wallet: {
           select: {
             id: true,
@@ -39,13 +40,29 @@ export async function GET(request: NextRequest) {
             issuedAt: true,
             revokedAt: true,
             revokeReason: true,
+            dataHash: true,
           },
         },
       },
       orderBy: { nama: "asc" },
     });
 
-    return NextResponse.json({ mahasiswa });
+    // Ambil tanggal backup terakhir untuk masing-masing mahasiswa
+    const latestBackups = await prisma.certificateBackup.groupBy({
+      by: ['userId'],
+      _max: {
+        createdAt: true,
+      },
+    });
+
+    const backupMap = new Map(latestBackups.map(b => [b.userId, b._max.createdAt]));
+
+    const mahasiswaWithBackup = mahasiswa.map(m => ({
+      ...m,
+      lastBackupAt: backupMap.get(m.id) || null,
+    }));
+
+    return NextResponse.json({ mahasiswa: mahasiswaWithBackup });
   } catch (error) {
     console.error("Mahasiswa list error:", error);
     return NextResponse.json(

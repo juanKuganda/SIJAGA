@@ -17,11 +17,13 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ActionModal } from "@/components/ui/action-modal";
 
 interface ConsentStatus {
   dataConsent: boolean;
   consentGivenAt: string | null;
   consentVersion: string | null;
+  certificateStatus: string;
 }
 
 export default function ConsentPage() {
@@ -29,6 +31,7 @@ export default function ConsentPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  const [confirmWithdraw, setConfirmWithdraw] = useState(false);
 
   const fetchConsent = async () => {
     try {
@@ -76,6 +79,7 @@ export default function ConsentPage() {
       if (res.ok) {
         toast.success("Persetujuan berhasil ditarik kembali");
         fetchConsent();
+        setConfirmWithdraw(false);
       } else {
         toast.error(data.message || data.error || "Gagal menarik persetujuan");
       }
@@ -263,17 +267,15 @@ export default function ConsentPage() {
               <ul className="space-y-2 text-sm text-purple-700 ml-6">
                 <li className="flex items-start gap-2">
                   <span className="text-purple-400 mt-0.5">•</span>
-                  Saya dapat menarik persetujuan ini SEBELUM ijazah diterbitkan
+                  Saya dapat menarik persetujuan ini KAPAN SAJA (Hak untuk Dilupakan)
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-purple-400 mt-0.5">•</span>
-                  Setelah ijazah diterbitkan, data non-PII di blockchain
-                  bersifat permanen
+                  Jika ditarik setelah ijazah diterbitkan, nama dan NIM saya akan dianonimkan dari SIJAGA
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-purple-400 mt-0.5">•</span>
-                  Saya dapat meminta penghapusan data nama dan NIM dari server
-                  SIJAGA
+                  Setelah ijazah diterbitkan, data non-PII di blockchain bersifat permanen
                 </li>
               </ul>
             </div>
@@ -335,14 +337,11 @@ export default function ConsentPage() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-amber-700 mb-4 leading-relaxed">
-              Anda dapat menarik kembali persetujuan ini{" "}
-              <strong>hanya jika</strong> ijazah digital Anda{" "}
-              <strong>belum diterbitkan</strong>. Setelah ijazah diterbitkan ke
-              blockchain, persetujuan tidak dapat ditarik.
+              Anda dapat menarik kembali persetujuan ini kapan saja (Hak untuk Dilupakan / Right to Erasure). Jika ijazah digital Anda <strong>sudah diterbitkan</strong>, menarik persetujuan akan meng-anonimkan data pribadi Anda (Nama dan NIM) dari sistem SIJAGA secara permanen, sementara data ijazah anonim di blockchain tetap utuh.
             </p>
             <Button
               variant="outline"
-              onClick={handleWithdrawConsent}
+              onClick={() => setConfirmWithdraw(true)}
               disabled={submitting}
               className="border-amber-300 text-amber-800 hover:bg-amber-100"
             >
@@ -361,6 +360,36 @@ export default function ConsentPage() {
           </CardContent>
         </Card>
       )}
+
+      <ActionModal
+        isOpen={confirmWithdraw}
+        onClose={() => !submitting && setConfirmWithdraw(false)}
+        icon={AlertTriangle}
+        iconBgColor="bg-red-50"
+        iconTextColor="text-red-600"
+        title="Apakah Anda Sangat Yakin?"
+        subtitle="Konfirmasi Penarikan Persetujuan (Right to be Forgotten)"
+        confirmText="Ya, Tarik Persetujuan Permanen"
+        confirmVariant="destructive"
+        onConfirm={handleWithdrawConsent}
+        isConfirming={submitting}
+      >
+        <div className="space-y-4">
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm leading-relaxed">
+            <p className="font-bold mb-2">PERINGATAN KERAS:</p>
+            <p>
+              Dengan menarik persetujuan ini, identitas Anda (Nama dan NIM) akan <strong>dihapus secara permanen</strong> dari sistem verifikasi SIJAGA.
+            </p>
+          </div>
+          <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm leading-relaxed">
+            <ul className="list-disc ml-5 space-y-1">
+              <li>Ijazah Anda di blockchain tidak akan bisa diverifikasi menggunakan nama Anda lagi.</li>
+              <li>Pencarian ijazah Anda akan memunculkan status <code>[DATA DIHAPUS]</code>.</li>
+              <li>Sistem akan membuat salinan terenkripsi sesaat sebelum dihapus, yang hanya dapat di-restore jika Anda menghubungi Universitas.</li>
+            </ul>
+          </div>
+        </div>
+      </ActionModal>
     </div>
   );
 }

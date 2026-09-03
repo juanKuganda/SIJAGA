@@ -6,16 +6,18 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import CopyBlinkLink from "./CopyBlinkLink";
 import EditButton from "./EditButton";
 import { headers } from "next/headers";
+import { CertificateUI } from "@/components/certificate-ui";
+import { logoBase64 } from "@/lib/logo-base64";
 
 export default async function DetailIjazahPage({
   params,
 }: {
-  params: Promise<{ nim: string }>;
+  params: Promise<{ id: string }>;
 }) {
-  const { nim } = await params;
+  const { id } = await params;
 
   const user = await prisma.user.findUnique({
-    where: { nim },
+    where: { id },
     include: {
       wallet: true,
       certificate: true,
@@ -53,7 +55,7 @@ export default async function DetailIjazahPage({
           <div>
             <h1 className="text-3xl font-extrabold text-foreground tracking-tight">Detail Ijazah</h1>
             <p className="text-muted-foreground mt-1">
-              Data ijazah untuk NIM: {user.nim}
+              Data ijazah untuk NIM: {user.dataDeletedAt ? <span className="text-red-500 font-semibold">[DATA ANONIM]</span> : user.nim}
             </p>
           </div>
         </div>
@@ -188,66 +190,15 @@ export default async function DetailIjazahPage({
               </p>
             </CardHeader>
             <CardContent>
-              {/* Sertifikat CSS-based Preview */}
-              <div className="w-full aspect-[1.414] bg-[#F8F9FA] rounded-md border-[8px] border-[#D1D5DB] p-4 sm:p-8 flex flex-col items-center justify-center text-center shadow-inner relative overflow-hidden">
-                {/* Ornamen / Latar Belakang Garis */}
-                <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'repeating-linear-gradient(45deg, #000 0, #000 1px, transparent 1px, transparent 10px)' }}></div>
-                <div className="absolute inset-4 border-2 border-[#E5E7EB] rounded pointer-events-none"></div>
-                
-                {/* Logo Untad */}
-                <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center mb-6 z-10 drop-shadow-lg">
-                  <img
-                    src="/web-app-manifest-512x512.png"
-                    alt="Logo Universitas Tadulako"
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-
-                <div className="space-y-4 z-10">
-                  <div>
-                    <h3 className="text-gray-900 font-serif text-lg sm:text-2xl font-bold uppercase tracking-widest">
-                      Universitas Tadulako
-                    </h3>
-                    <p className="text-gray-500 text-xs sm:text-sm font-medium mt-1 uppercase tracking-wider">
-                      Sertifikat Ijazah Kelulusan
-                    </p>
-                  </div>
-
-                  <div className="py-2">
-                    <p className="text-gray-500 text-xs italic mb-2">Diberikan Kepada</p>
-                    <h2 className="text-2xl sm:text-4xl font-serif text-gray-900 font-bold">
-                      {user.nama}
-                    </h2>
-                    <p className="text-gray-600 font-mono mt-1 text-sm">
-                      NIM: {user.nim}
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-gray-500 text-xs">
-                      Telah menyelesaikan semua persyaratan akademik<br/>pada Program Studi:
-                    </p>
-                    <p className="text-gray-900 font-bold uppercase tracking-widest mt-1 text-sm sm:text-base">
-                      {user.prodi || "INFORMATIKA"}
-                    </p>
-                    <p className="text-gray-500 text-xs mt-1">
-                      Tahun Kelulusan: {user.angkatan || "2026"}
-                    </p>
-                  </div>
-                </div>
-                
-                {/* Watermark / Seal status */}
-                <div className="absolute bottom-6 right-6 z-10 opacity-80">
-                  <div className={`w-16 h-16 rounded-full border-4 flex items-center justify-center transform -rotate-12 ${
-                    user.certificate?.status === 'CLAIMED' ? 'border-emerald-500 text-emerald-600' : 
-                    user.certificate?.status === 'REVOKED' ? 'border-red-500 text-red-600' :
-                    user.certificate?.status === 'MINTED' ? 'border-blue-500 text-blue-600' : 'border-gray-400 text-gray-400'
-                  }`}>
-                    <span className="text-[10px] font-bold uppercase tracking-tighter">
-                      {user.certificate?.status || "DRAFT"}
-                    </span>
-                  </div>
-                </div>
+              {/* Sertifikat Component */}
+              <div className="w-full aspect-[1.414] overflow-hidden rounded-md border border-zinc-200">
+                <CertificateUI
+                  prodi={user.prodi || ""}
+                  tahunLulus={user.angkatan || ""}
+                  dataHash={user.certificate?.dataHash || undefined}
+                  isRevoked={user.certificate?.status === 'REVOKED'}
+                  logoBase64={logoBase64}
+                />
               </div>
               
               <div className="mt-4 text-center">

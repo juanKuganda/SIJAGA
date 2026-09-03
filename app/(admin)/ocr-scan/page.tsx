@@ -81,6 +81,7 @@ export default function OcrScanPage() {
   const [formNim, setFormNim] = useState("");
   const [formProdi, setFormProdi] = useState("");
   const [formAngkatan, setFormAngkatan] = useState("");
+  const [formHash, setFormHash] = useState("");
 
   // Search results
   const [isSearching, setIsSearching] = useState(false);
@@ -161,11 +162,12 @@ export default function OcrScanPage() {
       setFormNim(entities.nim?.value || "");
       setFormProdi(entities.prodi?.value || "");
       setFormAngkatan(entities.angkatan?.value || "");
+      setFormHash(entities.dataHash?.value || "");
 
       toast.success("OCR selesai!", {
         description: `Confidence: ${confidence.toFixed(0)}% — ${
-          [entities.nama, entities.nim, entities.prodi, entities.angkatan].filter(Boolean).length
-        }/4 field terdeteksi.`,
+          [entities.prodi, entities.angkatan, entities.dataHash].filter(Boolean).length
+        }/3 field utama terdeteksi. (Nama & NIM diabaikan demi privasi)`,
       });
     } catch (error) {
       console.error("OCR error:", error);
@@ -180,8 +182,8 @@ export default function OcrScanPage() {
 
   // ─── Database Search ────────────────────────────────────────────
   const searchMahasiswa = async () => {
-    if (!formNim && !formNama) {
-      toast.error("Isi minimal NIM atau Nama untuk mencari.");
+    if (!formNim && !formNama && !formHash) {
+      toast.error("Isi minimal NIM, Nama, atau Hash untuk mencari.");
       return;
     }
 
@@ -200,14 +202,22 @@ export default function OcrScanPage() {
         // Filter by form fields using fuzzy matching (includes)
         let results = data.mahasiswa;
 
-        if (formNim || formNama) {
+        if (formNim || formNama || formHash) {
           const sNim = formNim?.toLowerCase().trim() || "";
           const sNama = formNama?.toLowerCase().trim() || "";
+          const sHash = formHash?.toLowerCase().trim() || "";
           
-          results = results.filter((m: MatchedMahasiswa) => {
+          results = results.filter((m: any) => {
             const mNim = m.nim.toLowerCase();
             const mNama = m.nama.toLowerCase();
+            const mHash = (m.certificate?.dataHash || "").toLowerCase();
             
+            // Match Hash if provided (exact or includes 16 chars)
+            let matchHash = false;
+            if (sHash) {
+              if (mHash.includes(sHash)) matchHash = true;
+            }
+
             // Match NIM if it contains or is contained by search string
             const matchNim = sNim ? (mNim.includes(sNim) || sNim.includes(mNim)) : false;
             
@@ -218,15 +228,29 @@ export default function OcrScanPage() {
                 matchNama = true;
               } else {
                 // Check if any word from search name is in DB name
-                const sNamaWords = sNama.split(/\s+/).filter(w => w.length > 2);
-                if (sNamaWords.length > 0 && sNamaWords.some(w => mNama.includes(w))) {
+                const sNamaWords = sNama.split(/\s+/).filter((w: string) => w.length > 2);
+                if (sNamaWords.length > 0 && sNamaWords.some((w: string) => mNama.includes(w))) {
                   matchNama = true;
                 }
               }
             }
             
+            // If hash is searched, it has priority and must match
+            if (sHash) return matchHash;
             return matchNim || matchNama;
           });
+          
+          // Auto-fill form fields if a single match is found (especially useful when searching by truncated Hash)
+          if (results.length === 1) {
+            const match = results[0];
+            if (!formNama) setFormNama(match.nama);
+            if (!formNim) setFormNim(match.nim);
+            if (!formProdi && match.prodi) setFormProdi(match.prodi);
+            if (!formAngkatan && match.angkatan) setFormAngkatan(match.angkatan);
+            if (match.certificate?.dataHash && formHash.length < 64) {
+              setFormHash(match.certificate.dataHash);
+            }
+          }
         }
 
         setMatchedResults(results.slice(0, 5));
@@ -252,6 +276,7 @@ export default function OcrScanPage() {
     setFormNim("");
     setFormProdi("");
     setFormAngkatan("");
+    setFormHash("");
     setMatchedResults(null);
     setShowRawText(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -452,13 +477,12 @@ export default function OcrScanPage() {
                   >
                     {
                       [
-                        extractedData.nama,
-                        extractedData.nim,
                         extractedData.prodi,
                         extractedData.angkatan,
+                        extractedData.dataHash,
                       ].filter(Boolean).length
                     }
-                    /4 field
+                    /3 field utama
                   </Badge>
                 )}
               </CardTitle>
@@ -474,76 +498,24 @@ export default function OcrScanPage() {
                 </div>
               ) : (
                 <>
-                  {/* NIM */}
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <Label className="text-xs font-bold text-foreground">
-                        NIM
-                      </Label>
-                      {extractedData?.nim && (
-                        <ConfidenceBadge level={extractedData.nim.confidence} />
-                      )}
-                    </div>
-                    <Input
-                      value={formNim}
-                      onChange={(e) => setFormNim(e.target.value)}
-                      placeholder="Contoh: C10121001"
-                      className="font-mono"
-                    />
-                  </div>
 
-                  {/* Nama */}
+                  {/* Data Hash */}
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
                       <Label className="text-xs font-bold text-foreground">
-                        Nama Lengkap
+                        Data Hash (SHA-256)
                       </Label>
-                      {extractedData?.nama && (
-                        <ConfidenceBadge level={extractedData.nama.confidence} />
-                      )}
-                    </div>
-                    <Input
-                      value={formNama}
-                      onChange={(e) => setFormNama(e.target.value)}
-                      placeholder="Contoh: Budi Santoso"
-                    />
-                  </div>
-
-                  {/* Prodi */}
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <Label className="text-xs font-bold text-foreground">
-                        Program Studi
-                      </Label>
-                      {extractedData?.prodi && (
+                      {extractedData?.dataHash && (
                         <ConfidenceBadge
-                          level={extractedData.prodi.confidence}
+                          level={extractedData.dataHash.confidence}
                         />
                       )}
                     </div>
                     <Input
-                      value={formProdi}
-                      onChange={(e) => setFormProdi(e.target.value)}
-                      placeholder="Contoh: Informatika"
-                    />
-                  </div>
-
-                  {/* Angkatan */}
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <Label className="text-xs font-bold text-foreground">
-                        Tahun Lulus / Angkatan
-                      </Label>
-                      {extractedData?.angkatan && (
-                        <ConfidenceBadge
-                          level={extractedData.angkatan.confidence}
-                        />
-                      )}
-                    </div>
-                    <Input
-                      value={formAngkatan}
-                      onChange={(e) => setFormAngkatan(e.target.value)}
-                      placeholder="Contoh: 2026"
+                      value={formHash}
+                      onChange={(e) => setFormHash(e.target.value)}
+                      placeholder="Contoh: a8f9c3..."
+                      className="font-mono text-xs"
                     />
                   </div>
 
@@ -662,7 +634,7 @@ export default function OcrScanPage() {
                             className="text-xs h-8"
                             onClick={() =>
                               window.open(
-                                `/detail-ijazah/${m.nim}`,
+                                `/detail-ijazah/${m.id}`,
                                 "_blank"
                               )
                             }

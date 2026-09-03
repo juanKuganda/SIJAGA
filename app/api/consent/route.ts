@@ -5,7 +5,7 @@ import { getAuthUser } from "@/lib/auth";
 /**
  * GET — Ambil status consent mahasiswa saat ini
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const payload = await getAuthUser();
     if (!payload) {
@@ -18,6 +18,11 @@ export async function GET(request: NextRequest) {
         dataConsent: true,
         consentGivenAt: true,
         consentVersion: true,
+        certificate: {
+          select: {
+            status: true,
+          },
+        },
       },
     });
 
@@ -29,6 +34,7 @@ export async function GET(request: NextRequest) {
       dataConsent: user.dataConsent,
       consentGivenAt: user.consentGivenAt,
       consentVersion: user.consentVersion,
+      certificateStatus: user.certificate?.status || "NOT_ISSUED",
     });
   } catch (error) {
     console.error("Consent GET error:", error);
@@ -85,27 +91,71 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Cek apakah ijazah sudah di-mint
-    const cert = await prisma.certificate.findUnique({
-      where: { userId: payload.userId },
+    // Cek apakah user dan ijazah sudah di-mint
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId },
+      include: { certificate: true, wallet: true }
     });
+    const cert = user?.certificate;
 
-    if (cert && cert.status !== "NOT_ISSUED") {
-      return NextResponse.json({
-        error: "CANNOT_WITHDRAW",
-        message: "Consent tidak dapat ditarik setelah ijazah diterbitkan.",
-      }, { status: 400 });
+    if (!user) {
+      return NextResponse.json({ error: "User tidak ditemukan" }, { status: 404 });
     }
 
-    await prisma.user.update({
-      where: { id: payload.userId },
-      data: {
-        dataConsent: false,
-        consentGivenAt: null,
-        consentIpAddress: null,
-        consentVersion: null,
-      },
-    });
+    const updateData: import("@prisma/client").Prisma.UserUpdateInput = {
+      dataConsent: false,
+      consentGivenAt: null,
+      consentIpAddress: null,
+      consentVersion: null,
+    };
+
+    if (cert && cert.status !== "NOT_ISSUED") {
+      // Jika NFT sudah terbit, hapus/anonimkan PII dari DB Lokal.
+      // Metadata di blockchain tetap utuh karena sudah anonim (hanya DataHash).
+      updateData.nama = "[DATA ANONIM]";
+      updateData.nim = `ANON-${Date.now()}`;
+      updateData.email = `deleted_${Date.now()}@sijaga.local`;
+      updateData.dataDeletedAt = new Date();
+      updateData.dataDeleteNote = "Dihapus oleh mahasiswa (Withdraw Consent)";
+
+      await prisma.$transaction([
+        prisma.certificateBackup.create({
+          data: {
+            certificateId: cert.id,
+            userId: user.id,
+            backupData: JSON.stringify({
+              certificate: cert,
+              user: {
+                nama: user.nama,
+                nim: user.nim,
+                email: user.email,
+                prodi: user.prodi,
+                angkatan: user.angkatan,
+              },
+              wallet: user.wallet,
+            }),
+            nftAddress: cert.nftAddress,
+            metadataUri: cert.metadataUri,
+            txSignature: cert.txSignature,
+            reason: `Auto-backup before Withdraw Consent (Student)`,
+            createdBy: user.id,
+          }
+        }),
+        prisma.user.update({
+          where: { id: payload.userId },
+          data: updateData,
+        }),
+        prisma.certificate.update({
+          where: { userId: payload.userId },
+          data: { dataSalt: null },
+        }),
+      ]);
+    } else {
+      await prisma.user.update({
+        where: { id: payload.userId },
+        data: updateData,
+      });
+    }
 
     const ipAddress = request.headers.get("x-forwarded-for") || "unknown";
 

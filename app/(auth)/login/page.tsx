@@ -88,7 +88,7 @@ function LoginForm() {
 
         <div className="relative z-10 max-w-md mx-auto">
           <Link href="/" className="inline-flex items-center gap-3 mb-16">
-            <Image src="/apple-touch-icon.png" alt="Logo Untad" width={40} height={40} className="object-contain drop-shadow-sm" />
+            <Image src="/apple-touch-icon.png" alt="Logo Untad" width={40} height={40} className="object-contain drop-shadow-sm" priority />
             <div className="flex flex-col">
               <span className="text-2xl font-black tracking-tight text-white leading-none">SIJAGA</span>
               <span className="text-[10px] font-bold text-white uppercase tracking-widest mt-1">Universitas Tadulako</span>

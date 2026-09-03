@@ -440,7 +440,7 @@ export default function RevokePage() {
                               <ShieldAlert className="w-3.5 h-3.5 mr-1" />
                               Revoke
                             </Button>
-                            <Link href={`/detail-ijazah/${m.nim}`}>
+                            <Link href={`/detail-ijazah/${m.id}`}>
                               <Button size="sm" variant="outline">
                                 Detail
                               </Button>

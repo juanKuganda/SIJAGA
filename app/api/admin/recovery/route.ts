@@ -103,10 +103,7 @@ export async function POST(request: NextRequest) {
 
     if (certData.nftAddress) {
       try {
-        // 1. Generate Image baru (berdasarkan data User saat ini) & Upload ke Pinata
-        const { gatewayUrl: imageUrl } = await generateAndUploadCertificateImage(user, "MINTED");
-
-        // 3. Generate dataHash baru untuk recovery
+        // 1. Generate dataHash baru untuk recovery
         const { hash, salt } = generateDataHash(
           user.nama,
           user.nim,
@@ -114,6 +111,13 @@ export async function POST(request: NextRequest) {
         );
         recoveryDataHash = hash;
         recoveryDataSalt = salt;
+
+        // 2. Generate Image baru (TANPA PII) & Upload ke Pinata
+        const { gatewayUrl: imageUrl } = await generateAndUploadCertificateImage({
+          prodi: user.prodi || "Informatika",
+          tahunLulus: user.angkatan || "2026",
+          dataHash: hash,
+        }, "MINTED");
 
         // 4. Generate Metadata baru (PRIVACY: tanpa PII)
         const metadata = generateCertificateMetadata({
