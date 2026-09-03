@@ -20,6 +20,7 @@ interface Wallet {
 }
 
 interface Certificate {
+  id: string;
   status: string;
   nftAddress: string;
   txSignature: string;
@@ -298,7 +299,7 @@ export default function ProfilPage() {
                 </div>
               </div>
               <Link
-                href={`/ijazah/${user?.nim}`}
+                href={`/ijazah/${certificate?.id}`}
                 className="shrink-0 px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm shadow-blue-600/20"
               >
                 Klaim Sekarang
@@ -321,7 +322,7 @@ export default function ProfilPage() {
               </div>
               <div className="flex gap-3">
                 <Link
-                  href={`/ijazah/${user?.nim}`}
+                  href={`/ijazah/${certificate?.id}`}
                   className="shrink-0 px-5 py-2.5 bg-white text-emerald-700 border border-emerald-200 font-semibold rounded-xl hover:bg-emerald-50 transition-colors shadow-sm"
                 >
                   Lihat Publik

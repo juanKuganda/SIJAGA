@@ -1,11 +1,15 @@
 /**
  * lib/gemini.ts — Gemini API Utility untuk SIJAGA AI Verification Assistant
  * 
- * Arsitektur RAG (Retrieval-Augmented Generation):
+ * Arsitektur Prompt Grounding (Database-Augmented LLM):
  * 1. Terima pertanyaan verifikator
- * 2. Retrieve data dari database (dilakukan di API route)
- * 3. Augment system prompt dengan data
- * 4. Generate respons via Gemini
+ * 2. Query data terstruktur dari PostgreSQL (dilakukan di API route)
+ * 3. Suntikkan (ground) data ke system prompt sebagai konteks faktual
+ * 4. Generate respons via Gemini dengan temperature rendah
+ * 
+ * Catatan: Ini BUKAN RAG (Retrieval-Augmented Generation) karena tidak
+ * menggunakan embedding, vector store, atau retrieval dokumen. Data
+ * diambil via query SQL konvensional.
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
@@ -126,7 +130,7 @@ export async function generateVerificationResponse(
 
 /**
  * Ekstrak keywords pencarian dari pertanyaan natural language.
- * Digunakan untuk step "Retrieval" di RAG pipeline.
+ * Digunakan untuk step query database di pipeline prompt grounding.
  */
 export function extractSearchTerms(question: string): { nim: string | null; nama: string | null } {
   let nim: string | null = null;

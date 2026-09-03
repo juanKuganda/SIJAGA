@@ -222,14 +222,28 @@ const ScrollExpand = ({
     applyProgress(current);
 
     const scroller = useWindowScroll ? window : root;
-    scroller.addEventListener('scroll', onScroll, { passive: true });
+    
+    // Custom integration with Lenis (if available on window) to prevent scroll conflicts
+    // @ts-ignore - lenis might not be typed on window
+    const lenis = useWindowScroll && window.lenis;
+    
+    if (lenis) {
+      (lenis as any).on('scroll', onScroll);
+    } else {
+      scroller.addEventListener('scroll', onScroll, { passive: true });
+    }
+    
     window.addEventListener('resize', onResize);
     const ro = new ResizeObserver(onResize);
     ro.observe(root);
 
     return () => {
       if (raf) cancelAnimationFrame(raf);
-      scroller.removeEventListener('scroll', onScroll as EventListener);
+      if (lenis) {
+        (lenis as any).off('scroll', onScroll);
+      } else {
+        scroller.removeEventListener('scroll', onScroll as EventListener);
+      }
       window.removeEventListener('resize', onResize);
       ro.disconnect();
     };

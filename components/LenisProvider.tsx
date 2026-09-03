@@ -20,6 +20,10 @@ export function LenisProvider({ children }: { children: React.ReactNode }) {
       requestAnimationFrame(raf);
     }
 
+    // Expose lenis to window for other components like ScrollExpand to hook into
+    // @ts-ignore
+    window.lenis = lenis;
+
     requestAnimationFrame(raf);
 
     // Intercept anchor clicks for smooth scrolling
@@ -40,6 +44,8 @@ export function LenisProvider({ children }: { children: React.ReactNode }) {
     return () => {
       document.removeEventListener("click", handleAnchorClick);
       lenis.destroy();
+      // @ts-ignore
+      delete window.lenis;
     };
   }, []);
 

@@ -68,7 +68,6 @@ export async function proxy(request: NextRequest) {
     '/dashboard',
     '/profil',
     '/wallet',
-    '/ijazah',
     '/consent',
     '/admin',
     '/mahasiswa',

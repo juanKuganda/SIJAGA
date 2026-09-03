@@ -57,8 +57,16 @@ export async function POST(request: NextRequest) {
       });
 
       if (users.length > 0) {
+        // Cek autentikasi untuk membatasi PII
+        const { getAuthUser } = await import('@/lib/auth');
+        const authUser = await getAuthUser();
+        const isAdmin = authUser?.role === 'ADMIN';
+
         retrievedData = users.map((user) => {
           const cert = user.certificate;
+          const isOwner = authUser?.userId === user.id;
+          const canSeePII = isAdmin || isOwner;
+          
           let hashVerified: boolean | null = null;
 
           // Verifikasi hash jika data tersedia
@@ -71,10 +79,23 @@ export async function POST(request: NextRequest) {
               cert.dataHash
             );
           }
+          
+          const maskString = (str: string) => str ? `${str.charAt(0)}***${str.charAt(str.length - 1)}` : "";
+          const maskNim = (nim: string) => nim ? `${nim.substring(0, 3)}***${nim.substring(nim.length - 3)}` : "";
+
+          const formatNama = () => {
+            if (user.dataDeletedAt) return '[DATA DIHAPUS]';
+            return canSeePII ? user.nama : maskString(user.nama);
+          };
+
+          const formatNim = () => {
+            if (user.dataDeletedAt) return '[DIHAPUS]';
+            return canSeePII ? user.nim : maskNim(user.nim);
+          };
 
           return {
-            nama: user.dataDeletedAt ? '[DATA DIHAPUS]' : user.nama,
-            nim: user.dataDeletedAt ? '[DIHAPUS]' : user.nim,
+            nama: formatNama(),
+            nim: formatNim(),
             prodi: user.prodi,
             angkatan: user.angkatan,
             status: cert?.status || 'NOT_ISSUED',

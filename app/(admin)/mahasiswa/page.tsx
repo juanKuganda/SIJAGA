@@ -91,6 +91,14 @@ export default function MahasiswaPage() {
   const [restorePiiLoading, setRestorePiiLoading] = useState(false);
   const [restorePiiError, setRestorePiiError] = useState("");
 
+  const [resetWalletModal, setResetWalletModal] = useState<{
+    userId: string;
+    nama: string;
+    nim: string;
+  } | null>(null);
+  const [resetWalletLoading, setResetWalletLoading] = useState(false);
+  const [resetWalletError, setResetWalletError] = useState("");
+
   const [backupLoading, setBackupLoading] = useState<string | null>(null);
 
   // Edit modal state
@@ -255,6 +263,35 @@ export default function MahasiswaPage() {
       setRestorePiiError("Terjadi kesalahan sistem saat me-restore data");
     } finally {
       setRestorePiiLoading(false);
+    }
+  };
+
+  const handleResetWallet = async () => {
+    if (!resetWalletModal) return;
+    setResetWalletLoading(true);
+    setResetWalletError("");
+
+    try {
+      const response = await fetch("/api/admin/wallet/reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: resetWalletModal.userId }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setResetWalletModal(null);
+        fetchMahasiswa();
+        toast.success("Wallet berhasil di-reset");
+      } else {
+        setResetWalletError(data.error || "Gagal me-reset wallet");
+      }
+    } catch (error) {
+      console.error("Error resetting wallet:", error);
+      setResetWalletError("Terjadi kesalahan server");
+    } finally {
+      setResetWalletLoading(false);
     }
   };
 
@@ -572,6 +609,22 @@ export default function MahasiswaPage() {
                             </>
                           )}
 
+                          {m.wallet && !m.dataDeletedAt && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setResetWalletModal({ userId: m.id, nama: m.nama, nim: m.nim });
+                                  setResetWalletError("");
+                                }}
+                                className="cursor-pointer text-amber-600 focus:text-amber-700 flex items-center"
+                              >
+                                <RefreshCcw className="w-4 h-4 mr-2" />
+                                Reset Wallet
+                              </DropdownMenuItem>
+                            </>
+                          )}
+
                           {!m.dataDeletedAt ? (
                             <>
                               <DropdownMenuSeparator />
@@ -797,6 +850,33 @@ export default function MahasiswaPage() {
           </p>
           <p className="text-sm text-amber-700 leading-relaxed">
             Tindakan ini akan <strong>secara publik</strong> memunculkan kembali Nama dan NIM mahasiswa yang sebelumnya telah dianonimkan (dicabut consent-nya). Pastikan Anda memiliki persetujuan baru yang sah dari mahasiswa untuk memulihkan data pribadi mereka dari cadangan (backup).
+          </p>
+        </div>
+      </ActionModal>
+
+      <ActionModal
+        isOpen={!!resetWalletModal}
+        onClose={() => {
+          if (!resetWalletLoading) setResetWalletModal(null);
+        }}
+        icon={RefreshCcw}
+        iconBgColor="bg-amber-50"
+        iconTextColor="text-amber-600"
+        title="Reset Wallet Mahasiswa"
+        subtitle={resetWalletModal ? `${resetWalletModal.nama} (${resetWalletModal.nim})` : ""}
+        confirmText="Ya, Reset Wallet"
+        onConfirm={handleResetWallet}
+        isConfirming={resetWalletLoading}
+      >
+        {resetWalletError && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+            {resetWalletError}
+          </div>
+        )}
+        <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 space-y-1">
+          <p className="font-bold">⚠️ Perhatian Risiko Kriptografi:</p>
+          <p>
+            Me-reset wallet akan memutuskan kaitan alamat wallet yang lama secara permanen. Jika Ijazah sudah tercetak (MINTED/CLAIMED), ijazah tersebut akan di-reset menjadi <code>NOT_ISSUED</code>. Admin perlu melakukan <strong>Re-minting</strong> setelah mahasiswa mendaftarkan alamat wallet barunya.
           </p>
         </div>
       </ActionModal>

@@ -1,28 +1,41 @@
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 
-type Props = { params: Promise<{ nim: string }> };
+type Props = { params: Promise<{ id: string }> };
 
+/**
+ * Layout metadata untuk halaman ijazah
+ * 
+ * PRIVASI: Menggunakan certificateId (CUID) sebagai slug, bukan NIM.
+ * OG metadata TIDAK menampilkan nama mahasiswa.
+ */
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { nim } = await params;
+  const { id } = await params;
   
-  const user = await prisma.user.findUnique({
-    where: { nim },
-    include: { certificate: true },
+  const certificate = await prisma.certificate.findUnique({
+    where: { id },
+    include: {
+      user: {
+        select: {
+          prodi: true,
+          angkatan: true,
+        },
+      },
+    },
   });
 
   const origin = process.env.NEXT_PUBLIC_APP_URL || "https://sijaga-seven.vercel.app";
   
-  const title = user
-    ? `Klaim Ijazah S1 — ${user.nama}`
-    : `Ijazah ${nim} — SIJAGA Untad`;
+  const title = certificate
+    ? `Ijazah S1 ${certificate.user?.prodi || "Informatika"} — SIJAGA Untad`
+    : `Ijazah — SIJAGA Untad`;
     
-  const description = user
-    ? `${user.prodi || 'Informatika'} · Universitas Tadulako · Soulbound NFT di Solana`
+  const description = certificate
+    ? `${certificate.user?.prodi || 'Informatika'} · Universitas Tadulako · Soulbound NFT di Solana`
     : "Verifikasi ijazah digital Universitas Tadulako di jaringan Solana.";
     
-  const image = `${origin}/api/og/ijazah/${encodeURIComponent(nim)}`;
-  const url = `${origin}/ijazah/${encodeURIComponent(nim)}`;
+  const image = `${origin}/api/og/ijazah/${encodeURIComponent(id)}`;
+  const url = `${origin}/ijazah/${encodeURIComponent(id)}`;
 
   return {
     title,

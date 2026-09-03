@@ -207,6 +207,14 @@ body {
 }
 
 /* ========================================
+   GSAP Initial States (Prevent FOUC)
+   ======================================== */
+.bento-card {
+  opacity: 0;
+  transform: translateY(80px) scale(0.9);
+}
+
+/* ========================================
    Gradient Utilities
    ======================================== */
 .gradient-text {

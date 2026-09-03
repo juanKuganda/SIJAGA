@@ -56,11 +56,11 @@ export default function HomePage() {
   const faqs = [
     {
       q: "Apa itu SIJAGA?",
-      a: "SIJAGA (Sistem Jaminan Autentikasi Gelar Akademik) adalah platform verifikasi ijazah berbasis blockchain Solana menggunakan Soulbound Token.",
+      a: "SIJAGA (Sistem Jaminan Autentikasi Gelar Akademik) adalah purwarupa platform verifikasi ijazah berbasis blockchain Solana menggunakan Soulbound Token.",
     },
     {
       q: "Bagaimana cara kerja verifikasi ini?",
-      a: "Setiap ijazah dienkripsi dan dicetak sebagai token NFT permanen. Pihak perusahaan atau kampus lain dapat memverifikasi keasliannya secara instan tanpa perantara.",
+      a: "Setiap ijazah di-hash secara kriptografis (SHA-256) dan dicetak sebagai token NFT permanen di blockchain Solana. Pihak perusahaan atau kampus lain dapat memverifikasi keasliannya secara instan melalui portal SIJAGA.",
     },
     {
       q: "Apakah token ini bisa dipindahtangankan?",
@@ -68,7 +68,11 @@ export default function HomePage() {
     },
     {
       q: "Berapa lama proses verifikasi berlangsung?",
-      a: "Verifikasi terjadi secara real-time di jaringan Solana, biasanya memakan waktu kurang dari 400 milidetik (0.4 detik).",
+      a: "Verifikasi melalui portal SIJAGA terjadi secara real-time, biasanya memakan waktu kurang dari 400 milidetik (0.4 detik).",
+    },
+    {
+      q: "Apakah jika server kampus down, verifikasi tidak bisa dilakukan?",
+      a: "Portal verifikasi SIJAGA memerlukan koneksi ke server universitas untuk mencocokkan data kriptografis. Namun, keberadaan ijazah tetap dapat dicek secara independen langsung di blockchain Solana melalui Solana Explorer (explorer.solana.com) menggunakan alamat NFT. Verifikasi penuh (termasuk pencocokan identitas) memerlukan server aktif.",
     },
   ];
 
@@ -214,8 +218,6 @@ export default function HomePage() {
   useEffect(() => {
     if (!bentoRef.current) return;
     const ctx = gsap.context(() => {
-      gsap.set(".bento-card", { y: 80, opacity: 0, scale: 0.9 });
-
       const observer = new IntersectionObserver(
         ([entry]) => {
           if (entry.isIntersecting) {
@@ -226,7 +228,6 @@ export default function HomePage() {
               duration: 1,
               stagger: 0.2,
               ease: "back.out(1.2)",
-              clearProps: "all",
             });
             observer.disconnect();
           }
@@ -267,7 +268,6 @@ export default function HomePage() {
           opacity: 1,
           duration: 0.5,
           ease: "power3.out",
-          clearProps: "all",
         },
       );
     }
@@ -633,7 +633,7 @@ export default function HomePage() {
             <div className="floating-card absolute top-[150px] md:top-[160px] lg:top-[180px] right-2 md:right-6 lg:right-20 w-full max-w-[300px] md:max-w-[320px] lg:max-w-[380px] bg-white border border-zinc-200 rounded-3xl p-5 lg:p-6 shadow-2xl transform -rotate-2 hover:rotate-0 transition-transform duration-500 z-30">
               <div className="flex items-center gap-3 mb-2">
                 <Award className="w-5 h-5 text-foreground" />
-                <span className="font-bold text-foreground">Budi Santoso</span>
+                <span className="font-bold text-foreground">Alumni Untad</span>
               </div>
               <p className="text-sm text-muted-foreground mb-4">
                 S.Kom - Teknik Informatika (2024)
@@ -670,7 +670,7 @@ export default function HomePage() {
                 <span className="font-bold">Validasi Real-time</span>
               </div>
               <p className="card-3-text text-sm text-zinc-300">
-                Memungkinkan verifikasi instan secara digital sebagai uji coba ekosistem tanpa perantara.
+                Memungkinkan verifikasi instan secara digital sebagai uji coba ekosistem transparan.
               </p>
             </div>
           </div>
@@ -683,7 +683,7 @@ export default function HomePage() {
               SIJAGA dibangun menggunakan teknologi:
             </p>
             <div className="flex flex-wrap justify-center items-center gap-12 md:gap-24 opacity-60">
-              {["SOLANA", "METAPLEX", "NEXT.JS", "PRISMA"].map((name) => (
+              {["SOLANA", "METAPLEX", "NEXT.JS", "PRISMA", "NEON"].map((name) => (
                 <span
                   key={name}
                   className="text-2xl font-black text-foreground tracking-tight"
@@ -971,7 +971,7 @@ export default function HomePage() {
 
         <div className="max-w-7xl mx-auto px-6 md:px-12 w-full flex flex-col md:flex-row justify-between items-center gap-4 relative z-10 pt-8 border-t border-zinc-700">
           <p className="text-sm font-bold text-zinc-600 uppercase tracking-widest">
-            © 2024 SIJAGA Beta • Universitas Tadulako
+            © 2024–2026 SIJAGA Beta • Universitas Tadulako
           </p>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
