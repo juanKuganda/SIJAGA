@@ -95,7 +95,7 @@ async function main() {
 
   console.log("\n🎉 Seeding completed!");
   console.log("\n📋 Login credentials (Gunakan Email di Halaman Login):");
-  console.log("   Admin:      Email=admin@sijaga.ac.id            Password=admin123");
+  console.log("   Admin:      Email=admin@sijaga.ac.id            Password=@admin123");
 }
 
 main()

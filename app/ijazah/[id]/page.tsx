@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, Printer, ExternalLink, ShieldCheck, XCircle, FileText } from "lucide-react";
 import { CertificateUI } from "@/components/certificate-ui";
 import { logoBase64 } from "@/lib/logo-base64";
+import { useRouter } from "next/navigation";
 
 interface CertificateData {
   nama: string;
@@ -21,20 +22,22 @@ interface CertificateData {
   revokeReason: string | null;
   walletAddress: string | null;
   dataHash: string | null;
+  viewerRole?: string;
 }
 
 export default function IjazahPreviewPage({
   params,
 }: {
-  params: Promise<{ nim: string }>;
+  params: Promise<{ id: string }>;
 }) {
   const resolvedParams = use(params);
   const [cert, setCert] = useState<CertificateData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
-    fetch(`/api/certificate/${resolvedParams.nim}`)
+    fetch(`/api/certificate/${resolvedParams.id}`)
       .then((r) => r.json())
       .then((data) => {
         if (data.error) {
@@ -45,10 +48,21 @@ export default function IjazahPreviewPage({
       })
       .catch(() => setError("Gagal memuat data ijazah"))
       .finally(() => setLoading(false));
-  }, [resolvedParams.nim]);
+  }, [resolvedParams.id]);
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleBack = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (cert?.viewerRole === 'MAHASISWA') {
+      router.push('/mahasiswa');
+    } else if (cert?.viewerRole === 'ADMIN') {
+      router.push('/admin/mahasiswa');
+    } else {
+      router.push('/');
+    }
   };
 
   if (loading) {
@@ -92,13 +106,13 @@ export default function IjazahPreviewPage({
       <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-8 md:py-12">
         {/* Header Navigation — hidden on print */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10 print:hidden">
-          <Link
-            href="/"
+          <button
+            onClick={handleBack}
             className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm font-semibold bg-white px-4 py-2.5 rounded-xl border border-zinc-200 shadow-sm w-fit"
           >
             <ArrowLeft className="w-4 h-4" />
             Kembali
-          </Link>
+          </button>
           <div className="flex flex-wrap gap-3">
             {cert.nftAddress && (
               <a

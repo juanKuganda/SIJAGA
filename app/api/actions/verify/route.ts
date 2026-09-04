@@ -90,8 +90,13 @@ export async function GET(request: NextRequest) {
     : null;
 
   const piiDeleted = !!user.dataDeletedAt;
-  const displayName = piiDeleted ? "[DATA DIHAPUS]" : user.nama;
-  const displayNim = piiDeleted ? "[DIHAPUS]" : user.nim;
+  
+  // Masking PII for Blinks response (public endpoint)
+  const maskString = (str: string) => str ? `${str.charAt(0)}***${str.charAt(str.length - 1)}` : "";
+  const maskNim = (nim: string) => nim ? `${nim.substring(0, 3)}***${nim.substring(nim.length - 3)}` : "";
+  
+  const displayName = piiDeleted ? "[DATA DIHAPUS]" : maskString(user.nama);
+  const displayNim = piiDeleted ? "[DIHAPUS]" : maskNim(user.nim);
 
   if (isRevoked) {
     return actionJson({
