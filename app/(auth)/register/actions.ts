@@ -73,25 +73,28 @@ export async function registerWithEmail(
     });
 
     // Auto-backup initial registration data
-    await prisma.certificateBackup.create({
-      data: {
-        certificateId: null,
-        userId: user.id,
-        backupData: JSON.stringify({
-          certificate: null,
-          user: {
-            nama: user.nama,
-            nim: user.nim,
-            email: user.email,
-            prodi: user.prodi,
-            angkatan: user.angkatan,
-          },
-          wallet: null,
-        }),
-        reason: "Auto-backup initial registration",
-        createdBy: user.id,
-      },
-    });
+    try {
+      await prisma.certificateBackup.create({
+        data: {
+          userId: user.id,
+          backupData: JSON.stringify({
+            certificate: null,
+            user: {
+              nama: user.nama,
+              nim: user.nim,
+              email: user.email,
+              prodi: user.prodi,
+              angkatan: user.angkatan,
+            },
+            wallet: null,
+          }),
+          reason: "Auto-backup initial registration",
+          createdBy: user.id,
+        },
+      });
+    } catch (backupErr) {
+      console.warn("Initial registration backup warning:", backupErr);
+    }
   } catch (err) {
     console.error("Registration Error:", err);
     return {
