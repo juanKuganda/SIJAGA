@@ -110,28 +110,40 @@ export async function POST(request: NextRequest) {
 
     // Validasi dihapus agar bisa backup semua mahasiswa
 
-    // Buat backup
+    // Buat backup dengan menyaring field opsional yang bernilai null
+    const backupInput: {
+      userId: string;
+      backupData: string;
+      reason: string;
+      createdBy: string;
+      certificateId?: string;
+      nftAddress?: string;
+      metadataUri?: string;
+      txSignature?: string;
+    } = {
+      userId: userId,
+      backupData: JSON.stringify({
+        certificate: user.certificate,
+        user: {
+          nama: user.nama,
+          nim: user.nim,
+          email: user.email,
+          prodi: user.prodi,
+          angkatan: user.angkatan,
+        },
+        wallet: user.wallet,
+      }),
+      reason: reason || "Manual backup",
+      createdBy: payload.userId,
+    };
+
+    if (user.certificate?.id) backupInput.certificateId = user.certificate.id;
+    if (user.certificate?.nftAddress) backupInput.nftAddress = user.certificate.nftAddress;
+    if (user.certificate?.metadataUri) backupInput.metadataUri = user.certificate.metadataUri;
+    if (user.certificate?.txSignature) backupInput.txSignature = user.certificate.txSignature;
+
     const backup = await prisma.certificateBackup.create({
-      data: {
-        certificateId: user.certificate?.id ?? null,
-        userId: userId,
-        backupData: JSON.stringify({
-          certificate: user.certificate,
-          user: {
-            nama: user.nama,
-            nim: user.nim,
-            email: user.email,
-            prodi: user.prodi,
-            angkatan: user.angkatan,
-          },
-          wallet: user.wallet,
-        }),
-        nftAddress: user.certificate?.nftAddress ?? null,
-        metadataUri: user.certificate?.metadataUri ?? null,
-        txSignature: user.certificate?.txSignature ?? null,
-        reason: reason || "Manual backup",
-        createdBy: payload.userId,
-      },
+      data: backupInput,
     });
 
     // Audit log

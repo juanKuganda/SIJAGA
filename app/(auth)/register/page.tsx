@@ -8,6 +8,13 @@ import { Shield, ArrowLeft, Eye, EyeOff, Link as LinkIcon, CheckCircle2, XCircle
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const PRODI_OPTIONS = [
   "Informatika",
@@ -199,23 +206,25 @@ export default function RegisterPage() {
 
             <div className="space-y-2 w-full">
               <Label htmlFor="prodi" className="font-semibold">Program Studi</Label>
-              <select
-                id="prodi"
+              <Select
                 name="prodi"
                 value={formData.prodi}
-                onChange={handleChange}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({ ...prev, prodi: value || "" }))
+                }
                 required
-                className="flex h-11 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none cursor-pointer"
               >
-                <option value="" disabled className="text-muted-foreground">
-                  Pilih program studi
-                </option>
-                {PRODI_OPTIONS.map((prodi) => (
-                  <option key={prodi} value={prodi}>
-                    {prodi}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="prodi" className="w-full h-11">
+                  <SelectValue placeholder="Pilih program studi" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PRODI_OPTIONS.map((prodi) => (
+                    <SelectItem key={prodi} value={prodi}>
+                      {prodi}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -232,13 +241,15 @@ export default function RegisterPage() {
                     required
                     className="h-11 pr-10"
                   />
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="icon"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-muted-foreground hover:text-foreground"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
+                  </Button>
                 </div>
               </div>
 
@@ -255,13 +266,15 @@ export default function RegisterPage() {
                     required
                     className="h-11 pr-10"
                   />
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="icon"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-muted-foreground hover:text-foreground"
                   >
                     {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
