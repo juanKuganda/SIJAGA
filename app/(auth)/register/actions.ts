@@ -47,6 +47,8 @@ export async function registerWithEmail(
       return { error: "Email atau NIM sudah terdaftar" };
     }
 
+    let authUserId: string | undefined;
+
     // Register ke Neon Auth
     const { data, error } = await auth.signUp.email({
       email,
@@ -55,13 +57,31 @@ export async function registerWithEmail(
     });
 
     if (error) {
-      return { error: error.message || "Gagal membuat akun" };
+      // Fallback untuk Vercel Preview / Database Branching Terisolasi:
+      // Neon Auth bersifat global. Jika user sudah pernah register di branch production/local,
+      // signUp akan gagal karena email sudah digunakan. Kita coba signIn untuk sinkronisasi.
+      console.warn(`[WARN] auth.signUp.email error: ${error.message}. Mencoba auth.signIn.email...`);
+      const { data: signInData, error: signInError } = await auth.signIn.email({
+        email,
+        password,
+      });
+
+      if (signInError) {
+        return { error: error.message || "Akun sudah terdaftar di Neon Auth (dari branch lain), namun password salah. Silakan login atau gunakan password yang sesuai." };
+      }
+      authUserId = signInData?.user?.id;
+    } else {
+      authUserId = data?.user?.id;
+    }
+
+    if (!authUserId) {
+      return { error: "Gagal mendapatkan User ID dari Neon Auth" };
     }
 
     // Buat User di Prisma DB
     user = await prisma.user.create({
       data: {
-        id: data?.user?.id, // Gunakan ID yang sama dengan Neon Auth jika ada
+        id: authUserId, // Gunakan ID yang sama dengan Neon Auth jika ada
         nama: name,
         email,
         nim,

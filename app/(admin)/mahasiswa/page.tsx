@@ -29,6 +29,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Mahasiswa {
   id: string;
@@ -449,19 +456,23 @@ export default function MahasiswaPage() {
                 </Button>
               ))}
               <div className="border-l mx-1 border-border"></div>
-              <select
+              <Select
                 value={sortBy}
-                onChange={(e) => {
-                  setSortBy(e.target.value);
+                onValueChange={(value) => {
+                  setSortBy(value || "terbaru");
                   setCurrentPage(1);
                 }}
-                className="h-9 w-[140px] rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <option value="terbaru">Terbaru</option>
-                <option value="terlama">Terlama</option>
-                <option value="nama-asc">Nama (A-Z)</option>
-                <option value="nama-desc">Nama (Z-A)</option>
-              </select>
+                <SelectTrigger className="w-[140px] h-9">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="terbaru">Terbaru</SelectItem>
+                  <SelectItem value="terlama">Terlama</SelectItem>
+                  <SelectItem value="nama-asc">Nama (A-Z)</SelectItem>
+                  <SelectItem value="nama-desc">Nama (Z-A)</SelectItem>
+                </SelectContent>
+              </Select>
               <Button
                 variant="outline"
                 size="sm"
