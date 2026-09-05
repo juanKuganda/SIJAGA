@@ -34,62 +34,73 @@ export async function registerWithEmail(
     };
   }
 
-  // Cek apakah email/NIM sudah terdaftar
-  const existingUser = await prisma.user.findFirst({
-    where: {
-      OR: [{ email }, { nim }],
-    },
-  });
+  let user;
+  try {
+    // Cek apakah email/NIM sudah terdaftar di Prisma DB
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        OR: [{ email }, { nim }],
+      },
+    });
 
-  if (existingUser) {
-    return { error: "Email atau NIM sudah terdaftar" };
-  }
+    if (existingUser) {
+      return { error: "Email atau NIM sudah terdaftar" };
+    }
 
-  // Register ke Neon Auth
-  const { data, error } = await auth.signUp.email({
-    email,
-    name,
-    password,
-  });
-
-  if (error) {
-    return { error: error.message || "Gagal membuat akun" };
-  }
-
-  // Buat User di Prisma DB
-  const user = await prisma.user.create({
-    data: {
-      id: data?.user?.id, // Gunakan ID yang sama dengan Neon Auth jika ada, atau biarkan default cuid()
-      nama: name,
+    // Register ke Neon Auth
+    const { data, error } = await auth.signUp.email({
       email,
-      nim,
-      prodi,
-      angkatan,
-      password: "", // Neon Auth yang handle password asli
-      role: "MAHASISWA",
-    },
-  });
+      name,
+      password,
+    });
 
-  // Auto-backup initial registration data
-  await prisma.certificateBackup.create({
-    data: {
-      certificateId: null,
-      userId: user.id,
-      backupData: JSON.stringify({
-        certificate: null,
-        user: {
-          nama: user.nama,
-          nim: user.nim,
-          email: user.email,
-          prodi: user.prodi,
-          angkatan: user.angkatan,
-        },
-        wallet: null,
-      }),
-      reason: "Auto-backup initial registration",
-      createdBy: user.id,
-    },
-  });
+    if (error) {
+      return { error: error.message || "Gagal membuat akun" };
+    }
+
+    // Buat User di Prisma DB
+    user = await prisma.user.create({
+      data: {
+        id: data?.user?.id, // Gunakan ID yang sama dengan Neon Auth jika ada
+        nama: name,
+        email,
+        nim,
+        prodi,
+        angkatan,
+        password: "", // Neon Auth yang handle password asli
+        role: "MAHASISWA",
+      },
+    });
+
+    // Auto-backup initial registration data
+    await prisma.certificateBackup.create({
+      data: {
+        certificateId: null,
+        userId: user.id,
+        backupData: JSON.stringify({
+          certificate: null,
+          user: {
+            nama: user.nama,
+            nim: user.nim,
+            email: user.email,
+            prodi: user.prodi,
+            angkatan: user.angkatan,
+          },
+          wallet: null,
+        }),
+        reason: "Auto-backup initial registration",
+        createdBy: user.id,
+      },
+    });
+  } catch (err) {
+    console.error("Registration Error:", err);
+    return {
+      error:
+        err instanceof Error
+          ? `Gagal menyimpan ke database: ${err.message}`
+          : "Terjadi kesalahan server saat menyimpan profil.",
+    };
+  }
 
   redirect("/login?registered=true");
 }
