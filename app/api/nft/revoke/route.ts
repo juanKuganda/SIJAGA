@@ -61,9 +61,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (user.certificate.status === "NOT_ISSUED") {
+    if (user.certificate.status === "NOT_ISSUED" || user.certificate.status === "ISSUING") {
       return NextResponse.json(
-        { error: "Sertifikat belum diterbitkan" },
+        { error: user.certificate.status === "ISSUING" ? "Sertifikat masih dalam proses penerbitan" : "Sertifikat belum diterbitkan" },
         { status: 400 }
       );
     }
@@ -110,8 +110,7 @@ export async function POST(request: NextRequest) {
     // 3. Upload Revoked Metadata to IPFS via Pinata
     const { gatewayUrl: newMetadataUri } = await uploadMetadataToPinata(revokedMetadata);
 
-    // 4. Eksekusi On-Chain Revoke (Update URI)
-    let onChainWarning: string | null = null;
+    // 4. Eksekusi On-Chain Revoke (Update URI) — FAIL-CLOSED
     if (user.certificate.nftAddress) {
       const revokeResult = await revokeSoulboundNFT({
         mintAddress: user.certificate.nftAddress,
@@ -119,18 +118,16 @@ export async function POST(request: NextRequest) {
       });
 
       if (!revokeResult.success) {
+        // FAIL-CLOSED: DB tidak berubah, admin harus retry
         return NextResponse.json(
-          { error: `Gagal revoke on-chain: ${revokeResult.error}` },
-          { status: 500 }
+          { error: `Gagal revoke on-chain: ${revokeResult.error}. DB tidak diubah — silakan coba lagi.` },
+          { status: 502 }
         );
-      }
-      
-      if ('warning' in revokeResult && revokeResult.warning) {
-        onChainWarning = revokeResult.warning as string;
       }
     }
 
     // 5. Update status certificate ke REVOKED di Database
+    // HANYA jika on-chain berhasil (fail-closed principle)
     const revokedCert = await prisma.certificate.update({
       where: { id: user.certificate.id },
       data: {
@@ -138,7 +135,6 @@ export async function POST(request: NextRequest) {
         revokedAt: new Date(),
         revokedBy: payload.userId,
         revokeReason: reason,
-        // Menyimpan metadata baru yang direvoke
         metadataUri: newMetadataUri,
       },
     });
@@ -147,14 +143,13 @@ export async function POST(request: NextRequest) {
     await createAuditLog(
       userId,
       "NFT_REVOKE",
-      `NFT ijazah di-revoke untuk ${user.nama} (${user.nim}) oleh admin ${payload.userId}. Alasan: ${reason}`,
+      `NFT ijazah di-revoke untuk user ${userId} oleh admin ${payload.userId}. Alasan: ${reason}`,
       request.headers.get("x-forwarded-for") || "unknown"
     );
 
     return NextResponse.json({
       success: true,
-      message: `Sertifikat ${user.nama} berhasil direvoke${onChainWarning ? " (Catatan: " + onChainWarning + ")" : ""}`,
-      warning: onChainWarning,
+      message: `Sertifikat berhasil direvoke`,
       certificate: {
         id: revokedCert.id,
         status: revokedCert.status,

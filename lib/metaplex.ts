@@ -133,17 +133,16 @@ export function getAdminKeypair(): Keypair {
 /**
  * Mint NFT "Soulbound" (Institution-Enforced Non-Transferable via PermanentFreezeDelegate)
  * Menggunakan Metaplex UMI dan Metaplex Core di Solana Devnet.
+ *
+ * PRIVACY: Tidak menerima nama/nim/prodi sebagai argumen
+ * untuk mencegah PII terekspos di log production.
  */
 export async function mintSoulboundNFT(data: {
-  nama: string;
-  nim: string;
-  prodi: string;
-  tahunLulus: string;
   metadataUri: string;
   walletTujuan: string;
 }) {
   try {
-    console.log("[Metaplex] Starting NFT mint for:", data.nama);
+    console.log("[Metaplex] Starting NFT mint to:", data.walletTujuan);
 
     const umi = createUmiInstance();
     const adminKeypair = getAdminKeypair();
@@ -228,12 +227,16 @@ export async function mintSoulboundNFT(data: {
 }
 
 /**
- * Revoke NFT Soulbound (Visual Revoke)
+ * Revoke NFT Soulbound (Visual Revoke) — FAIL-CLOSED
  * Mengubah metadata URI NFT menjadi metadata 'DIBATALKAN'
- * 
- * Jika NFT immutable (tidak bisa diubah on-chain), 
- * fungsi ini akan mengembalikan partial success agar 
- * proses revoke di database tetap berjalan.
+ *
+ * PENTING: Jika on-chain update gagal untuk alasan APAPUN,
+ * fungsi ini mengembalikan success: false. Caller (route handler)
+ * TIDAK boleh update DB ke REVOKED jika ini gagal.
+ *
+ * Mint saat ini TIDAK set updateAuthority: None, jadi revoke
+ * seharusnya selalu bisa. Fallback immutable dihapus karena
+ * menutupi bug.
  */
 export async function revokeSoulboundNFT(data: {
   mintAddress: string;
@@ -245,31 +248,26 @@ export async function revokeSoulboundNFT(data: {
     const umi = createUmiInstance();
     const adminKeypair = getAdminKeypair();
 
-    // Convert keypair ke format Umi dan set sebagai identity
     const umiKeypair = umi.eddsa.createKeypairFromSecretKey(
       adminKeypair.secretKey
     );
     umi.use(keypairIdentity(umiKeypair));
 
     const mint = publicKey(data.mintAddress);
-    
-    // Ambil data asset
     const asset = await fetchAsset(umi, mint);
 
-    // Cek apakah update authority di-set ke None (immutable)
+    // Fail-closed: immutable = tidak bisa revoke = error
     if (asset.updateAuthority.type === 'None') {
-      console.warn("[Metaplex] NFT is immutable. Skipping on-chain update, proceeding with database-only revoke.");
+      console.error("[Metaplex] NFT is immutable — cannot revoke on-chain.");
       return {
-        success: true,
-        signature: null,
-        warning: "NFT immutable — revoke hanya dilakukan di database. Metadata on-chain tidak diubah.",
+        success: false,
+        error: "NFT immutable (updateAuthority: None). Tidak bisa revoke on-chain. Hubungi developer.",
       };
     }
 
-    // Update NFT
     const result = await update(umi, {
       asset: asset,
-      name: "[DIBATALKAN] Ijazah S1", // Visual Revoke
+      name: "[DIBATALKAN] Ijazah S1",
       uri: data.metadataUri,
     }).sendAndConfirm(umi, {
       send: { commitment: "finalized" },
@@ -278,26 +276,16 @@ export async function revokeSoulboundNFT(data: {
 
     const signatureBase58 = bs58.encode(result.signature);
     console.log("[Metaplex] NFT revoked successfully!");
-    
+
     return {
       success: true,
       signature: signatureBase58,
     };
   } catch (error) {
     console.error("[Metaplex] Error revoking NFT:", error);
-    
     const errorMsg = error instanceof Error ? error.message : "Gagal revoke NFT";
-    
-    // Jika error karena immutable, tetap lanjutkan (revoke di DB saja)
-    if (errorMsg.includes("immutable") || errorMsg.includes("0x3b")) {
-      console.warn("[Metaplex] NFT immutable detected from error. Proceeding with database-only revoke.");
-      return {
-        success: true,
-        signature: null,
-        warning: "NFT immutable — revoke hanya dilakukan di database. Metadata on-chain tidak diubah.",
-      };
-    }
-    
+
+    // Fail-closed: semua error = gagal
     return {
       success: false,
       error: errorMsg,
@@ -305,6 +293,13 @@ export async function revokeSoulboundNFT(data: {
   }
 }
 
+/**
+ * Restore NFT Soulbound — FAIL-CLOSED
+ * Mengembalikan metadata NFT ke state valid.
+ *
+ * PENTING: Gagal on-chain = gagal restore. Caller TIDAK boleh
+ * update DB ke MINTED jika ini gagal.
+ */
 export async function restoreSoulboundNFT(data: {
   mintAddress: string;
   metadataUri: string;
@@ -321,15 +316,14 @@ export async function restoreSoulboundNFT(data: {
     umi.use(keypairIdentity(umiKeypair));
 
     const mint = publicKey(data.mintAddress);
-    
     const asset = await fetchAsset(umi, mint);
 
+    // Fail-closed: immutable = tidak bisa restore
     if (asset.updateAuthority.type === 'None') {
-      console.warn("[Metaplex] NFT is immutable. Skipping on-chain update.");
+      console.error("[Metaplex] NFT is immutable — cannot restore on-chain.");
       return {
-        success: true,
-        signature: null,
-        warning: "NFT immutable — restore hanya dilakukan di database. Metadata on-chain tidak diubah.",
+        success: false,
+        error: "NFT immutable (updateAuthority: None). Tidak bisa restore on-chain.",
       };
     }
 
@@ -344,23 +338,14 @@ export async function restoreSoulboundNFT(data: {
 
     const signatureBase58 = bs58.encode(result.signature);
     console.log("[Metaplex] NFT restored successfully!");
-    
+
     return {
       success: true,
       signature: signatureBase58,
     };
   } catch (error) {
     console.error("[Metaplex] Error restoring NFT:", error);
-    
     const errorMsg = error instanceof Error ? error.message : "Gagal restore NFT";
-    
-    if (errorMsg.includes("immutable") || errorMsg.includes("0x3b")) {
-      return {
-        success: true,
-        signature: null,
-        warning: "NFT immutable — metadata on-chain tidak dapat diubah (sudah di-lock).",
-      };
-    }
 
     return {
       success: false,

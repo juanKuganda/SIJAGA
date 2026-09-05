@@ -35,20 +35,11 @@ export async function getSolBalance(walletAddress: string): Promise<number> {
 
 /**
  * Get token accounts dari wallet
+ * 
+ * CATATAN: Fungsi ini DIHAPUS karena menggunakan SPL Token program
+ * (TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA) yang TIDAK relevan
+ * untuk Metaplex Core NFT. Gunakan inspectCertificate() dari lib/onchain.ts
+ * untuk membaca state NFT ijazah.
  */
-export async function getTokenAccounts(walletAddress: string) {
-  try {
-    const publicKey = new PublicKey(walletAddress);
-    const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
-      publicKey,
-      {
-        programId: new PublicKey(
-          "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
-        ),
-      }
-    );
-    return tokenAccounts.value;
-  } catch {
-    return [];
-  }
-}
+// getTokenAccounts REMOVED — gunakan inspectCertificate() dari lib/onchain.ts
+

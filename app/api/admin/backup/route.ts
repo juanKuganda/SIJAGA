@@ -47,10 +47,14 @@ export async function GET(request: NextRequest) {
       exportedAt: new Date().toISOString(),
       exportedBy: payload.userId,
       totalCertificates: certificates.length,
-      certificates: certificates.map((cert) => ({
-        ...cert,
-        walletAddress: wallets.find((w) => w.userId === cert.userId)?.walletAddress || null,
-      })),
+      // SECURITY: dataSalt tidak dikirim ke klien
+      certificates: certificates.map((cert) => {
+        const { dataSalt: _salt, ...certWithoutSalt } = cert;
+        return {
+          ...certWithoutSalt,
+          walletAddress: wallets.find((w) => w.userId === cert.userId)?.walletAddress || null,
+        };
+      }),
       backupHistory: backups,
     };
 

@@ -58,18 +58,19 @@ export default function ProfilPage() {
     else if (wallet?.status === "VERIFIED") {
       currentStep = 2;
       if (certificate?.status === "MINTED") currentStep = 3;
-      if (certificate?.status === "CLAIMED") currentStep = 4;
+      if (certificate?.status === "CLAIMED" || certificate?.status === "REVOKED") currentStep = 4;
     }
     return currentStep;
   };
 
   const currentStep = getProgress();
+  const isRevoked = certificate?.status === "REVOKED";
 
   const steps = [
     { title: "Registrasi", description: "Akun dibuat", active: currentStep >= 1, done: true },
     { title: "Verifikasi Wallet", description: wallet?.status === "REJECTED" ? "Ditolak" : "Pengecekan Admin", active: currentStep >= 1, done: currentStep > 1 || wallet?.status === "VERIFIED", error: wallet?.status === "REJECTED" },
-    { title: "Penerbitan Ijazah", description: "Proses Minting", active: currentStep >= 2, done: currentStep > 2 },
-    { title: "Klaim Aset", description: "Soulbound Token", active: currentStep >= 3, done: currentStep >= 4 },
+    { title: "Penerbitan Ijazah", description: isRevoked ? "Telah Dicabut" : "Proses Minting", active: currentStep >= 2, done: currentStep > 2 },
+    { title: "Klaim Aset", description: isRevoked ? "Akses Dicabut" : "Soulbound Token", active: currentStep >= 3, done: currentStep >= 4 && !isRevoked, error: isRevoked },
   ];
 
   if (loading) {

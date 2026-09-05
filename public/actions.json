@@ -1,16 +1,16 @@
 {
   "rules": [
     {
-      "pathPattern": "/ijazah/**",
-      "apiPath": "/api/actions/claim?nim=**"
-    },
-    {
-      "pathPattern": "/ijazah/*",
+      "pathPattern": "/claim/**",
       "apiPath": "/api/actions/claim?nim=*"
     },
     {
       "pathPattern": "/api/actions/claim**",
       "apiPath": "/api/actions/claim**"
+    },
+    {
+      "pathPattern": "/api/actions/verify**",
+      "apiPath": "/api/actions/verify**"
     }
   ]
 }

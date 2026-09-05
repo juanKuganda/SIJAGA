@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { actionJson, actionOptions, appUrl } from "@/lib/solana-actions";
 import { actionError } from "@/lib/actions-cors";
 import { prisma } from "@/lib/prisma";
-import { Connection, PublicKey, clusterApiUrl } from "@solana/web3.js";
+import { inspectCertificate } from "@/lib/onchain";
 
 export async function OPTIONS() {
   return actionOptions();
@@ -71,30 +71,65 @@ export async function GET(request: NextRequest) {
   const isRevoked = cert.status === "REVOKED";
   const isClaimed = cert.status === "CLAIMED";
   const isMinted = cert.status === "MINTED";
+  const isIssuing = cert.status === "ISSUING";
 
-  // Verifikasi on-chain: cek NFT masih ada di blockchain
+  // ISSUING = belum selesai mint
+  if (isIssuing) {
+    return actionJson({
+      type: "action",
+      icon: `${appUrlVar}/web-app-manifest-512x512.png`,
+      title: "⏳ Ijazah Sedang Diproses",
+      description: "Ijazah sedang dalam proses penerbitan di blockchain.",
+      label: "Dalam Proses",
+      disabled: true,
+    });
+  }
+
+  const solanaNetwork = process.env.NEXT_PUBLIC_SOLANA_NETWORK || "devnet";
+
+  // ═══════════════════════════════════════════════════════════
+  // Verifikasi on-chain: pakai inspectCertificate (bukan getAccountInfo)
+  // ═══════════════════════════════════════════════════════════
+
+  let onChainLabel = "⚠️ Status blockchain tidak dapat dikonfirmasi";
   let onChainValid = false;
+
   if (cert.nftAddress) {
-    try {
-      const rpcUrl = process.env.NEXT_PUBLIC_SOLANA_RPC || clusterApiUrl("devnet");
-      const connection = new Connection(rpcUrl, "confirmed");
-      const info = await connection.getAccountInfo(new PublicKey(cert.nftAddress));
-      onChainValid = info !== null;
-    } catch {
+    const inspection = await inspectCertificate(cert.nftAddress);
+
+    if (inspection.ok) {
+      const nameShowsRevoked = inspection.name.includes("[DIBATALKAN]");
+
+      if (nameShowsRevoked) {
+        onChainLabel = "❌ Dicabut di blockchain";
+        onChainValid = false;
+      } else if (inspection.frozen) {
+        onChainLabel = "✅ Valid dan frozen di Solana Blockchain";
+        onChainValid = true;
+      } else {
+        onChainLabel = "⚠️ Aset ditemukan tapi tidak frozen";
+        onChainValid = false;
+      }
+    } else {
+      // inspectCertificate gagal (RPC down, not found)
+      onChainLabel =
+        inspection.reason === "NOT_FOUND"
+          ? "❌ Aset tidak ditemukan di blockchain"
+          : "⚠️ Tidak bisa konfirmasi rantai (RPC tidak tersedia)";
       onChainValid = false;
     }
   }
 
-  const explorerUrl = cert.txSignature
-    ? `https://solscan.io/tx/${cert.txSignature}?cluster=devnet`
+  const explorerUrl = cert.nftAddress
+    ? `https://explorer.solana.com/address/${cert.nftAddress}?cluster=${solanaNetwork}`
     : null;
 
   const piiDeleted = !!user.dataDeletedAt;
-  
+
   // Masking PII for Blinks response (public endpoint)
   const maskString = (str: string) => str ? `${str.charAt(0)}***${str.charAt(str.length - 1)}` : "";
-  const maskNim = (nim: string) => nim ? `${nim.substring(0, 3)}***${nim.substring(nim.length - 3)}` : "";
-  
+  const maskNim = (nimStr: string) => nimStr ? `${nimStr.substring(0, 3)}***${nimStr.substring(nimStr.length - 3)}` : "";
+
   const displayName = piiDeleted ? "[DATA DIHAPUS]" : maskString(user.nama);
   const displayNim = piiDeleted ? "[DIHAPUS]" : maskNim(user.nim);
 
@@ -122,17 +157,19 @@ export async function GET(request: NextRequest) {
   return actionJson({
     type: "completed",
     icon: `${appUrlVar}/web-app-manifest-512x512.png`,
-    title: `${statusEmoji} Ijazah Terverifikasi`,
+    title: onChainValid
+      ? `${statusEmoji} Ijazah Terverifikasi`
+      : `⚠️ Ijazah — Verifikasi On-Chain Gagal`,
     description: [
       `Nama: ${displayName}`,
       `NIM: ${displayNim}`,
       `Program Studi: ${user.prodi ?? "-"}`,
       `Institusi: Universitas Tadulako`,
       `Status: ${statusText}`,
-      onChainValid ? "✅ Terkonfirmasi di Solana Blockchain" : "⚠️ Status blockchain tidak dapat dikonfirmasi",
+      onChainLabel,
       explorerUrl ? `Explorer: ${explorerUrl}` : "",
     ].filter(Boolean).join("\n"),
-    label: "Terverifikasi",
+    label: onChainValid ? "Terverifikasi" : "Verifikasi Gagal",
   });
 }
 
