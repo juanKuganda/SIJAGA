@@ -35,22 +35,57 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // Guard: Jangan reset wallet jika ada NFT aktif
+    // Mencegah double-mint / NFT yatim
+    // ═══════════════════════════════════════════════════════════
+
+    if (user.certificate) {
+      const certStatus = user.certificate.status;
+      const hasNftAddress = !!user.certificate.nftAddress;
+
+      // MINTED / CLAIMED / ISSUING + ada nftAddress = HARUS revoke dulu
+      if (
+        (certStatus === "MINTED" || certStatus === "CLAIMED" || certStatus === "ISSUING") &&
+        hasNftAddress
+      ) {
+        return NextResponse.json(
+          {
+            error: "Tidak bisa reset wallet: sertifikat masih aktif di blockchain. Revoke dulu sebelum reset wallet.",
+            certStatus,
+            nftAddress: user.certificate.nftAddress,
+          },
+          { status: 400 }
+        );
+      }
+
+      // ISSUING tanpa nftAddress = aman untuk reset (mint belum berhasil)
+      // REVOKED = aman untuk reset, tapi JANGAN null-kan nftAddress (jejak)
+      // NOT_ISSUED = aman
+    }
+
+    // ═══════════════════════════════════════════════════════════
     // 1. Hapus Wallet
+    // ═══════════════════════════════════════════════════════════
+
     if (user.wallet) {
       await prisma.wallet.delete({
         where: { id: user.wallet.id },
       });
     }
 
+    // ═══════════════════════════════════════════════════════════
     // 2. Reset Certificate Status jika ada
+    // PENTING: JANGAN null-kan nftAddress/metadataUri/txSignature
+    // (jejak audit bahwa pernah ada NFT)
+    // ═══════════════════════════════════════════════════════════
+
     if (user.certificate) {
       await prisma.certificate.update({
         where: { id: user.certificate.id },
         data: {
           status: "NOT_ISSUED",
-          nftAddress: null,
-          metadataUri: null,
-          txSignature: null,
+          // Retain nftAddress, metadataUri, txSignature for audit trail
           claimedAt: null,
         },
       });

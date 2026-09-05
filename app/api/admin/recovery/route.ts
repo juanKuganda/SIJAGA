@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
           dataHash: hash,
         }, "MINTED");
 
-        // 4. Generate Metadata baru (PRIVACY: tanpa PII)
+        // 3. Generate Metadata baru (PRIVACY: tanpa PII)
         const metadata = generateCertificateMetadata({
           prodi: user.prodi || "Informatika",
           tahunLulus: user.angkatan || "2026",
@@ -127,24 +127,30 @@ export async function POST(request: NextRequest) {
           imageUri: imageUrl,
         });
 
-        // 5. Upload Metadata
+        // 4. Upload Metadata
         const { gatewayUrl: newMetadataUri } = await uploadMetadataToPinata(metadata);
         updatedMetadataUri = newMetadataUri;
 
-        // 6. Update NFT Solana
-        await restoreSoulboundNFT({
+        // 5. Update NFT Solana — FAIL-CLOSED
+        const restoreResult = await restoreSoulboundNFT({
           mintAddress: certData.nftAddress,
           metadataUri: newMetadataUri,
         });
+
+        if (!restoreResult.success) {
+          // FAIL-CLOSED: Gagal on-chain = jangan update DB ke MINTED
+          return NextResponse.json(
+            { error: `Gagal restore on-chain: ${restoreResult.error}. DB tidak diubah — silakan coba lagi.` },
+            { status: 502 }
+          );
+        }
       } catch (genError) {
         console.error("Gagal re-generate metadata saat restore:", genError);
-        // Fallback: Jika IPFS gagal, update NFT tetap menggunakan metadata lama dari backup
-        if (certData.metadataUri) {
-          await restoreSoulboundNFT({
-            mintAddress: certData.nftAddress,
-            metadataUri: certData.metadataUri,
-          });
-        }
+        // FAIL-CLOSED: Jika IPFS/metadata generation gagal, jangan restore
+        return NextResponse.json(
+          { error: `Gagal generate metadata untuk restore: ${genError instanceof Error ? genError.message : "Unknown error"}` },
+          { status: 500 }
+        );
       }
     }
 

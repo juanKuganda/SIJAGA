@@ -69,6 +69,13 @@ model Certificate {
   dataHash       String?     // SHA256 hash disimpan juga di metadata IPFS
   dataSalt       String?     // salt unik per mahasiswa (JANGAN taruh di IPFS)
 
+  // On-chain snapshot fields (Fase 0 — Reconciliation)
+  onChainOwner     String?     // owner terakhir dari fetchAsset
+  onChainFrozen    Boolean?    // plugin freeze masih true
+  onChainHash      String?     // hash yang terbaca dari metadata URI on-chain
+  onChainCheckedAt DateTime?   // kapan terakhir dicek on-chain
+  onChainError     String?     // alasan gagal sync (revoke gagal, RPC down)
+
   user           User        @relation(fields: [userId], references: [id])
 
   @@index([dataHash])
@@ -113,6 +120,7 @@ enum WalletStatus {
 
 enum CertStatus {
   NOT_ISSUED
+  ISSUING
   MINTED
   CLAIMED
   REVOKED

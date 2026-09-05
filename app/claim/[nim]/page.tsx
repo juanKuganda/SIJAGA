@@ -48,14 +48,18 @@ function createWalletAdapter(): ActionAdapter {
       let signedBytes: Uint8Array;
       try {
         const transaction = Transaction.from(txBytes);
-        const { blockhash } = await connection.getLatestBlockhash("confirmed");
-        transaction.recentBlockhash = blockhash;
+        if (!transaction.recentBlockhash) {
+          const { blockhash } = await connection.getLatestBlockhash("finalized");
+          transaction.recentBlockhash = blockhash;
+        }
         const signedTx = await provider.signTransaction(transaction);
         signedBytes = signedTx.serialize();
       } catch {
         const transaction = VersionedTransaction.deserialize(txBytes);
-        const { blockhash } = await connection.getLatestBlockhash("confirmed");
-        transaction.message.recentBlockhash = blockhash;
+        if (!transaction.message.recentBlockhash) {
+          const { blockhash } = await connection.getLatestBlockhash("finalized");
+          transaction.message.recentBlockhash = blockhash;
+        }
         const signedTx = await provider.signTransaction(transaction);
         signedBytes = signedTx.serialize();
       }

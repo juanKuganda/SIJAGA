@@ -83,9 +83,7 @@ Gunakan kredensial berikut untuk login ke dalam sistem (hasil dari script `seed.
 
 | Role | Email Login | Password | Keterangan |
 |------|-------------|----------|------------|
-| 👨‍💼 **Admin** | `admin@sijaga.ac.id` | `admin123` | Akses penuh dashboard admin |
-| 🎓 **Mahasiswa** | `budi@student.untad.ac.id` | `mahasiswa123` | Simulasi mhs dengan wallet PENDING |
-| 🎓 **Mahasiswa** | `siti@student.untad.ac.id` | `mahasiswa123` | Simulasi mhs dengan wallet VERIFIED |
+| 👨‍💼 **Admin** | `admin@sijaga.ac.id` | `@admin123` | Akses penuh dashboard admin |
 
 ---
 

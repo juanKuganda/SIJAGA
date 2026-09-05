@@ -63,6 +63,21 @@ export async function proxy(request: NextRequest) {
     }
   }
 
+  // 2b. Rate Limiting untuk Endpoint Verify (publik, rawan enumerasi NIM)
+  if (pathname === '/api/verify') {
+    const ip = request.headers.get('x-forwarded-for') ?? 'unknown-ip';
+    const blocked = checkRateLimit(ip, aiRateLimitMap, AI_RATE_LIMIT_WINDOW_MS, AI_MAX_REQUESTS_PER_WINDOW);
+    
+    if (blocked) {
+      return addSecurityHeaders(
+        NextResponse.json(
+          { error: "Terlalu banyak permintaan verifikasi. Silakan coba lagi dalam 1 menit." },
+          { status: 429, headers: { 'Retry-After': '60' } }
+        )
+      );
+    }
+  }
+
   // 3. Proteksi Halaman / Route Protection
   const protectedRoutes = [
     '/dashboard',
@@ -79,13 +94,14 @@ export async function proxy(request: NextRequest) {
   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
 
   if (isProtectedRoute) {
-    // SECURITY FIX: Sesuaikan pengecekan cookie dengan format Better Auth / Neon Auth.
-    // Kita gunakan pengecekan yang lebih fleksibel terlebih dahulu sampai kita tahu nama pasti cookie-nya.
+    // Cek session cookie Neon Auth
+    // Neon Auth @neondatabase/auth sets cookies with prefix:
+    //   - HTTP:  neon-auth.session_token
+    //   - HTTPS: __Secure-neon-auth.session_token
     const cookies = request.cookies.getAll();
     const hasSessionToken = cookies.some(c => 
-      c.name.includes('session') || 
-      c.name.includes('neon') || 
-      c.name.includes('auth')
+      c.name.includes('neon-auth.session_token') ||
+      c.name.includes('better-auth.session_token')
     );
     
     if (!hasSessionToken) {

@@ -73,13 +73,15 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  // Kasus: Belum diterbitkan
-  if (!user.certificate?.nftAddress || user.certificate?.status === "NOT_ISSUED") {
+  // Kasus: Belum diterbitkan atau sedang proses
+  if (!user.certificate?.nftAddress || user.certificate?.status === "NOT_ISSUED" || user.certificate?.status === "ISSUING") {
     return actionJson({
       type: "action",
       icon: `${origin}/web-app-manifest-512x512.png`,
-      title: "Ijazah Belum Diterbitkan",
-      description: `Ijazah untuk NIM ${nim} belum diterbitkan oleh admin.`,
+      title: user.certificate?.status === "ISSUING" ? "Ijazah Sedang Diproses" : "Ijazah Belum Diterbitkan",
+      description: user.certificate?.status === "ISSUING"
+        ? `Ijazah untuk NIM ${nim} sedang dalam proses penerbitan di blockchain.`
+        : `Ijazah untuk NIM ${nim} belum diterbitkan oleh admin.`,
       label: "Belum Tersedia",
       disabled: true,
       error: { message: "Hubungi admin kampus untuk informasi lebih lanjut." },
@@ -155,7 +157,7 @@ export async function POST(request: NextRequest) {
   // Buat transaksi Memo sebagai bukti klaim
   const rpcUrl = process.env.SOLANA_RPC_URL || clusterApiUrl("devnet");
   const connection = new Connection(rpcUrl, "confirmed");
-  const { blockhash } = await connection.getLatestBlockhash();
+  const { blockhash } = await connection.getLatestBlockhash("finalized");
 
   const transaction = new Transaction({
     feePayer: walletPublicKey,
@@ -163,11 +165,11 @@ export async function POST(request: NextRequest) {
   });
 
   // Tambah Memo instruction sebagai bukti on-chain
+  // PRIVACY: Jangan taruh dataHash di plaintext memo
   const memoMessage = JSON.stringify({
     type: "SIJAGA_CLAIM",
-    nftAddress: user.certificate.nftAddress,
-    dataHash: user.certificate.dataHash,
-    timestamp: new Date().toISOString(),
+    certId: user.certificate.id,
+    mint: user.certificate.nftAddress,
   });
   
   transaction.add(
