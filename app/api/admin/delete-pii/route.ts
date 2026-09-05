@@ -54,30 +54,41 @@ export async function POST(request: NextRequest) {
 
     const ipAddress = request.headers.get("x-forwarded-for") || "unknown";
 
+    const deleteBackupInput: {
+      userId: string;
+      backupData: string;
+      reason: string;
+      createdBy: string;
+      certificateId?: string;
+      nftAddress?: string;
+      metadataUri?: string;
+      txSignature?: string;
+    } = {
+      userId: user.id,
+      backupData: JSON.stringify({
+        certificate: user.certificate,
+        user: {
+          nama: user.nama,
+          nim: user.nim,
+          email: user.email,
+          prodi: user.prodi,
+          angkatan: user.angkatan,
+        },
+        wallet: user.wallet,
+      }),
+      reason: `Auto-backup before PII deletion. Reason: ${reason}`,
+      createdBy: payload.userId,
+    };
+    if (user.certificate?.id) deleteBackupInput.certificateId = user.certificate.id;
+    if (user.certificate?.nftAddress) deleteBackupInput.nftAddress = user.certificate.nftAddress;
+    if (user.certificate?.metadataUri) deleteBackupInput.metadataUri = user.certificate.metadataUri;
+    if (user.certificate?.txSignature) deleteBackupInput.txSignature = user.certificate.txSignature;
+
     // Eksekusi penghapusan PII dalam satu transaksi
     await prisma.$transaction([
       // 0. Auto-Backup sebelum PII dihapus (selalu dieksekusi)
       prisma.certificateBackup.create({
-        data: {
-          certificateId: user.certificate?.id ?? null,
-          userId: user.id,
-          backupData: JSON.stringify({
-            certificate: user.certificate,
-            user: {
-              nama: user.nama,
-              nim: user.nim,
-              email: user.email,
-              prodi: user.prodi,
-              angkatan: user.angkatan,
-            },
-            wallet: user.wallet,
-          }),
-          nftAddress: user.certificate?.nftAddress ?? null,
-          metadataUri: user.certificate?.metadataUri ?? null,
-          txSignature: user.certificate?.txSignature ?? null,
-          reason: `Auto-backup before PII deletion. Reason: ${reason}`,
-          createdBy: payload.userId,
-        },
+        data: deleteBackupInput,
       }),
       
       // 1. Hapus PII dari User

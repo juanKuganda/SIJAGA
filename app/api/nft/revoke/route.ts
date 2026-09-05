@@ -68,28 +68,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const revokeBackupInput: {
+      certificateId: string;
+      userId: string;
+      backupData: string;
+      reason: string;
+      createdBy: string;
+      nftAddress?: string;
+      metadataUri?: string;
+      txSignature?: string;
+    } = {
+      certificateId: user.certificate.id,
+      userId: userId,
+      backupData: JSON.stringify({
+        certificate: user.certificate,
+        user: {
+          nama: user.nama,
+          nim: user.nim,
+          email: user.email,
+          prodi: user.prodi,
+          angkatan: user.angkatan,
+        },
+        wallet: user.wallet,
+      }),
+      reason: `REVOKE: ${reason}`,
+      createdBy: payload.userId,
+    };
+    if (user.certificate.nftAddress) revokeBackupInput.nftAddress = user.certificate.nftAddress;
+    if (user.certificate.metadataUri) revokeBackupInput.metadataUri = user.certificate.metadataUri;
+    if (user.certificate.txSignature) revokeBackupInput.txSignature = user.certificate.txSignature;
+
     // Backup data sertifikat sebelum revoke
     await prisma.certificateBackup.create({
-      data: {
-        certificateId: user.certificate.id,
-        userId: userId,
-        backupData: JSON.stringify({
-          certificate: user.certificate,
-          user: {
-            nama: user.nama,
-            nim: user.nim,
-            email: user.email,
-            prodi: user.prodi,
-            angkatan: user.angkatan,
-          },
-          wallet: user.wallet,
-        }),
-        nftAddress: user.certificate.nftAddress,
-        metadataUri: user.certificate.metadataUri,
-        txSignature: user.certificate.txSignature,
-        reason: `REVOKE: ${reason}`,
-        createdBy: payload.userId,
-      },
+      data: revokeBackupInput,
     });
 
     // 1. Generate Revoked PNG Image & Upload (TANPA PII)
