@@ -11,7 +11,7 @@ interface CertificateData {
   nama: string;
   nim: string;
   prodi: string;
-  angkatan: string;
+  tahunLulus: string;
   status: string;
   nftAddress: string | null;
   txSignature: string | null;
@@ -159,7 +159,7 @@ export default function IjazahPreviewPage({
           <div className="w-full aspect-[1.414] overflow-hidden rounded-md border border-zinc-200 print:aspect-auto print:h-screen print:border-none print:shadow-none">
             <CertificateUI
               prodi={cert.prodi || ""}
-              tahunLulus={cert.angkatan || ""}
+              tahunLulus={cert.tahunLulus || ""}
               dataHash={cert.dataHash || undefined}
               isRevoked={isRevoked}
               logoBase64={logoBase64}

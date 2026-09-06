@@ -19,7 +19,7 @@ export async function GET(_request: NextRequest) {
         nim: true,
         email: true,
         prodi: true,
-        angkatan: true,
+        tahunLulus: true,
         dataConsent: true,
         consentGivenAt: true,
         dataDeletedAt: true,
@@ -94,7 +94,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const { userId, nama, email, nim, prodi, angkatan } = result.data;
+    const { userId, nama, email, nim, prodi, tahunLulus } = result.data;
 
     // Cek apakah user ada
     const existingUser = await prisma.user.findUnique({
@@ -150,7 +150,7 @@ export async function PUT(request: NextRequest) {
     if (email) updateData.email = email;
     if (nim) updateData.nim = nim;
     if (prodi) updateData.prodi = prodi;
-    if (angkatan) updateData.angkatan = angkatan;
+    if (tahunLulus) updateData.tahunLulus = tahunLulus;
 
     // Jika tidak ada data yang diubah, tolak
     if (Object.keys(updateData).length === 0) {
@@ -170,7 +170,7 @@ export async function PUT(request: NextRequest) {
         nim: true,
         email: true,
         prodi: true,
-        angkatan: true,
+        tahunLulus: true,
       },
     });
 

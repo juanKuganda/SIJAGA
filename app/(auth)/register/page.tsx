@@ -52,7 +52,7 @@ export default function RegisterPage() {
     nim: "",
     email: "",
     prodi: "",
-    angkatan: "",
+    tahunLulus: "",
     password: "",
     confirmPassword: "",
   });
@@ -175,13 +175,13 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="angkatan" className="font-semibold">Angkatan</Label>
+                <Label htmlFor="tahunLulus" className="font-semibold">Tahun Lulus</Label>
                 <Input
-                  id="angkatan"
-                  name="angkatan"
+                  id="tahunLulus"
+                  name="tahunLulus"
                   type="text"
                   placeholder="Contoh: 2021"
-                  value={formData.angkatan}
+                  value={formData.tahunLulus}
                   onChange={handleChange}
                   required
                   maxLength={4}

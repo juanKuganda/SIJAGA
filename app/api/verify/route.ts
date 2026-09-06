@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
       nama: string;
       nim: string;
       prodi: string | null;
-      angkatan: string | null;
+      tahunLulus: string | null;
       userId: string;
       dataDeletedAt: Date | null;
       walletAddress: string | null;
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
               nama: true,
               nim: true,
               prodi: true,
-              angkatan: true,
+              tahunLulus: true,
               dataDeletedAt: true,
             },
           },
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
           nama: user.nama,
           nim: user.nim,
           prodi: user.prodi,
-          angkatan: user.angkatan,
+          tahunLulus: user.tahunLulus,
           userId: user.id,
           dataDeletedAt: user.dataDeletedAt,
           walletAddress: user.wallet?.walletAddress ?? null,
@@ -131,10 +131,17 @@ export async function GET(request: NextRequest) {
 
     let hashVerified: boolean | null = null;
     if (!piiDeleted && certificate.dataSalt && certificate.dataHash) {
+      if (!userWithWallet.prodi) {
+        return NextResponse.json({
+          verified: false,
+          message: "Data Program Studi tidak lengkap, gagal melakukan komputasi hash.",
+        });
+      }
+      
       hashVerified = verifyDataHash(
         userWithWallet.nama,
         userWithWallet.nim,
-        userWithWallet.prodi || "Informatika",
+        userWithWallet.prodi,
         certificate.dataSalt,
         certificate.dataHash
       );
@@ -168,7 +175,7 @@ export async function GET(request: NextRequest) {
           nama: formatNama(),
           nim: formatNim(),
           prodi: userWithWallet.prodi,
-          tahunLulus: userWithWallet.angkatan,
+          tahunLulus: userWithWallet.tahunLulus,
           nftAddress: certificate.nftAddress,
         },
         onChain: {
@@ -205,7 +212,7 @@ export async function GET(request: NextRequest) {
           nama: formatNama(),
           nim: formatNim(),
           prodi: userWithWallet.prodi,
-          tahunLulus: userWithWallet.angkatan,
+          tahunLulus: userWithWallet.tahunLulus,
           status: certificate.status,
           nftAddress: certificate.nftAddress,
           issuedAt: certificate.issuedAt,
@@ -256,14 +263,13 @@ export async function GET(request: NextRequest) {
 
     // ─── Final decision ───────────────────────────────────────
 
+    // ─── Final decision ───────────────────────────────────────
+
     const onChainValid =
       hashMatch && ownerMatch && frozenCheck && nameConsistent;
 
-    // Hash lokal harus valid (atau PII dihapus → null → acceptable)
-    const localHashOk =
-      hashVerified === true || piiDeleted;
-
-    const verified = onChainValid && localHashOk;
+    const verifiedOnChain = !!onChainValid;
+    const verifiedNominative = !piiDeleted && hashVerified === true;
 
     // Update on-chain snapshot di DB (fire-and-forget)
     prisma.certificate
@@ -282,14 +288,16 @@ export async function GET(request: NextRequest) {
       });
 
     return NextResponse.json({
-      verified,
+      verified: verifiedOnChain, // Keep for backward compatibility
+      verifiedOnChain,
+      verifiedNominative,
       hashVerified,
       mismatch,
       data: {
         nama: formatNama(),
         nim: formatNim(),
         prodi: userWithWallet.prodi,
-        tahunLulus: userWithWallet.angkatan,
+        tahunLulus: userWithWallet.tahunLulus,
         status: certificate.status,
         nftAddress: certificate.nftAddress,
         issuedAt: certificate.issuedAt,
@@ -297,7 +305,7 @@ export async function GET(request: NextRequest) {
         // SECURITY: dataHash / dataSalt TIDAK dikirim ke klien publik
       },
       onChain: {
-        status: mismatch ? "MISMATCH" : (verified ? "VALID" : "MISMATCH"),
+        status: mismatch ? "MISMATCH" : (verifiedOnChain ? "VALID" : "MISMATCH"),
         frozen: inspection.frozen,
         owner: inspection.owner,
       },

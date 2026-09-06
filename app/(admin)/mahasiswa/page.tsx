@@ -43,7 +43,7 @@ interface Mahasiswa {
   nim: string;
   email: string;
   prodi: string;
-  angkatan: string;
+  tahunLulus: string;
   dataConsent: boolean;
   consentGivenAt: string | null;
   dataDeletedAt: string | null;
@@ -70,7 +70,7 @@ interface EditForm {
   nim: string;
   email: string;
   prodi: string;
-  angkatan: string;
+  tahunLulus: string;
 }
 
 export default function MahasiswaPage() {
@@ -115,7 +115,7 @@ export default function MahasiswaPage() {
     nim: "",
     email: "",
     prodi: "",
-    angkatan: "",
+    tahunLulus: "",
   });
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState("");
@@ -174,7 +174,7 @@ export default function MahasiswaPage() {
       nim: m.nim,
       email: m.email,
       prodi: m.prodi || "",
-      angkatan: m.angkatan || "",
+      tahunLulus: m.tahunLulus || "",
     });
     setEditError("");
   };
@@ -768,16 +768,16 @@ export default function MahasiswaPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="edit-angkatan" className="font-semibold">
-              Angkatan
+            <Label htmlFor="edit-tahunLulus" className="font-semibold">
+              Tahun Lulus
             </Label>
             <Input
-              id="edit-angkatan"
-              value={editForm.angkatan}
+              id="edit-tahunLulus"
+              value={editForm.tahunLulus}
               onChange={(e) =>
                 setEditForm((prev) => ({
                   ...prev,
-                  angkatan: e.target.value,
+                  tahunLulus: e.target.value,
                 }))
               }
               maxLength={4}

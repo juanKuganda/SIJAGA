@@ -34,7 +34,7 @@ interface MatchedMahasiswa {
   nama: string;
   nim: string;
   prodi: string;
-  angkatan: string;
+  tahunLulus: string;
   wallet: { status: string } | null;
   certificate: { status: string } | null;
 }
@@ -161,12 +161,12 @@ export default function OcrScanPage() {
       setFormNama(entities.nama?.value || "");
       setFormNim(entities.nim?.value || "");
       setFormProdi(entities.prodi?.value || "");
-      setFormAngkatan(entities.angkatan?.value || "");
+      setFormAngkatan(entities.tahunLulus?.value || "");
       setFormHash(entities.dataHash?.value || "");
 
       toast.success("OCR selesai!", {
         description: `Confidence: ${confidence.toFixed(0)}% — ${
-          [entities.prodi, entities.angkatan, entities.dataHash].filter(Boolean).length
+          [entities.prodi, entities.tahunLulus, entities.dataHash].filter(Boolean).length
         }/3 field utama terdeteksi. (Nama & NIM diabaikan demi privasi)`,
       });
     } catch (error) {
@@ -246,7 +246,7 @@ export default function OcrScanPage() {
             if (!formNama) setFormNama(match.nama);
             if (!formNim) setFormNim(match.nim);
             if (!formProdi && match.prodi) setFormProdi(match.prodi);
-            if (!formAngkatan && match.angkatan) setFormAngkatan(match.angkatan);
+            if (!formAngkatan && match.tahunLulus) setFormAngkatan(match.tahunLulus);
             if (match.certificate?.dataHash && formHash.length < 64) {
               setFormHash(match.certificate.dataHash);
             }
@@ -478,7 +478,7 @@ export default function OcrScanPage() {
                     {
                       [
                         extractedData.prodi,
-                        extractedData.angkatan,
+                        extractedData.tahunLulus,
                         extractedData.dataHash,
                       ].filter(Boolean).length
                     }
@@ -595,8 +595,8 @@ export default function OcrScanPage() {
                               NIM: {m.nim}
                             </p>
                             <p className="text-xs text-muted-foreground mt-0.5">
-                              {m.prodi || "—"} • Angkatan{" "}
-                              {m.angkatan || "—"}
+                              {m.prodi || "—"} • Tahun Lulus{" "}
+                              {m.tahunLulus || "—"}
                             </p>
                           </div>
                           <div className="flex flex-col items-end gap-1.5">
@@ -649,7 +649,7 @@ export default function OcrScanPage() {
                                 size="sm"
                                 className="text-xs h-8"
                                 onClick={() =>
-                                  window.open("/terbitkan", "_blank")
+                                  window.open(`/terbitkan?userId=${m.id}`, "_blank")
                                 }
                               >
                                 Terbitkan Ijazah

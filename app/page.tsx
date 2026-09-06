@@ -27,6 +27,8 @@ import AiChatBubble from "@/components/AiChatBubble";
 
 interface VerificationResult {
   verified: boolean;
+  verifiedOnChain?: boolean;
+  verifiedNominative?: boolean;
   revoked?: boolean;
   message?: string;
   revokeReason?: string;
@@ -41,7 +43,94 @@ interface VerificationResult {
     issuedAt: string;
     penerbit: string;
   };
+  onChain?: {
+    status: string;
+    frozen?: boolean;
+    owner?: string;
+  };
+  hashVerified?: boolean;
+  mismatch?: string | null;
+  piiDeleted?: boolean;
   explorerUrl?: string;
+}
+
+function VerificationChecklist({ result }: { result: VerificationResult }) {
+  if (!result.data) return null;
+  
+  const isRevoked = result.revoked === true;
+  const onChain = result.onChain;
+  
+  const blockchainChecklist = [
+    {
+      label: "Aset ada di blockchain",
+      passed: onChain?.status !== "NOT_FOUND" && onChain?.status !== "UNAVAILABLE",
+    },
+    {
+      label: "Status Token (Soulbound)",
+      passed: onChain?.frozen === true,
+    },
+    {
+      label: "Kesesuaian Kepemilikan (Owner)",
+      passed: result.mismatch !== "OWNER" && onChain?.status !== "UNAVAILABLE" && onChain?.status !== "NOT_FOUND",
+    },
+    {
+      label: "Konsistensi Hash On-Chain",
+      passed: result.mismatch !== "HASH" && onChain?.status !== "UNAVAILABLE" && onChain?.status !== "NOT_FOUND",
+    },
+    {
+      label: "Status Aktif (Bukan Dibatalkan)",
+      passed: result.mismatch !== "STATUS" && !isRevoked,
+    }
+  ];
+
+  const nominativeChecklist = [
+    {
+      label: "Verifikasi Hash Lokal (Sesuai PII)",
+      passed: result.verifiedNominative === true,
+      warning: result.piiDeleted ? "Data Dihapus (UU PDP)" : null
+    }
+  ];
+
+  return (
+    <div className="mt-4 flex flex-col gap-4 border-t border-zinc-100 pt-4">
+      <div>
+        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-3">Bukti Kriptografis (On-Chain)</p>
+        <div className="space-y-2">
+          {blockchainChecklist.map((item, i) => (
+            <div key={`bc-${i}`} className="flex items-center gap-2">
+              {item.passed ? (
+                <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+              ) : (
+                <X className="w-4 h-4 text-red-500 shrink-0" />
+              )}
+              <span className={`text-sm ${item.passed ? "text-zinc-700" : "text-red-600 font-medium"}`}>
+                {item.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div>
+        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-3">Bukti Nominatif (Lokal)</p>
+        <div className="space-y-2">
+          {nominativeChecklist.map((item, i) => (
+            <div key={`nm-${i}`} className="flex items-center gap-2">
+              {item.passed ? (
+                <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+              ) : item.warning ? (
+                <X className="w-4 h-4 text-amber-500 shrink-0" />
+              ) : (
+                <X className="w-4 h-4 text-red-500 shrink-0" />
+              )}
+              <span className={`text-sm ${item.passed ? "text-zinc-700" : item.warning ? "text-amber-600 font-medium" : "text-red-600 font-medium"}`}>
+                {item.label} {item.warning && `— ${item.warning}`}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function HomePage() {
@@ -524,15 +613,18 @@ export default function HomePage() {
                         </p>
                       </div>
                     </div>
-                  ) : result.verified ? (
+                  ) : result.verifiedOnChain ? (
                     <div className="flex gap-4">
                       <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
                         <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                       </div>
                       <div className="w-full">
                         <h4 className="text-base font-bold text-foreground">
-                          Tervalidasi Asli
+                          {result.verifiedNominative ? "Tervalidasi Penuh (Asli)" : "Terverifikasi Kriptografis"}
                         </h4>
+                        {!result.verifiedNominative && (
+                          <p className="text-xs text-amber-600 font-medium mt-1">Data identitas telah dihapus dari sistem sesuai kebijakan privasi.</p>
+                        )}
                         {result.data && (
                           <div className="mt-3 bg-zinc-50 rounded-xl p-3 grid grid-cols-2 gap-y-3 gap-x-4 border border-zinc-100">
                             <div>
@@ -569,6 +661,7 @@ export default function HomePage() {
                             </div>
                           </div>
                         )}
+                        <VerificationChecklist result={result} />
                         {result.explorerUrl && (
                           <a
                             href={result.explorerUrl}
@@ -587,13 +680,16 @@ export default function HomePage() {
                       <div className="w-10 h-10 rounded-full bg-zinc-100 flex items-center justify-center shrink-0">
                         <SearchX className="w-5 h-5 text-zinc-500" />
                       </div>
-                      <div>
+                      <div className="w-full">
                         <h4 className="text-base font-bold text-foreground">
-                          Data Tidak Ditemukan
+                          {result.onChain?.status === "UNAVAILABLE" 
+                            ? "Keberadaan on-chain tidak dapat dikonfirmasi — tidak dinyatakan sah" 
+                            : "Data Tidak Ditemukan"}
                         </h4>
                         <p className="text-sm font-medium text-muted-foreground mt-1">
                           {result.message}
                         </p>
+                        <VerificationChecklist result={result} />
                       </div>
                     </div>
                   )}

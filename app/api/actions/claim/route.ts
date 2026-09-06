@@ -90,7 +90,8 @@ export async function GET(request: NextRequest) {
 
   // KASUS NORMAL: Ijazah sudah di-mint, siap diklaim
   const piiDeleted = !!user.dataDeletedAt;
-  const displayName = piiDeleted ? "[DATA DIHAPUS]" : user.nama;
+  const maskString = (str: string) => str ? `${str.charAt(0)}***${str.charAt(str.length - 1)}` : "";
+  const displayName = piiDeleted ? "[DATA DIHAPUS]" : maskString(user.nama);
   const displayProdi = user.prodi ?? "-";
 
   return actionJson({
@@ -184,9 +185,11 @@ export async function POST(request: NextRequest) {
   // ACTION CHAINING: setup callback URL
   const callbackUrl = `${origin}/api/actions/claim-callback?nim=${encodeURIComponent(nim)}`;
 
+  const piiDeleted = !!user.dataDeletedAt;
+  const maskString = (str: string) => str ? `${str.charAt(0)}***${str.charAt(str.length - 1)}` : "";
   return actionJson({
     transaction: serializedTransaction,
-    message: `Klaim ijazah atas nama ${user.nama} dari Universitas Tadulako`,
+    message: `Klaim ijazah atas nama ${piiDeleted ? "[DATA DIHAPUS]" : maskString(user.nama)} dari Universitas Tadulako`,
     links: {
       next: {
         type: "post",

@@ -1,8 +1,10 @@
 /**
  * lib/ocr.ts — OCR Utility untuk SIJAGA
  * 
- * Client-side OCR menggunakan tesseract.js.
- * Mengekstrak entitas bernama (Nama, NIM, Prodi, Angkatan) dari scan ijazah/transkrip.
+ * Client-side OCR menggunakan tesseract.js v7.
+ * CATATAN BAB I: Tesseract v7 secara bawaan (default) menggunakan mesin LSTM (Long Short-Term Memory) 
+ * untuk bahasa Indonesia (ind) dan Inggris (eng), sehingga lebih akurat.
+ * Mengekstrak entitas bernama (Nama, NIM, Prodi, Tahun Lulus) dari scan ijazah/transkrip.
  */
 
 import Tesseract from 'tesseract.js';
@@ -16,7 +18,7 @@ export interface OcrExtractedData {
   nama: OcrField | null;
   nim: OcrField | null;
   prodi: OcrField | null;
-  angkatan: OcrField | null;
+  tahunLulus: OcrField | null;
   dataHash: OcrField | null;
   rawText: string;
 }
@@ -60,7 +62,7 @@ export function extractEntities(rawText: string): OcrExtractedData {
     nama: extractNama(text),
     nim: extractNim(text),
     prodi: extractProdi(text),
-    angkatan: extractAngkatan(text),
+    tahunLulus: extractAngkatan(text),
     dataHash: extractDataHash(text),
     rawText: text,
   };
@@ -143,8 +145,8 @@ function extractProdi(text: string): OcrField | null {
 
 function extractAngkatan(text: string): OcrField | null {
   const patterns = [
-    /(?:Tahun\s+(?:Lulus|Kelulusan|Masuk|Angkatan))\s*[:\-]\s*(\d{4})/i,
-    /(?:Angkatan)\s*[:\-]?\s*(\d{4})/i,
+    /(?:Tahun\s+(?:Lulus|Kelulusan|Masuk|Tahun Lulus))\s*[:\-]\s*(\d{4})/i,
+    /(?:Tahun Lulus)\s*[:\-]?\s*(\d{4})/i,
     /(?:Tanggal\s+(?:Lulus|Kelulusan))\s*[:\-]\s*\d{1,2}\s+\w+\s+(\d{4})/i,
     // Fallback: cari tahun 20xx di sekitar kata kunci
     /(?:lulus|kelulusan|wisuda).*?(20[12]\d)/i,

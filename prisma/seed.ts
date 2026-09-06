@@ -22,7 +22,7 @@ async function main() {
     email: string;
     password: string;
     prodi: string;
-    angkatan?: string;
+    tahunLulus?: string;
   }
 
   async function seedUser(data: SeedUserData, role: "ADMIN" | "MAHASISWA") {
@@ -73,7 +73,7 @@ async function main() {
         password: "", 
         role: role,
         prodi: data.prodi,
-        angkatan: data.angkatan || null,
+        tahunLulus: data.tahunLulus || null,
       },
     });
 

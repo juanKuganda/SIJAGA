@@ -63,15 +63,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // Status machine gate
-    // ═══════════════════════════════════════════════════════════
+ 
 
     if (user.certificate) {
       const status = user.certificate.status;
 
-      // ISSUING = ada proses sebelumnya yang belum selesai
-      // Cek apakah NFT sudah ada di rantai (rekonsiliasi)
+ 
       if (status === "ISSUING" && user.certificate.nftAddress) {
         const inspection = await inspectCertificate(user.certificate.nftAddress);
 
@@ -113,12 +110,10 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        // NOT_FOUND → lanjut mint ulang (jatuh ke flow di bawah)
+   
       } else if (status === "ISSUING") {
-        // ISSUING tanpa nftAddress — lanjutkan mint dari awal
-        // Jatuh ke flow mint di bawah
       } else if (status !== "NOT_ISSUED") {
-        // MINTED, CLAIMED, REVOKED — tidak bisa mint lagi
+     
         const statusMsg: Record<string, string> = {
           MINTED: "Ijazah sudah diterbitkan dan menunggu klaim",
           CLAIMED: "Ijazah sudah diklaim oleh mahasiswa",
@@ -131,31 +126,29 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // Step 1: Generate dataHash dan salt
-    // ═══════════════════════════════════════════════════════════
+   
+
+    if (!user.prodi) {
+      return NextResponse.json({ error: "Data Program Studi tidak lengkap" }, { status: 400 });
+    }
 
     const { hash: dataHash, salt: dataSalt } = generateDataHash(
       user.nama,
       user.nim,
-      user.prodi || "Informatika"
+      user.prodi
     );
 
-    // ═══════════════════════════════════════════════════════════
-    // Step 2: Upload ke IPFS (image + metadata)
-    // ═══════════════════════════════════════════════════════════
-
-    // Generate & upload PNG certificate image to IPFS (TANPA PII)
+ 
     const { gatewayUrl: imageUrl } = await generateAndUploadCertificateImage({
-      prodi: user.prodi || "Informatika",
-      tahunLulus: user.angkatan || "2026",
+      prodi: user.prodi,
+      tahunLulus: user.tahunLulus || "2026",
       dataHash,
     }, "MINTED");
 
     // Generate metadata TANPA PII (Privacy Architecture)
     const metadata = generateCertificateMetadata({
-      prodi: user.prodi || "Informatika",
-      tahunLulus: user.angkatan || "2026",
+      prodi: user.prodi,
+      tahunLulus: user.tahunLulus || "2026",
       dataHash,
       imageUri: imageUrl,
     });
@@ -163,18 +156,9 @@ export async function POST(request: NextRequest) {
     // Upload metadata ke Pinata
     const { gatewayUrl: metadataUri } = await uploadMetadataToPinata(metadata);
 
-    // ═══════════════════════════════════════════════════════════
-    // Step 2.5: Pre-generate mint address SEBELUM on-chain TX
-    // Ini memastikan nftAddress tersimpan di DB sebelum TX dikirim.
-    // Jika crash setelah TX sukses, rekonsiliasi bisa jalan.
-    // ═══════════════════════════════════════════════════════════
 
     const { mintSigner, mintAddress } = prepareMintSigner();
 
-    // ═══════════════════════════════════════════════════════════
-    // Step 3: Upsert certificate ke ISSUING SEBELUM mint on-chain
-    // Ini mencegah NFT yatim jika crash setelah mint berhasil
-    // ═══════════════════════════════════════════════════════════
 
     await prisma.certificate.upsert({
       where: { userId },
@@ -196,9 +180,6 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // ═══════════════════════════════════════════════════════════
-    // Step 4: Mint NFT Soulbound (on-chain)
-    // ═══════════════════════════════════════════════════════════
 
     const mintResult = await mintSoulboundNFT({
       metadataUri,
@@ -221,10 +202,6 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    // ═══════════════════════════════════════════════════════════
-    // Step 5: Promote ke MINTED + snapshot on-chain
-    // ═══════════════════════════════════════════════════════════
 
     const certificate = await prisma.certificate.update({
       where: { userId },

@@ -13,7 +13,7 @@ interface User {
   nim: string;
   email: string;
   prodi: string;
-  angkatan: string;
+  tahunLulus: string;
 }
 
 interface Wallet {
@@ -267,7 +267,7 @@ export default function IjazahPage() {
                   { label: "Nama Lengkap", value: user?.nama },
                   { label: "NIM", value: user?.nim },
                   { label: "Program Studi", value: user?.prodi || "-" },
-                  { label: "Angkatan", value: user?.angkatan || "-" },
+                  { label: "Tahun Lulus", value: user?.tahunLulus || "-" },
                 ].map((item) => (
                   <div key={item.label}>
                     <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">

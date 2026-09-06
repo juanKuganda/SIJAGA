@@ -61,8 +61,8 @@ export async function GET(
       certificate: {
         nama: showPII ? user.nama : (piiDeleted ? "[DATA DIHAPUS]" : "[TERSEMBUNYI]"),
         nim: showPII ? user.nim : (piiDeleted ? "[DIHAPUS]" : "[TERSEMBUNYI]"),
-        prodi: user.prodi || "Informatika",
-        angkatan: user.angkatan || "-",
+        prodi: user.prodi ,
+        tahunLulus: user.tahunLulus || "-",
         status: certificate.status,
         nftAddress: certificate.nftAddress,
         txSignature: certificate.txSignature,

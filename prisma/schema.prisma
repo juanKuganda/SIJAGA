@@ -17,7 +17,7 @@ model User {
   password    String    // bcrypt hash
   role        Role      @default(MAHASISWA)
   prodi       String?
-  angkatan    String?
+  tahunLulus    String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 

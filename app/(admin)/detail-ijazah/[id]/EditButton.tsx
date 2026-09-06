@@ -14,7 +14,7 @@ interface EditButtonProps {
     nama: string;
     email: string;
     prodi: string | null;
-    angkatan: string | null;
+    tahunLulus: string | null;
   };
 }
 
@@ -25,7 +25,7 @@ export default function EditButton({ user }: EditButtonProps) {
     nama: user.nama,
     email: user.email,
     prodi: user.prodi || "",
-    angkatan: user.angkatan || "",
+    tahunLulus: user.tahunLulus || "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -136,16 +136,16 @@ export default function EditButton({ user }: EditButtonProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="edit-angkatan" className="font-semibold text-foreground">
-                  Angkatan
+                <Label htmlFor="edit-tahunLulus" className="font-semibold text-foreground">
+                  Tahun Lulus
                 </Label>
                 <Input
-                  id="edit-angkatan"
-                  value={editForm.angkatan}
+                  id="edit-tahunLulus"
+                  value={editForm.tahunLulus}
                   onChange={(e) =>
                     setEditForm((prev) => ({
                       ...prev,
-                      angkatan: e.target.value,
+                      tahunLulus: e.target.value,
                     }))
                   }
                   maxLength={4}

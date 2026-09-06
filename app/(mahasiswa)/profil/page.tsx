@@ -11,7 +11,7 @@ interface UserProfile {
   nim: string;
   email: string;
   prodi: string;
-  angkatan: string;
+  tahunLulus: string;
 }
 
 interface Wallet {
@@ -171,7 +171,7 @@ export default function ProfilPage() {
               { label: "NAMA LENGKAP", value: user?.nama },
               { label: "NIM", value: user?.nim },
               { label: "PROGRAM STUDI", value: user?.prodi || "-" },
-              { label: "ANGKATAN", value: user?.angkatan || "-" },
+              { label: "ANGKATAN", value: user?.tahunLulus || "-" },
               { label: "EMAIL INSTITUSI", value: user?.email },
             ].map((item, idx) => (
               <div key={idx} className={item.label === "NAMA LENGKAP" ? "md:col-span-2" : ""}>

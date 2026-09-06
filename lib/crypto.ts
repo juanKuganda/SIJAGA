@@ -13,7 +13,7 @@ export function generateDataHash(
   prodi: string
 ): { hash: string; salt: string } {
   const salt = crypto.randomBytes(16).toString('hex');
-  const raw = `${nama}|${nim}|${prodi}|${salt}`;
+  const raw = `${nama.trim()}|${nim.toUpperCase()}|${prodi}|${salt}`;
   const hash = crypto.createHash('sha256').update(raw).digest('hex');
   return {
     hash: `sha256:${hash}`,
@@ -32,7 +32,15 @@ export function verifyDataHash(
   salt: string,
   storedHash: string
 ): boolean {
-  const raw = `${nama}|${nim}|${prodi}|${salt}`;
+  const raw = `${nama.trim()}|${nim.toUpperCase()}|${prodi}|${salt}`;
   const computed = `sha256:${crypto.createHash('sha256').update(raw).digest('hex')}`;
-  return computed === storedHash;
+  
+  const computedBuffer = Buffer.from(computed);
+  const storedBuffer = Buffer.from(storedHash);
+  
+  if (computedBuffer.length !== storedBuffer.length) {
+    return false;
+  }
+  
+  return crypto.timingSafeEqual(computedBuffer, storedBuffer);
 }

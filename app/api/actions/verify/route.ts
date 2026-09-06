@@ -98,17 +98,34 @@ export async function GET(request: NextRequest) {
     const inspection = await inspectCertificate(cert.nftAddress);
 
     if (inspection.ok) {
-      const nameShowsRevoked = inspection.name.includes("[DIBATALKAN]");
+      const hashMatch =
+        inspection.dataHash !== null &&
+        cert.dataHash !== null &&
+        inspection.dataHash === cert.dataHash;
+        
+      const ownerMatch = 
+        user.wallet?.walletAddress &&
+        inspection.owner === user.wallet.walletAddress;
 
-      if (nameShowsRevoked) {
+      const frozenCheck = inspection.frozen === true;
+      const nameShowsRevoked = inspection.name.includes("[DIBATALKAN]");
+      const nameConsistent = !nameShowsRevoked;
+
+      if (!nameConsistent) {
         onChainLabel = "❌ Dicabut di blockchain";
         onChainValid = false;
-      } else if (inspection.frozen) {
-        onChainLabel = "✅ Valid dan frozen di Solana Blockchain";
-        onChainValid = true;
-      } else {
+      } else if (!frozenCheck) {
         onChainLabel = "⚠️ Aset ditemukan tapi tidak frozen";
         onChainValid = false;
+      } else if (!ownerMatch) {
+        onChainLabel = "❌ Kepemilikan tidak sesuai";
+        onChainValid = false;
+      } else if (!hashMatch) {
+        onChainLabel = "❌ Integritas data (hash) tidak cocok";
+        onChainValid = false;
+      } else {
+        onChainLabel = "✅ Valid, frozen, dan data otentik";
+        onChainValid = true;
       }
     } else {
       // inspectCertificate gagal (RPC down, not found)

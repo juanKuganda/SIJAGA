@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
           nim: user.nim,
           email: user.email,
           prodi: user.prodi,
-          angkatan: user.angkatan,
+          tahunLulus: user.tahunLulus,
         },
         wallet: user.wallet,
       }),
@@ -103,16 +103,20 @@ export async function POST(request: NextRequest) {
       data: revokeBackupInput,
     });
 
+    if (!user.prodi) {
+      return NextResponse.json({ error: "Data program studi tidak lengkap" }, { status: 400 });
+    }
+
     // 1. Generate Revoked PNG Image & Upload (TANPA PII)
     const { gatewayUrl: revokedImageUrl } = await generateAndUploadCertificateImage({
-      prodi: user.prodi || "Informatika",
-      tahunLulus: user.angkatan || "2026",
+      prodi: user.prodi ,
+      tahunLulus: user.tahunLulus || "2026",
     }, "REVOKED");
 
     // 2. Generate Revoked Metadata with image
     const revokedMetadata = generateRevokedMetadata({
-      prodi: user.prodi || "Informatika",
-      tahunLulus: user.angkatan || "2026",
+      prodi: user.prodi ,
+      tahunLulus: user.tahunLulus || "2026",
     });
     // Override image with IPFS-hosted revoked SVG
     revokedMetadata.image = revokedImageUrl;
