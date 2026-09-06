@@ -98,7 +98,7 @@ sijaga/
 │   ├── api/                # REST API & Solana Actions endpoints
 │   └── page.tsx            # Public verification & landing page
 ├── components/             # Custom React components & GSAP animations
-│   └── ui/                 # 26 shadcn/ui generic components
+│   └── ui/                 # 27 shadcn/ui generic components
 ├── lib/                    # Core business logic layer
 │   ├── auth.ts             # Adapter untuk Neon Managed Better Auth
 │   ├── auth/               # Konfigurasi server & client Neon Auth
