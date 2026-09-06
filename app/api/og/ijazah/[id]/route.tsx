@@ -20,15 +20,15 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       user: {
         select: {
           prodi: true,
-          angkatan: true,
+          tahunLulus: true,
         },
       },
     },
   });
 
   const cluster = process.env.SOLANA_CLUSTER ?? "devnet";
-  const prodi = certificate?.user?.prodi ?? "Informatika";
-  const tahunLulus = certificate?.user?.angkatan ?? "-";
+  const prodi = certificate?.user?.prodi ?? "-";
+  const tahunLulus = certificate?.user?.tahunLulus ?? "-";
   const status = certificate?.status === "REVOKED" ? "DICABUT" : "Terverifikasi";
 
   return new ImageResponse(

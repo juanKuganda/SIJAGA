@@ -101,28 +101,32 @@ export async function POST(request: NextRequest) {
     let recoveryDataHash: string | null = null;
     let recoveryDataSalt: string | null = null;
 
+    if (!user.prodi) {
+      return NextResponse.json({ error: "Data program studi tidak lengkap" }, { status: 400 });
+    }
+
     if (certData.nftAddress) {
       try {
         // 1. Generate dataHash baru untuk recovery
         const { hash, salt } = generateDataHash(
           user.nama,
           user.nim,
-          user.prodi || "Informatika"
+          user.prodi 
         );
         recoveryDataHash = hash;
         recoveryDataSalt = salt;
 
         // 2. Generate Image baru (TANPA PII) & Upload ke Pinata
         const { gatewayUrl: imageUrl } = await generateAndUploadCertificateImage({
-          prodi: user.prodi || "Informatika",
-          tahunLulus: user.angkatan || "2026",
+          prodi: user.prodi ,
+          tahunLulus: user.tahunLulus || "2026",
           dataHash: hash,
         }, "MINTED");
 
         // 3. Generate Metadata baru (PRIVACY: tanpa PII)
         const metadata = generateCertificateMetadata({
-          prodi: user.prodi || "Informatika",
-          tahunLulus: user.angkatan || "2026",
+          prodi: user.prodi ,
+          tahunLulus: user.tahunLulus || "2026",
           dataHash: hash,
           imageUri: imageUrl,
         });

@@ -130,7 +130,7 @@ export async function DELETE(request: NextRequest) {
                 nim: user.nim,
                 email: user.email,
                 prodi: user.prodi,
-                angkatan: user.angkatan,
+                tahunLulus: user.tahunLulus,
               },
               wallet: user.wallet,
             }),

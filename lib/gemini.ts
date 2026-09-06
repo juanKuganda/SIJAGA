@@ -26,7 +26,7 @@ export interface RetrievedStudentData {
   nama: string;
   nim: string;
   prodi: string | null;
-  angkatan: string | null;
+  tahunLulus: string | null;
   status: string;
   nftAddress: string | null;
   txSignature: string | null;
@@ -35,6 +35,11 @@ export interface RetrievedStudentData {
   revokeReason: string | null;
   hashVerified: boolean | null;
   piiDeleted: boolean;
+  onChainOk?: boolean;
+  frozen?: boolean;
+  ownerMatch?: boolean;
+  hashMatch?: boolean;
+  rpcAvailable?: boolean;
 }
 
 /**
@@ -57,13 +62,14 @@ function buildSystemPrompt(retrievedData: RetrievedStudentData[] | null, searchT
 1. Gunakan **HANYA** data JSON berikut untuk menjawab pertanyaan. DILARANG KERAS mengarang atau berasumsi data apapun.
 2. Jika data tidak ditemukan, berikan respons natural dan sopan yang menyebutkan apa yang pengguna cari. Contoh: "Maaf, saya tidak dapat menemukan data ijazah untuk pencarian **${searchInfo}** di dalam sistem SIJAGA."
 3. Jika sertifikat berstatus "REVOKED", **WAJIB** sampaikan bahwa ijazah tersebut telah **DICABUT/DIREVOKE** beserta alasannya.
-4. Jika sertifikat berstatus "MINTED" atau "CLAIMED", sampaikan bahwa ijazah tersebut **TERVERIFIKASI** dan valid.
-5. Jika status "NOT_ISSUED", sampaikan bahwa ijazah belum diterbitkan di blockchain.
-6. Jika field piiDeleted = true, sampaikan bahwa data pribadi telah dihapus sesuai UU PDP namun ijazah tetap terverifikasi di blockchain.
-7. Selalu sertakan link ke **Solana Explorer** jika nftAddress tersedia: https://explorer.solana.com/address/{nftAddress}?cluster=${process.env.NEXT_PUBLIC_SOLANA_NETWORK || "devnet"}
-8. **JANGAN** menjawab pertanyaan di luar konteks verifikasi ijazah, akademik, atau SIJAGA. Jawab: "Maaf, saya hanya dapat membantu verifikasi ijazah di sistem SIJAGA."
-9. Jawab dalam **Bahasa Indonesia** yang profesional, sopan, dan meyakinkan.
-10. Format respons menggunakan Markdown yang rapi (bold untuk nama, code block untuk NIM/hash, link untuk explorer).
+4. Jika \`rpcAvailable = false\`, **JANGAN** katakan sah atau terverifikasi. Katakan verifikasi rantai (blockchain) gagal.
+5. Katakan **TERVERIFIKASI** dan valid HANYA JIKA dari sistem mengembalikan \`onChainOk = true\` dan \`hashMatch = true\` (atau \`hashVerified = true\`). BUKAN sekadar dari status DB.
+6. Jika status "NOT_ISSUED", sampaikan bahwa ijazah belum diterbitkan di blockchain.
+7. Jika field piiDeleted = true, sampaikan bahwa data pribadi telah dihapus sesuai UU PDP. Jelaskan bahwa aset kriptografisnya (token) masih valid di blockchain, namun tautan nominatif (identitas) sudah terputus secara matematis dan tidak dapat diverifikasi lagi.
+8. Selalu sertakan link ke **Solana Explorer** jika nftAddress tersedia: https://explorer.solana.com/address/{nftAddress}?cluster=${process.env.NEXT_PUBLIC_SOLANA_NETWORK || "devnet"}
+9. **JANGAN** menjawab pertanyaan di luar konteks verifikasi ijazah, akademik, atau SIJAGA. Jawab: "Maaf, saya hanya dapat membantu verifikasi ijazah di sistem SIJAGA."
+10. Jawab dalam **Bahasa Indonesia** yang profesional, sopan, dan meyakinkan.
+11. Format respons menggunakan Markdown yang rapi (bold untuk nama, code block untuk NIM/hash, link untuk explorer).
 
 ## DATA KONTEKS PENCARIAN (Berdasarkan Ekstraksi Sistem):
 Yang dicari pengguna: ${searchInfo}

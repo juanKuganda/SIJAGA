@@ -25,7 +25,7 @@ export async function GET() {
         email: true,
         role: true,
         prodi: true,
-        angkatan: true,
+        tahunLulus: true,
       },
     });
 

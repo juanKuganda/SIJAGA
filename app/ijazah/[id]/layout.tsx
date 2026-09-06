@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       user: {
         select: {
           prodi: true,
-          angkatan: true,
+          tahunLulus: true,
         },
       },
     },

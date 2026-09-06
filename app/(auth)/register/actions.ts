@@ -13,7 +13,7 @@ export async function registerWithEmail(
   const name = formData.get("nama") as string;
   const nim = formData.get("nim") as string;
   const prodi = formData.get("prodi") as string;
-  const angkatan = formData.get("angkatan") as string;
+  const tahunLulus = formData.get("tahunLulus") as string;
   const password = formData.get("password") as string;
   const confirmPassword = formData.get("confirmPassword") as string;
 
@@ -23,7 +23,7 @@ export async function registerWithEmail(
     nama: name,
     nim,
     prodi,
-    angkatan,
+    tahunLulus,
     password,
     confirmPassword,
   });
@@ -86,7 +86,7 @@ export async function registerWithEmail(
         email,
         nim,
         prodi,
-        angkatan,
+        tahunLulus,
         password: "", // Neon Auth yang handle password asli
         role: "MAHASISWA",
       },
@@ -104,7 +104,7 @@ export async function registerWithEmail(
               nim: user.nim,
               email: user.email,
               prodi: user.prodi,
-              angkatan: user.angkatan,
+              tahunLulus: user.tahunLulus,
             },
             wallet: null,
           }),

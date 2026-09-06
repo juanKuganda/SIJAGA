@@ -13,10 +13,47 @@ interface Wallet {
   status: string;
 }
 
+
+// Typing for third-party injected wallets
+interface PhantomProvider {
+  isPhantom?: boolean;
+  connect: () => Promise<{ publicKey: { toString: () => string } }>;
+  signTransaction: (tx: any) => Promise<any>;
+  signMessage: (msg: Uint8Array) => Promise<{ signature: Uint8Array }>;
+}
+
+interface SolflareProvider {
+  isSolflare?: boolean;
+  connect: () => Promise<{ publicKey: { toString: () => string } }>;
+  signTransaction: (tx: any) => Promise<any>;
+  signMessage: (msg: Uint8Array) => Promise<{ signature: Uint8Array }>;
+}
+
+interface CustomWindow extends Window {
+  phantom?: { solana?: PhantomProvider };
+  solflare?: SolflareProvider;
+  solana?: PhantomProvider;
+}
+
+function getWalletProvider(): PhantomProvider | SolflareProvider | null {
+  if (typeof window === "undefined") return null;
+  const customWindow = window as unknown as CustomWindow;
+
+  if (customWindow.phantom?.solana?.isPhantom) {
+    return customWindow.phantom.solana;
+  }
+  if (customWindow.solflare?.isSolflare) {
+    return customWindow.solflare;
+  }
+  if (customWindow.solana?.isPhantom) {
+    return customWindow.solana;
+  }
+  return null;
+}
+
 export default function WalletPage() {
   const [wallet, setWallet] = useState<Wallet | null>(null);
-  const [walletAddress, setWalletAddress] = useState("");
-  const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -31,47 +68,8 @@ export default function WalletPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const isValidSolanaAddress = (addr: string): boolean => {
-    // Base58 format, 32-44 characters
-    return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(addr);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
-
-    if (!isValidSolanaAddress(walletAddress)) {
-      setError("Format wallet address tidak valid. Gunakan alamat Solana (base58, 32-44 karakter).");
-      return;
-    }
-
-    setSubmitting(true);
-
-    try {
-      const response = await fetch("/api/wallet/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ walletAddress }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || "Gagal mendaftarkan wallet");
-        return;
-      }
-
-      setSuccess("Wallet berhasil didaftarkan! Menunggu verifikasi admin.");
-      setWallet(data.wallet);
-      setWalletAddress("");
-    } catch {
-      setError("Terjadi kesalahan. Silakan coba lagi.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
+  
+  
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "PENDING":
@@ -155,7 +153,6 @@ export default function WalletPage() {
                         className="border-amber-300 text-amber-800 hover:bg-amber-100"
                         onClick={() => {
                           setWallet(null);
-                          setWalletAddress("");
                           setError("");
                           setSuccess("");
                         }}
@@ -193,7 +190,6 @@ export default function WalletPage() {
                         size="sm"
                         onClick={() => {
                           setWallet(null);
-                          setWalletAddress("");
                           setError("");
                           setSuccess("");
                         }}
@@ -205,57 +201,78 @@ export default function WalletPage() {
                 )}
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Info className="w-4 h-4 text-blue-600" />
-                    <p className="text-blue-800 font-bold text-sm">
-                      Cara Mendapatkan Alamat Wallet
-                    </p>
-                  </div>
-                  <ol className="text-blue-700 text-sm mt-2 space-y-1.5 list-decimal list-inside font-medium">
-                    <li>Install ekstensi Phantom Wallet di browser Anda</li>
-                    <li>Buat wallet baru atau import wallet yang sudah ada</li>
-                    <li>Klik nama wallet dan copy alamat wallet Solana Anda</li>
-                    <li>Paste alamat wallet di form di bawah ini</li>
-                  </ol>
-                </div>
-
-                {error && (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex gap-2">
-                    <XCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-                    <p className="text-sm text-red-800 font-medium">{error}</p>
-                  </div>
-                )}
-
-                {success && (
-                  <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg flex gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <p className="text-sm text-emerald-800 font-medium">{success}</p>
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <Label htmlFor="walletAddress" className="font-semibold text-foreground">
-                    Alamat Wallet Phantom <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="walletAddress"
-                    placeholder="Contoh: 7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-                    value={walletAddress}
-                    onChange={(e) => setWalletAddress(e.target.value)}
-                    required
-                    className="font-mono text-sm"
-                  />
-                  <p className="text-xs text-muted-foreground font-medium">
-                    Alamat wallet Solana (base58 format, 32-44 karakter)
+              
+            <div className="space-y-6">
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <Info className="w-4 h-4 text-blue-600" />
+                  <p className="text-blue-800 font-bold text-sm">
+                    Cara Menghubungkan Wallet
                   </p>
                 </div>
+                <p className="text-blue-700 text-sm mt-2 font-medium">
+                  Klik tombol di bawah untuk menghubungkan Phantom Wallet yang sudah terinstall di browser Anda secara otomatis.
+                </p>
+              </div>
 
-                <Button type="submit" className="w-full font-bold" disabled={submitting} size="lg">
-                  {submitting ? "Memproses..." : "Daftarkan Wallet"}
-                </Button>
-              </form>
+              {error && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex gap-2">
+                  <XCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                  <p className="text-sm text-red-800 font-medium">{error}</p>
+                </div>
+              )}
+
+              {success && (
+                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg flex gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  <p className="text-sm text-emerald-800 font-medium">{success}</p>
+                </div>
+              )}
+
+              <Button 
+                onClick={async () => {
+                  setError("");
+                  setSuccess("");
+                  setSubmitting(true);
+                  try {
+                    const provider = getWalletProvider();
+                    if (!provider) {
+                      setError("Wallet tidak ditemukan. Silakan install Phantom Wallet.");
+                      setSubmitting(false);
+                      return;
+                    }
+                    const response = await provider.connect();
+                    const address = response.publicKey.toString();
+                    
+                    const res = await fetch("/api/wallet/register", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ walletAddress: address }),
+                    });
+              
+                    const data = await res.json();
+              
+                    if (!res.ok) {
+                      setError(data.error || "Gagal mendaftarkan wallet");
+                      return;
+                    }
+              
+                    setSuccess("Wallet berhasil dihubungkan! Menunggu verifikasi admin.");
+                    setWallet(data.wallet);
+                  } catch (err: any) {
+                    setError(err.message || "Terjadi kesalahan saat menghubungkan wallet.");
+                  } finally {
+                    setSubmitting(false);
+                  }
+                }} 
+                className="w-full font-bold bg-[#AB9FF2] hover:bg-[#9B8FE2] text-white" 
+                disabled={submitting} 
+                size="lg"
+              >
+                {submitting ? "Memproses..." : "Hubungkan Phantom Wallet"}
+              </Button>
+            </div>
+
             )}
           </CardContent>
         </Card>

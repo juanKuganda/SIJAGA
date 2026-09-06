@@ -81,8 +81,8 @@ export default async function DetailIjazahPage({
                     <p className="text-foreground font-medium">{user.prodi || "-"}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">Angkatan</p>
-                    <p className="text-foreground font-medium">{user.angkatan || "-"}</p>
+                    <p className="text-sm text-muted-foreground mb-1">Tahun Lulus</p>
+                    <p className="text-foreground font-medium">{user.tahunLulus || "-"}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Email</p>
@@ -194,7 +194,7 @@ export default async function DetailIjazahPage({
               <div className="w-full aspect-[1.414] overflow-hidden rounded-md border border-zinc-200">
                 <CertificateUI
                   prodi={user.prodi || ""}
-                  tahunLulus={user.angkatan || ""}
+                  tahunLulus={user.tahunLulus || ""}
                   dataHash={user.certificate?.dataHash || undefined}
                   isRevoked={user.certificate?.status === 'REVOKED'}
                   logoBase64={logoBase64}

@@ -70,9 +70,9 @@ export const registerSchema = z.object({
   prodi: z
     .string()
     .min(1, "Program studi wajib diisi"),
-  angkatan: z
+  tahunLulus: z
     .string()
-    .regex(/^(20[0-9]{2})$/, "Angkatan harus tahun antara 2000-2099"),
+    .regex(/^(20[0-9]{2})$/, "Tahun Lulus harus tahun antara 2000-2099"),
 });
 
 /**
@@ -99,9 +99,9 @@ export const updateMahasiswaSchema = z.object({
     .string()
     .min(1, "Program studi wajib diisi")
     .optional(),
-  angkatan: z
+  tahunLulus: z
     .string()
-    .regex(/^(20[0-9]{2})$/, "Angkatan harus tahun antara 2000-2099")
+    .regex(/^(20[0-9]{2})$/, "Tahun Lulus harus tahun antara 2000-2099")
     .optional(),
 });
 

@@ -62,7 +62,9 @@ export async function POST(request: NextRequest) {
         const authUser = await getAuthUser();
         const isAdmin = authUser?.role === 'ADMIN';
 
-        retrievedData = users.map((user) => {
+        const { inspectCertificate } = await import('@/lib/onchain');
+
+        retrievedData = await Promise.all(users.map(async (user) => {
           const cert = user.certificate;
           const isOwner = authUser?.userId === user.id;
           const canSeePII = isAdmin || isOwner;
@@ -70,14 +72,37 @@ export async function POST(request: NextRequest) {
           let hashVerified: boolean | null = null;
 
           // Verifikasi hash jika data tersedia
-          if (cert?.dataSalt && cert?.dataHash && !user.dataDeletedAt) {
+          if (user.prodi && cert?.dataSalt && cert?.dataHash && !user.dataDeletedAt) {
             hashVerified = verifyDataHash(
               user.nama,
               user.nim,
-              user.prodi || 'Informatika',
+              user.prodi,
               cert.dataSalt,
               cert.dataHash
             );
+          }
+          
+          let onChainOk = false;
+          let frozen = false;
+          let ownerMatch = false;
+          let hashMatch = false;
+          let rpcAvailable = false;
+
+          if (cert?.nftAddress && cert.status !== 'REVOKED') {
+            const inspection = await inspectCertificate(cert.nftAddress);
+            if (inspection.ok) {
+              rpcAvailable = true;
+              frozen = inspection.frozen;
+              ownerMatch = !!(user.wallet?.walletAddress && inspection.owner === user.wallet.walletAddress);
+              hashMatch = !!(cert.dataHash && inspection.dataHash === cert.dataHash);
+              
+              // Strict Kriptografis 4-Layer Rule
+              if (frozen && ownerMatch && hashMatch) {
+                onChainOk = true;
+              }
+            } else {
+              rpcAvailable = inspection.reason !== "RPC";
+            }
           }
           
           const maskString = (str: string) => str ? `${str.charAt(0)}***${str.charAt(str.length - 1)}` : "";
@@ -97,7 +122,7 @@ export async function POST(request: NextRequest) {
             nama: formatNama(),
             nim: formatNim(),
             prodi: user.prodi,
-            angkatan: user.angkatan,
+            tahunLulus: user.tahunLulus,
             status: cert?.status || 'NOT_ISSUED',
             nftAddress: cert?.nftAddress || null,
             txSignature: cert?.txSignature || null,
@@ -106,8 +131,13 @@ export async function POST(request: NextRequest) {
             revokeReason: cert?.revokeReason || null,
             hashVerified,
             piiDeleted: !!user.dataDeletedAt,
+            onChainOk,
+            frozen,
+            ownerMatch,
+            hashMatch,
+            rpcAvailable
           };
-        });
+        }));
       }
     }
 
