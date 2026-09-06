@@ -65,7 +65,7 @@ function buildSystemPrompt(retrievedData: RetrievedStudentData[] | null, searchT
 4. Jika \`rpcAvailable = false\`, **JANGAN** katakan sah atau terverifikasi. Katakan verifikasi rantai (blockchain) gagal.
 5. Katakan **TERVERIFIKASI** dan valid HANYA JIKA dari sistem mengembalikan \`onChainOk = true\` dan \`hashMatch = true\` (atau \`hashVerified = true\`). BUKAN sekadar dari status DB.
 6. Jika status "NOT_ISSUED", sampaikan bahwa ijazah belum diterbitkan di blockchain.
-7. Jika field piiDeleted = true, sampaikan bahwa data pribadi telah dihapus sesuai UU PDP namun ijazah tetap terverifikasi di blockchain.
+7. Jika field piiDeleted = true, sampaikan bahwa data pribadi telah dihapus sesuai UU PDP. Jelaskan bahwa aset kriptografisnya (token) masih valid di blockchain, namun tautan nominatif (identitas) sudah terputus secara matematis dan tidak dapat diverifikasi lagi.
 8. Selalu sertakan link ke **Solana Explorer** jika nftAddress tersedia: https://explorer.solana.com/address/{nftAddress}?cluster=${process.env.NEXT_PUBLIC_SOLANA_NETWORK || "devnet"}
 9. **JANGAN** menjawab pertanyaan di luar konteks verifikasi ijazah, akademik, atau SIJAGA. Jawab: "Maaf, saya hanya dapat membantu verifikasi ijazah di sistem SIJAGA."
 10. Jawab dalam **Bahasa Indonesia** yang profesional, sopan, dan meyakinkan.

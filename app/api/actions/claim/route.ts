@@ -47,13 +47,17 @@ export async function GET(request: NextRequest) {
     });
   }
 
+  const piiDeleted = !!user.dataDeletedAt;
+  const maskString = (str: string) => str ? `${str.charAt(0)}***${str.charAt(str.length - 1)}` : "";
+  const displayName = piiDeleted ? "[DATA DIHAPUS]" : maskString(user.nama);
+
   // Kasus: Ijazah sudah diklaim
   if (user.certificate?.status === "CLAIMED") {
     return actionJson({
       type: "completed",
       icon: `${origin}/web-app-manifest-512x512.png`,
-      title: `Ijazah Sudah Diklaim — ${user.nama}`,
-      description: `Ijazah atas nama ${user.nama} sudah berhasil diklaim sebelumnya.`,
+      title: `Ijazah Sudah Diklaim — ${displayName}`,
+      description: `Ijazah atas nama ${displayName} sudah berhasil diklaim sebelumnya.`,
       label: "Sudah Diklaim",
     });
   }
@@ -64,7 +68,7 @@ export async function GET(request: NextRequest) {
       type: "action",
       icon: `${origin}/web-app-manifest-512x512.png`,
       title: "Ijazah Telah Dicabut",
-      description: `Ijazah atas nama ${user.nama} telah dicabut oleh institusi.`,
+      description: `Ijazah atas nama ${displayName} telah dicabut oleh institusi.`,
       label: "Tidak Dapat Diklaim",
       disabled: true,
       error: {
@@ -89,9 +93,6 @@ export async function GET(request: NextRequest) {
   }
 
   // KASUS NORMAL: Ijazah sudah di-mint, siap diklaim
-  const piiDeleted = !!user.dataDeletedAt;
-  const maskString = (str: string) => str ? `${str.charAt(0)}***${str.charAt(str.length - 1)}` : "";
-  const displayName = piiDeleted ? "[DATA DIHAPUS]" : maskString(user.nama);
   const displayProdi = user.prodi ?? "-";
 
   return actionJson({

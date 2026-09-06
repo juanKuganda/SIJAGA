@@ -91,11 +91,15 @@ export async function POST(request: NextRequest) {
           if (cert?.nftAddress && cert.status !== 'REVOKED') {
             const inspection = await inspectCertificate(cert.nftAddress);
             if (inspection.ok) {
-              onChainOk = true;
               rpcAvailable = true;
               frozen = inspection.frozen;
               ownerMatch = !!(user.wallet?.walletAddress && inspection.owner === user.wallet.walletAddress);
               hashMatch = !!(cert.dataHash && inspection.dataHash === cert.dataHash);
+              
+              // Strict Kriptografis 4-Layer Rule
+              if (frozen && ownerMatch && hashMatch) {
+                onChainOk = true;
+              }
             } else {
               rpcAvailable = inspection.reason !== "RPC";
             }
