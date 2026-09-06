@@ -131,6 +131,23 @@ export function getAdminKeypair(): Keypair {
 }
 
 /**
+ * Pre-generate mint signer keypair.
+ * Panggil SEBELUM upsert ke DB agar nftAddress bisa disimpan
+ * sebelum TX dikirim ke Solana.
+ *
+ * PENTING: signer hanya valid dalam satu request scope.
+ * Jangan coba simpan/serialize secret key.
+ */
+export function prepareMintSigner() {
+  const umi = createUmiInstance();
+  const mintSigner = generateSigner(umi);
+  return {
+    mintSigner,
+    mintAddress: mintSigner.publicKey.toString(),
+  };
+}
+
+/**
  * Mint NFT "Soulbound" (Institution-Enforced Non-Transferable via PermanentFreezeDelegate)
  * Menggunakan Metaplex UMI dan Metaplex Core di Solana Devnet.
  *
@@ -140,6 +157,7 @@ export function getAdminKeypair(): Keypair {
 export async function mintSoulboundNFT(data: {
   metadataUri: string;
   walletTujuan: string;
+  mintSigner?: ReturnType<typeof generateSigner>;
 }) {
   try {
     console.log("[Metaplex] Starting NFT mint to:", data.walletTujuan);
@@ -162,8 +180,8 @@ export async function mintSoulboundNFT(data: {
 
     const recipient = publicKey(data.walletTujuan);
 
-    // Generate new signer untuk mint NFT
-    const mintSigner = generateSigner(umi);
+    // Gunakan external signer jika ada, kalau tidak generate baru
+    const mintSigner = data.mintSigner ?? generateSigner(umi);
 
     console.log("[Metaplex] Mint address:", mintSigner.publicKey);
     console.log("[Metaplex] Recipient:", data.walletTujuan);

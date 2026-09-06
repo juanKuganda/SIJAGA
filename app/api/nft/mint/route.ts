@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 import { mintNftSchema } from "@/lib/validation";
-import { uploadMetadataToPinata, generateCertificateMetadata, generateAndUploadCertificateImage } from "@/lib/pinata";
-import { mintSoulboundNFT } from "@/lib/metaplex";
+import { generateCertificateMetadata, generateAndUploadCertificateImage, uploadMetadataToPinata } from "@/lib/pinata";
+import { mintSoulboundNFT, prepareMintSigner } from "@/lib/metaplex";
 import { generateDataHash } from "@/lib/crypto";
 import { createAuditLog } from "@/lib/audit";
 import { inspectCertificate } from "@/lib/onchain";
@@ -105,10 +105,15 @@ export async function POST(request: NextRequest) {
             },
             reconciled: true,
           });
+        } else if (inspection.reason !== "NOT_FOUND") {
+          // RPC down / metadata fail — jangan mint ulang, bisa double-mint
+          return NextResponse.json(
+            { error: `Tidak bisa verifikasi status NFT sebelumnya (${inspection.reason}). Coba lagi nanti.` },
+            { status: 502 }
+          );
         }
 
-        // NFT belum ada di rantai — lanjutkan mint (retry)
-        // Jatuh ke flow mint di bawah
+        // NOT_FOUND → lanjut mint ulang (jatuh ke flow di bawah)
       } else if (status === "ISSUING") {
         // ISSUING tanpa nftAddress — lanjutkan mint dari awal
         // Jatuh ke flow mint di bawah
@@ -159,6 +164,14 @@ export async function POST(request: NextRequest) {
     const { gatewayUrl: metadataUri } = await uploadMetadataToPinata(metadata);
 
     // ═══════════════════════════════════════════════════════════
+    // Step 2.5: Pre-generate mint address SEBELUM on-chain TX
+    // Ini memastikan nftAddress tersimpan di DB sebelum TX dikirim.
+    // Jika crash setelah TX sukses, rekonsiliasi bisa jalan.
+    // ═══════════════════════════════════════════════════════════
+
+    const { mintSigner, mintAddress } = prepareMintSigner();
+
+    // ═══════════════════════════════════════════════════════════
     // Step 3: Upsert certificate ke ISSUING SEBELUM mint on-chain
     // Ini mencegah NFT yatim jika crash setelah mint berhasil
     // ═══════════════════════════════════════════════════════════
@@ -167,6 +180,7 @@ export async function POST(request: NextRequest) {
       where: { userId },
       update: {
         status: "ISSUING",
+        nftAddress: mintAddress,
         metadataUri,
         dataHash,
         dataSalt,
@@ -175,6 +189,7 @@ export async function POST(request: NextRequest) {
       create: {
         userId,
         status: "ISSUING",
+        nftAddress: mintAddress,
         metadataUri,
         dataHash,
         dataSalt,
@@ -188,6 +203,7 @@ export async function POST(request: NextRequest) {
     const mintResult = await mintSoulboundNFT({
       metadataUri,
       walletTujuan: user.wallet.walletAddress,
+      mintSigner,
     });
 
     if (!mintResult.success) {

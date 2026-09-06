@@ -242,10 +242,14 @@ export async function GET(request: NextRequest) {
     // ─── Determine mismatch ───────────────────────────────────
 
     let mismatch: string | null = null;
-    if (!hashMatch && inspection.dataHash !== null) {
+    if (inspection.dataHash === null) {
+      mismatch = "HASH";
+    } else if (!hashMatch) {
       mismatch = "HASH";
     } else if (!ownerMatch) {
       mismatch = "OWNER";
+    } else if (!frozenCheck) {
+      mismatch = "FROZEN";
     } else if (nameShowsRevoked) {
       mismatch = "STATUS"; // On-chain revoked tapi DB belum
     }
@@ -293,7 +297,7 @@ export async function GET(request: NextRequest) {
         // SECURITY: dataHash / dataSalt TIDAK dikirim ke klien publik
       },
       onChain: {
-        status: verified ? "VALID" : (mismatch ? "MISMATCH" : "VALID"),
+        status: mismatch ? "MISMATCH" : (verified ? "VALID" : "MISMATCH"),
         frozen: inspection.frozen,
         owner: inspection.owner,
       },

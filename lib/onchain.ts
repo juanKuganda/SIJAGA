@@ -12,8 +12,7 @@
 
 import { fetchAsset } from "@metaplex-foundation/mpl-core";
 import { publicKey } from "@metaplex-foundation/umi";
-import { createUmiInstance, getAdminKeypair } from "./metaplex";
-import { keypairIdentity } from "@metaplex-foundation/umi";
+import { createUmiInstance } from "./metaplex";
 
 // ─── Types ───────────────────────────────────────────────────────
 
@@ -150,11 +149,6 @@ export async function inspectCertificate(
 ): Promise<OnChainInspect> {
   try {
     const umi = createUmiInstance();
-    const adminKeypair = getAdminKeypair();
-    const umiKeypair = umi.eddsa.createKeypairFromSecretKey(
-      adminKeypair.secretKey
-    );
-    umi.use(keypairIdentity(umiKeypair));
 
     // 1. Fetch asset dari Solana
     let asset: Awaited<ReturnType<typeof fetchAsset>>;
@@ -196,30 +190,14 @@ export async function inspectCertificate(
 
     // 3. Fetch metadata JSON dari URI
     if (!uri) {
-      return {
-        ok: true,
-        owner,
-        name,
-        uri: "",
-        frozen,
-        dataHash: null,
-        updateAuthority,
-      };
+      return { ok: false, reason: "METADATA" };
     }
 
     const metadata = await fetchMetadataJson(uri);
     if (!metadata) {
-      // Metadata fetch gagal — tetap return data asset tanpa hash
-      // Ini bisa terjadi jika IPFS down, tapi asset on-chain valid
-      return {
-        ok: true,
-        owner,
-        name,
-        uri,
-        frozen,
-        dataHash: null,
-        updateAuthority,
-      };
+      // Fail-closed: metadata fetch gagal = inspeksi gagal
+      // Tidak boleh return ok: true tanpa dataHash — bisa bypass hash check
+      return { ok: false, reason: "METADATA" };
     }
 
     // 4. Extract Data Hash dari attributes
