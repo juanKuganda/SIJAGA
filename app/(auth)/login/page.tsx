@@ -104,7 +104,7 @@ function LoginForm() {
           </h1>
           
           <p className="text-lg text-white/80 leading-relaxed mb-12">
-            Verifikasi ijazah anti-pemalsuan berbasis NFT Soulbound pada blockchain Solana. Universitas Tadulako.
+            Purwarupa verifikasi ijazah digital berbasis ekosistem Solana untuk Universitas Tadulako.
           </p>
 
           <div className="space-y-6">
@@ -112,13 +112,13 @@ function LoginForm() {
               <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
                 <LinkIcon className="w-4 h-4 text-white" />
               </div>
-              <span className="font-medium">Blockchain Solana Devnet</span>
+              <span className="font-medium">Infrastruktur Solana Devnet</span>
             </div>
             <div className="flex items-center gap-4 text-white/90">
               <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
                 <Shield className="w-4 h-4 text-white" />
               </div>
-              <span className="font-medium">NFT Soulbound Non-transferable</span>
+              <span className="font-medium">Non-transferable Token (SBT)</span>
             </div>
             <div className="flex items-center gap-4 text-white/90">
               <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">

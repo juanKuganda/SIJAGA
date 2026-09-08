@@ -533,23 +533,23 @@ export default function HomePage() {
                 Baru
               </Badge>
               <span className="text-xs font-semibold text-red-900 pr-1">
-                Purwarupa SIJAGA Beta 1.0
+                Purwarupa SIJAGA Beta
               </span>
               <ArrowRight className="w-3 h-3 text-red-600" />
             </div>
 
             <h1 className="hero-anim text-[2.75rem] sm:text-5xl md:text-4xl lg:text-[4.25rem] xl:text-[5rem] font-black text-foreground leading-[1.05] tracking-tighter">
-              Amankan
+              Verifikasi Kredensial
               <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-red-400">
-                data akademik
+                Akademik
               </span>
               <br />
-              lebih transparan.
+              Digital.
             </h1>
 
             <p className="hero-anim text-xl text-muted-foreground leading-relaxed max-w-lg font-medium">
-              SIJAGA merupakan purwarupa sistem verifikasi ijazah berbasis Solana. Dirancang untuk menguji validasi instan dan mencegah pemalsuan dokumen secara digital.
+              SIJAGA adalah purwarupa sistem verifikasi ijazah Universitas Tadulako. Memungkinkan pengujian validitas dokumen secara instan dan transparan berbasis ekosistem Solana.
             </p>
 
             <form
@@ -570,9 +570,13 @@ export default function HomePage() {
                 <Button
                   disabled={loading}
                   type="submit"
-                  className="h-12 px-8 rounded-full font-bold bg-foreground text-white hover:bg-foreground/90 shrink-0"
+                  className={`h-12 px-8 rounded-full font-bold text-white shrink-0 transition-all ${
+                    loading 
+                      ? "bg-red-600 animate-pulse opacity-90 cursor-wait" 
+                      : "bg-foreground hover:bg-foreground/90 shadow-md"
+                  }`}
                 >
-                  {loading ? "..." : "Verifikasi"}
+                  {loading ? "Memeriksa..." : "Verifikasi"}
                 </Button>
               </div>
             </form>
@@ -798,17 +802,17 @@ export default function HomePage() {
         >
           <div className="max-w-2xl mb-16">
             <h2 className="text-4xl md:text-5xl font-black text-foreground tracking-tighter leading-tight mb-4">
-              Sistem untuk
+              Infrastruktur Inti
               <br />
-              membangun kepercayaan.
+              <span className="text-red-600">Web3 Enterprise.</span>
             </h2>
             <p className="text-lg text-muted-foreground font-medium">
-              Infrastruktur purwarupa untuk menerbitkan kredensial aman dan menguji pencegahan pemalsuan akademik.
+              Dirancang untuk memproses verifikasi instan secara desentralisasi, tanpa mengorbankan privasi data.
             </p>
           </div>
 
           <div ref={bentoRef} className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bento-card md:col-span-2 bg-zinc-50 rounded-[2rem] p-8 md:p-12 border border-zinc-200 group relative overflow-hidden transition-all hover:bg-zinc-100/80">
+            <div className="bento-card md:col-span-2 bg-white rounded-[2rem] p-8 md:p-12 border border-zinc-200 shadow-sm group relative overflow-hidden transition-all duration-300 hover:shadow-md hover:border-zinc-300">
               <div className="absolute right-0 bottom-0 opacity-10 transform translate-x-1/4 translate-y-1/4 group-hover:scale-110 transition-transform duration-700">
                 <Lock className="w-96 h-96" />
               </div>
@@ -835,7 +839,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="bento-card bg-red-600 rounded-[2rem] p-8 md:p-12 text-white relative overflow-hidden group">
+            <div className="bento-card bg-red-600 rounded-[2rem] p-8 md:p-12 text-white relative overflow-hidden group transition-transform duration-300 hover:scale-[1.02] shadow-lg shadow-red-600/20">
               <div className="absolute inset-0 opacity-[0.1] bg-[radial-gradient(circle_at_center,white_1px,transparent_1px)] [background-size:16px_16px]"></div>
               <div className="relative z-10 flex flex-col h-full">
                 <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center mb-8 backdrop-blur-sm">
@@ -844,14 +848,14 @@ export default function HomePage() {
                 <h3 className="text-3xl font-black tracking-tight mb-4 text-white">
                   400ms
                 </h3>
-                <p className="text-white/80 text-lg">
+                <p className="text-white/90 text-lg font-medium">
                   Waktu rata-rata yang dibutuhkan untuk memvalidasi keaslian
                   dokumen secara global.
                 </p>
               </div>
             </div>
 
-            <div className="bento-card bg-foreground rounded-[2rem] p-8 md:p-12 text-white relative overflow-hidden group">
+            <div className="bento-card bg-foreground rounded-[2rem] p-8 md:p-12 text-white relative overflow-hidden group transition-transform duration-300 hover:scale-[1.02] shadow-lg">
               <div className="relative z-10 flex flex-col h-full">
                 <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center mb-8 origin-bottom">
                   <Award className="w-6 h-6 text-white" />
@@ -859,7 +863,7 @@ export default function HomePage() {
                 <h3 className="text-2xl font-black tracking-tight mb-4 text-white">
                   Metaplex Core
                 </h3>
-                <p className="text-zinc-400 text-lg mb-8">
+                <p className="text-zinc-300 text-lg mb-8 font-medium">
                   Standar aset digital generasi baru di jaringan Solana.
                 </p>
                 <div className="mt-auto">
@@ -919,23 +923,21 @@ export default function HomePage() {
           <ScrollExpand
             src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2000&auto=format&fit=crop"
             alt="Security Abstract"
-            title="Kredensial digital yang aman."
+            title="Transparansi Data Akademik."
             scrollHint="Gulir ke bawah"
             mediaZoom={1.2}
             useWindowScroll={true}
             overlayScrim={0.8}
           >
-            <div className="absolute inset-0 w-full h-full bg-neutral-900/60 backdrop-blur-md flex flex-col items-center justify-center px-4">
+            <div className="absolute inset-0 w-full h-full bg-neutral-950/70 backdrop-blur-md flex flex-col items-center justify-center px-4">
               <div className="max-w-4xl mx-auto flex flex-col items-center mt-12">
                 <h2 className="text-4xl md:text-[5rem] font-black text-white tracking-tighter mb-8 leading-[1.05] text-center drop-shadow-2xl">
-                  Kredensial digital
+                  Transparansi
                   <br />
-                  yang{" "}
-                  <span className="italic font-light text-zinc-300">aman</span>
-                  .
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-zinc-200 to-zinc-500">Data Akademik</span>.
                 </h2>
-                <p className="text-xl md:text-2xl text-zinc-200 max-w-3xl mb-12 text-center drop-shadow-lg font-medium">
-                  Purwarupa SIJAGA membantu institusi menerbitkan rekam jejak akademik berbasis kriptografi yang dapat diverifikasi.
+                <p className="text-xl md:text-2xl text-zinc-300 max-w-3xl mb-12 text-center drop-shadow-lg font-medium">
+                  Infrastruktur modern bagi institusi pendidikan untuk memfasilitasi penelusuran rekam jejak akademik.
                 </p>
                 <div className="flex flex-col sm:flex-row items-center gap-5">
                   <Button
@@ -955,36 +957,75 @@ export default function HomePage() {
         </section>
       </main>
 
-      {/* Minimalist FAQ Section with Full Red Background */}
-      <section id="faq" className="w-full relative z-10 bg-red-600 text-white py-24 px-6 md:px-12">
-        <div className="max-w-4xl mx-auto w-full">
-          <h2 className="text-5xl md:text-6xl font-black tracking-tighter mb-12 uppercase text-center text-white">
-            FAQ
-          </h2>
-          <div className="flex flex-col gap-0 border-t border-white/20">
+      {/* Modern Two-Column FAQ Section (Dark Theme) */}
+      <section id="faq" className="w-full relative z-10 bg-neutral-950 py-24 md:py-32 px-4 md:px-12 border-t border-white/5">
+        <div className="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+          {/* Left Column */}
+          <div className="lg:col-span-5 flex flex-col gap-8 lg:sticky lg:top-32 relative">
+            <div>
+              <h2 className="text-4xl md:text-5xl font-black tracking-tighter mb-4 text-white leading-tight">
+                Pertanyaan yang Sering Diajukan
+              </h2>
+              <p className="text-lg text-zinc-400 font-medium max-w-sm">
+                Temukan jawaban singkat tentang bagaimana purwarupa verifikasi SIJAGA bekerja.
+              </p>
+            </div>
+            
+            {/* Contact Box (Dark Bento) */}
+            <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-3xl p-6 md:p-8 shadow-sm flex flex-col gap-6 w-full max-w-md transition-all hover:bg-white/10 hover:border-white/20">
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <div className="w-12 h-12 rounded-full bg-neutral-900 flex items-center justify-center overflow-hidden border border-white/10">
+                    <div className="w-full h-full bg-gradient-to-br from-red-600/20 to-red-900/40 flex items-center justify-center">
+                      <span className="text-red-500 font-bold text-lg">DV</span>
+                    </div>
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-neutral-900 rounded-full"></div>
+                </div>
+                <div>
+                  <h4 className="font-bold text-white">Tim Developer</h4>
+                  <p className="text-sm text-zinc-400 font-medium">Universitas Tadulako</p>
+                </div>
+              </div>
+              <div className="border-t border-white/10 pt-6">
+                <h5 className="font-bold text-lg mb-2 text-white">Butuh penjelasan teknis?</h5>
+                <p className="text-sm text-zinc-400 mb-6">Jadwalkan panggilan dengan developer atau baca dokumentasi proyek.</p>
+                <a href="mailto:dev@sijaga.ac.id">
+                  <Button className="w-full h-12 rounded-full font-bold bg-white text-black hover:bg-red-600 hover:text-white transition-all shadow-md hover:shadow-red-600/20">
+                    Hubungi Developer
+                  </Button>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column (Accordion) */}
+          <div className="lg:col-span-7 flex flex-col gap-3 md:gap-4 mt-8 lg:mt-0">
             {faqs.map((faq, idx) => (
               <div
                 key={idx}
-                className="border-b border-white/20 overflow-hidden transition-all duration-300"
+                className={`bg-white/5 backdrop-blur-sm border transition-all duration-300 rounded-2xl md:rounded-3xl overflow-hidden ${
+                  openFaq === idx ? "border-red-500/50 shadow-[0_0_15px_rgba(220,38,38,0.15)] bg-white/10" : "border-white/10 hover:border-white/20 hover:bg-white/10"
+                }`}
               >
                 <button
                   onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                  className="w-full px-2 py-8 flex justify-between items-center text-left hover:bg-white/5 transition-colors outline-none"
+                  className="w-full px-5 md:px-8 py-5 md:py-6 flex justify-between items-center text-left outline-none group"
                 >
-                  <span className="text-xl md:text-2xl font-semibold tracking-tight text-white pr-8">
+                  <span className="text-lg md:text-xl font-bold tracking-tight text-zinc-100 pr-6 group-hover:text-white transition-colors">
                     {faq.q}
                   </span>
                   <div
-                    className={`w-8 h-8 flex-shrink-0 flex items-center justify-center text-white transition-transform duration-300 ${openFaq === idx ? "rotate-45" : ""}`}
+                    className={`w-8 h-8 rounded-full border flex-shrink-0 flex items-center justify-center transition-all duration-300 ${openFaq === idx ? "bg-red-500/20 border-red-500/30 text-red-400 rotate-180" : "border-white/10 text-zinc-400 group-hover:bg-white/10 group-hover:text-white group-hover:border-white/20"}`}
                   >
-                    <span className="text-4xl font-light leading-none">+</span>
+                    <span className="text-xl font-light leading-none mb-0.5">{openFaq === idx ? "−" : "+"}</span>
                   </div>
                 </button>
                 <div
                   className={`grid transition-all duration-300 ease-in-out ${openFaq === idx ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
                 >
                   <div className="overflow-hidden">
-                    <p className="px-2 pb-8 text-lg text-white/80 font-medium">
+                    <p className="px-5 md:px-8 pb-6 md:pb-8 text-base md:text-lg text-zinc-400 font-medium leading-relaxed">
                       {faq.a}
                     </p>
                   </div>
@@ -1000,12 +1041,12 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-6 md:px-12 w-full mb-16 grid grid-cols-1 md:grid-cols-2 gap-16 relative z-10">
           <div>
             <h3 className="text-4xl font-black tracking-tighter uppercase mb-6 text-white leading-tight">
-              Masa Depan
+              Ekosistem
               <br />
-              Kredensial Digital.
+              Transparan.
             </h3>
             <p className="text-lg text-zinc-400 font-medium max-w-sm mb-8">
-              Purwarupa Sistem Jaminan Autentikasi Gelar Akademik Universitas Tadulako berbasis teknologi blockchain Solana.
+              Purwarupa Sistem Jaminan Autentikasi Gelar Akademik Universitas Tadulako berbasis teknologi Web3.
             </p>
             <a href="#verification">
               <Button className="h-14 px-8 rounded-none border-2 border-white text-base font-bold bg-white text-black hover:bg-red-600 hover:text-white hover:border-red-600 transition-colors uppercase tracking-widest">

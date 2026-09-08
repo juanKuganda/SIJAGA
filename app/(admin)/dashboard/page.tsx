@@ -190,7 +190,7 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-3xl md:text-4xl font-extrabold text-foreground tracking-tight">Admin Dashboard</h1>
           <p className="text-base text-muted-foreground mt-2 font-medium">
-            Pusat kendali ijazah digital Universitas Tadulako.
+            Sistem informasi pengelolaan dan penerbitan purwarupa ijazah.
           </p>
         </div>
         <div className="px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200/50 rounded-xl font-semibold text-xs flex items-center gap-2 shadow-sm">
