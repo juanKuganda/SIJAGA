@@ -176,10 +176,10 @@ export default function MahasiswaLayout({ children }: { children: ReactNode }) {
               </div>
               <button
                 onClick={handleLogout}
-                className="shrink-0 text-muted-foreground hover:text-red-600 transition-colors group-data-[collapsible=icon]:hidden"
+                className="shrink-0 text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-colors group-data-[collapsible=icon]:hidden h-10 w-10 flex items-center justify-center rounded-xl"
                 title="Logout"
               >
-                <LogOut className="w-4 h-4" />
+                <LogOut className="w-5 h-5 md:w-4 md:h-4" />
               </button>
             </div>
           </SidebarFooter>

@@ -91,7 +91,7 @@ export default function ProfilPage() {
       <div className="mb-10">
         <h1 className="text-3xl md:text-4xl font-extrabold text-foreground tracking-tight">Profil Digital</h1>
         <p className="text-base text-muted-foreground mt-2 font-medium">
-          Kelola identitas dan dompet kripto Anda dengan aman.
+          Kelola identitas dan status verifikasi dompet digital Anda.
         </p>
       </div>
 
@@ -295,7 +295,7 @@ export default function ProfilPage() {
                 <div>
                   <h3 className="text-lg font-bold text-blue-900 mb-1">Ijazah Siap Diklaim!</h3>
                   <p className="text-sm font-medium text-blue-800/80 max-w-lg leading-relaxed">
-                    Aset digital Anda telah diterbitkan oleh fakultas. Segera klaim NFT ini ke dompet Anda untuk verifikasi publik seumur hidup.
+                    Sertifikat ijazah Anda telah siap. Klaim untuk mencatat kepemilikan token di jaringan blockchain.
                   </p>
                 </div>
               </div>
@@ -317,7 +317,7 @@ export default function ProfilPage() {
                 <div>
                   <h3 className="text-lg font-bold text-emerald-900 mb-1">Aset Telah Dimiliki</h3>
                   <p className="text-sm font-medium text-emerald-800/80 max-w-lg leading-relaxed">
-                    NFT Ijazah ini telah tersimpan aman di dompet Anda sebagai Soulbound Token. Bukti akademik Anda abadi di jaringan Solana.
+                    Sertifikat ijazah (Soulbound Token) telah berhasil dicatat pada alamat dompet digital Anda secara on-chain.
                   </p>
                 </div>
               </div>
