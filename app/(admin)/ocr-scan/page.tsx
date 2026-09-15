@@ -77,10 +77,6 @@ export default function OcrScanPage() {
   const [showRawText, setShowRawText] = useState(false);
 
   // Editable form fields
-  const [formNama, setFormNama] = useState("");
-  const [formNim, setFormNim] = useState("");
-  const [formProdi, setFormProdi] = useState("");
-  const [formAngkatan, setFormAngkatan] = useState("");
   const [formHash, setFormHash] = useState("");
 
   // Search results
@@ -158,16 +154,12 @@ export default function OcrScanPage() {
       setExtractedData(entities);
 
       // Pre-fill form fields
-      setFormNama(entities.nama?.value || "");
-      setFormNim(entities.nim?.value || "");
-      setFormProdi(entities.prodi?.value || "");
-      setFormAngkatan(entities.tahunLulus?.value || "");
       setFormHash(entities.dataHash?.value || "");
 
       toast.success("OCR selesai!", {
         description: `Confidence: ${confidence.toFixed(0)}% — ${
-          [entities.prodi, entities.tahunLulus, entities.dataHash].filter(Boolean).length
-        }/3 field utama terdeteksi. (Nama & NIM diabaikan demi privasi)`,
+          entities.dataHash ? "Data Hash berhasil terdeteksi." : "Data Hash tidak ditemukan."
+        }`,
       });
     } catch (error) {
       console.error("OCR error:", error);
@@ -182,8 +174,8 @@ export default function OcrScanPage() {
 
   // ─── Database Search ────────────────────────────────────────────
   const searchMahasiswa = async () => {
-    if (!formNim && !formNama && !formHash) {
-      toast.error("Isi minimal NIM, Nama, atau Hash untuk mencari.");
+    if (!formHash) {
+      toast.error("Isi Data Hash untuk mencari.");
       return;
     }
 
@@ -191,62 +183,29 @@ export default function OcrScanPage() {
     setMatchedResults(null);
 
     try {
-      const params = new URLSearchParams();
-      if (formNim) params.set("nim", formNim);
-      if (formNama) params.set("nama", formNama);
-
-      const res = await fetch(`/api/admin/mahasiswa?${params.toString()}`);
+      const res = await fetch(`/api/admin/mahasiswa`);
       const data = await res.json();
 
       if (data.mahasiswa && data.mahasiswa.length > 0) {
         // Filter by form fields using fuzzy matching (includes)
         let results = data.mahasiswa;
 
-        if (formNim || formNama || formHash) {
-          const sNim = formNim?.toLowerCase().trim() || "";
-          const sNama = formNama?.toLowerCase().trim() || "";
+        if (formHash) {
           const sHash = formHash?.toLowerCase().trim() || "";
           
           results = results.filter((m: any) => {
-            const mNim = m.nim.toLowerCase();
-            const mNama = m.nama.toLowerCase();
             const mHash = (m.certificate?.dataHash || "").toLowerCase();
             
             // Match Hash if provided (exact or includes 16 chars)
-            let matchHash = false;
             if (sHash) {
-              if (mHash.includes(sHash)) matchHash = true;
+              return mHash.includes(sHash);
             }
-
-            // Match NIM if it contains or is contained by search string
-            const matchNim = sNim ? (mNim.includes(sNim) || sNim.includes(mNim)) : false;
-            
-            // Match Nama
-            let matchNama = false;
-            if (sNama) {
-              if (mNama.includes(sNama) || sNama.includes(mNama)) {
-                matchNama = true;
-              } else {
-                // Check if any word from search name is in DB name
-                const sNamaWords = sNama.split(/\s+/).filter((w: string) => w.length > 2);
-                if (sNamaWords.length > 0 && sNamaWords.some((w: string) => mNama.includes(w))) {
-                  matchNama = true;
-                }
-              }
-            }
-            
-            // If hash is searched, it has priority and must match
-            if (sHash) return matchHash;
-            return matchNim || matchNama;
+            return false;
           });
           
           // Auto-fill form fields if a single match is found (especially useful when searching by truncated Hash)
           if (results.length === 1) {
             const match = results[0];
-            if (!formNama) setFormNama(match.nama);
-            if (!formNim) setFormNim(match.nim);
-            if (!formProdi && match.prodi) setFormProdi(match.prodi);
-            if (!formAngkatan && match.tahunLulus) setFormAngkatan(match.tahunLulus);
             if (match.certificate?.dataHash && formHash.length < 64) {
               setFormHash(match.certificate.dataHash);
             }
@@ -272,10 +231,6 @@ export default function OcrScanPage() {
     setImageFile(null);
     setImagePreview(null);
     setExtractedData(null);
-    setFormNama("");
-    setFormNim("");
-    setFormProdi("");
-    setFormAngkatan("");
     setFormHash("");
     setMatchedResults(null);
     setShowRawText(false);
@@ -475,14 +430,7 @@ export default function OcrScanPage() {
                     variant="secondary"
                     className="bg-emerald-50 text-emerald-700 border-emerald-200 ml-auto"
                   >
-                    {
-                      [
-                        extractedData.prodi,
-                        extractedData.tahunLulus,
-                        extractedData.dataHash,
-                      ].filter(Boolean).length
-                    }
-                    /3 field utama
+                    {extractedData.dataHash ? "1/1 field utama" : "0/1 field utama"}
                   </Badge>
                 )}
               </CardTitle>
