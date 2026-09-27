@@ -921,7 +921,7 @@ export default function HomePage() {
         {/* Call to Action - Scroll Expand */}
         <section className="w-full relative">
           <ScrollExpand
-            src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2000&auto=format&fit=crop"
+            src="/ctaimg.avif"
             alt="Security Abstract"
             title="Transparansi Data Akademik."
             scrollHint="Gulir ke bawah"
