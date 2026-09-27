@@ -85,6 +85,8 @@ export default function MahasiswaLayout({ children }: { children: ReactNode }) {
   }, [router]);
 
   const handleLogout = async () => {
+    // SECURITY: Hapus session marker cookie agar middleware redirect ke login
+    document.cookie = '__sijaga_session=; path=/; max-age=0';
     await authClient.signOut();
     router.push("/login");
   };

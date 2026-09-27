@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     
     // Pastikan page dan limit valid
     const validPage = isNaN(page) || page < 1 ? 1 : page;
-    const validLimit = isNaN(limit) || limit < 1 ? 50 : limit;
+    const validLimit = isNaN(limit) || limit < 1 ? 50 : Math.min(limit, 100);
 
     const skip = (validPage - 1) * validLimit;
 
