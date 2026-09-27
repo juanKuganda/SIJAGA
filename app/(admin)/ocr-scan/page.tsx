@@ -28,6 +28,7 @@ import {
   type OcrExtractedData,
   type OcrProgress,
 } from "@/lib/ocr";
+import { validateOcrFile } from "@/lib/validation";
 
 interface MatchedMahasiswa {
   id: string;
@@ -88,18 +89,10 @@ export default function OcrScanPage() {
 
   // ─── File Handling ──────────────────────────────────────────────
   const handleFile = useCallback((file: File) => {
-    const validTypes = ["image/jpeg", "image/png", "image/webp", "image/bmp"];
-    if (!validTypes.includes(file.type)) {
-      toast.error("Format file tidak didukung", {
-        description: "Gunakan format JPG, PNG, WebP, atau BMP.",
-      });
-      return;
-    }
-
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("File terlalu besar", {
-        description: "Ukuran file maksimal 10MB.",
-      });
+    // SECURITY: Validasi file menggunakan fungsi terpusat
+    const validationError = validateOcrFile(file);
+    if (validationError) {
+      toast.error("File tidak valid", { description: validationError });
       return;
     }
 

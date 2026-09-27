@@ -37,6 +37,10 @@ function LoginForm() {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setSuccess("Registrasi berhasil! Silakan login dengan akun Anda.");
     }
+    if (searchParams.get("expired") === "true") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setError("Sesi Anda telah berakhir. Silakan login kembali.");
+    }
   }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -55,6 +59,11 @@ function LoginForm() {
         setError(signInError.message || "Login gagal");
         return;
       }
+
+      // SECURITY: Set session marker cookie (1 hari TTL)
+      // Middleware akan redirect ke login saat cookie ini expired
+      const isSecure = window.location.protocol === 'https:';
+      document.cookie = `__sijaga_session=1; path=/; max-age=86400; SameSite=Lax${isSecure ? '; Secure' : ''}`;
 
       // Ambil profile dari Prisma untuk menentukan role
       const profileRes = await fetch("/api/auth/me");
