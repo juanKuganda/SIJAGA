@@ -224,11 +224,10 @@ const ScrollExpand = ({
     const scroller = useWindowScroll ? window : root;
     
     // Custom integration with Lenis (if available on window) to prevent scroll conflicts
-    // @ts-ignore - lenis might not be typed on window
-    const lenis = useWindowScroll && window.lenis;
+    const lenis = (useWindowScroll && (window as unknown as { lenis?: { on: (event: string, cb: () => void) => void; off: (event: string, cb: () => void) => void } }).lenis);
     
-    if (lenis) {
-      (lenis as any).on('scroll', onScroll);
+    if (lenis && typeof lenis.on === 'function') {
+      lenis.on('scroll', onScroll);
     } else {
       scroller.addEventListener('scroll', onScroll, { passive: true });
     }
@@ -239,8 +238,8 @@ const ScrollExpand = ({
 
     return () => {
       if (raf) cancelAnimationFrame(raf);
-      if (lenis) {
-        (lenis as any).off('scroll', onScroll);
+      if (lenis && typeof lenis.off === 'function') {
+        lenis.off('scroll', onScroll);
       } else {
         scroller.removeEventListener('scroll', onScroll as EventListener);
       }

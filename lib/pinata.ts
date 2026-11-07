@@ -2,20 +2,21 @@ const PINATA_API_URL = "https://api.pinata.cloud";
 const PINATA_GATEWAY =
   process.env.NEXT_PUBLIC_PINATA_GATEWAY || "https://gateway.pinata.cloud";
 
-async function pinataRequest(endpoint: string, options: RequestInit, retries = 3) {
+async function pinataRequest(endpoint: string, options: RequestInit, maxRetries = 3) {
   const jwt = process.env.PINATA_JWT;
   if (!jwt) {
     throw new Error("PINATA_JWT tidak ditemukan di environment variables");
   }
 
-  let lastError: Error | null = null;
-  for (let attempt = 1; attempt <= retries; attempt++) {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const response = await fetch(`${PINATA_API_URL}${endpoint}`, {
         ...options,
         headers: {
           ...options.headers,
           Authorization: `Bearer ${jwt}`,
+          Connection: "close",
         },
       });
 
@@ -28,17 +29,18 @@ async function pinataRequest(endpoint: string, options: RequestInit, retries = 3
         ipfsHash: data.IpfsHash,
         uri: `ipfs://${data.IpfsHash}`,
         gatewayUrl: `${PINATA_GATEWAY}/ipfs/${data.IpfsHash}`,
+        attempts: attempt,
       };
-    } catch (err: unknown) {
-      lastError = err instanceof Error ? err : new Error(String(err));
-      console.warn(`[Pinata] Attempt ${attempt}/${retries} failed:`, lastError.message);
-      if (attempt < retries) {
-        await new Promise((r) => setTimeout(r, 1500 * attempt));
+    } catch (error) {
+      lastError = error;
+      if (attempt < maxRetries) {
+        // Exponential backoff: 500ms, 1000ms
+        await new Promise((resolve) => setTimeout(resolve, 500 * Math.pow(2, attempt - 1)));
       }
     }
   }
 
-  throw lastError || new Error(`Pinata request failed after ${retries} attempts`);
+  throw lastError instanceof Error ? lastError : new Error(String(lastError));
 }
 
 /**

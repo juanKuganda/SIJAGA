@@ -49,8 +49,8 @@ export default function AuditPage() {
 
   // Debounced search to avoid spamming the API
   useEffect(() => {
-    setLoading(true);
     const delayDebounceFn = setTimeout(() => {
+      setLoading(true);
       fetch(`/api/admin/audit?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}&action=${encodeURIComponent(filter)}`)
         .then((res) => {
           if (!res.ok) throw new Error("Gagal mengambil data");

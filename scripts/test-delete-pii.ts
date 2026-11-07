@@ -73,7 +73,7 @@ async function testDeletePiiSalt() {
       },
     }),
     prisma.certificate.update({
-      where: { userId: user.id },
+      where: { id: cert.id },
       data: { dataSalt: null },
     }),
   ]);
@@ -81,7 +81,7 @@ async function testDeletePiiSalt() {
   // 3. Verifikasi kondisi setelah delete
   console.log("\n[3] Memeriksa database pasca penghapusan...");
   const updatedUser = await prisma.user.findUnique({ where: { id: user.id } });
-  const updatedCert = await prisma.certificate.findUnique({ where: { userId: user.id } });
+  const updatedCert = await prisma.certificate.findUnique({ where: { id: cert.id } });
 
   console.log("- User dataDeletedAt:", updatedUser?.dataDeletedAt);
   console.log("- User nama:", updatedUser?.nama);
@@ -101,7 +101,7 @@ async function testDeletePiiSalt() {
   console.log("- Rekonstruksi hash dimungkinkan?:", reconstructionPossible ? "YA (GAGAL PRIVASI)" : "TIDAK (LOLOS PRIVASI)");
 
   // 5. Cleanup data dummy
-  await prisma.certificate.delete({ where: { userId: user.id } });
+  await prisma.certificate.deleteMany({ where: { userId: user.id } });
   await prisma.user.delete({ where: { id: user.id } });
   console.log("\n✓ Cleanup data uji berhasil.");
   console.log("=== TC-11 PREREQUISITE (DELETE-PII SALT DELETION) VERIFIED 100%! ===");

@@ -158,35 +158,44 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const restoredCert = await prisma.certificate.upsert({
-      where: { userId: backup.userId },
-      update: {
-        nftAddress: certData.nftAddress,
-        metadataUri: updatedMetadataUri, // Gunakan metadata yang baru
-        txSignature: certData.txSignature,
-        status: restoredStatus,
-        issuedAt: certData.issuedAt ? new Date(certData.issuedAt) : null,
-        issuedBy: certData.issuedBy,
-        claimedAt: null, // Reset karena status MINTED = siap diklaim ulang
-        revokedAt: null,
-        revokedBy: null,
-        revokeReason: null,
-        dataHash: recoveryDataHash,
-        dataSalt: recoveryDataSalt,
-      },
-      create: {
-        userId: backup.userId,
-        nftAddress: certData.nftAddress,
-        metadataUri: updatedMetadataUri,
-        txSignature: certData.txSignature,
-        status: restoredStatus,
-        issuedAt: certData.issuedAt ? new Date(certData.issuedAt) : null,
-        issuedBy: certData.issuedBy,
-        claimedAt: null, // Reset karena status MINTED = siap diklaim ulang
-        dataHash: recoveryDataHash,
-        dataSalt: recoveryDataSalt,
-      },
-    });
+    const targetCert = backup.certificateId
+      ? await prisma.certificate.findUnique({ where: { id: backup.certificateId } })
+      : certData.nftAddress
+        ? await prisma.certificate.findUnique({ where: { nftAddress: certData.nftAddress } })
+        : null;
+
+    const restoredCert = targetCert
+      ? await prisma.certificate.update({
+          where: { id: targetCert.id },
+          data: {
+            nftAddress: certData.nftAddress,
+            metadataUri: updatedMetadataUri,
+            txSignature: certData.txSignature,
+            status: restoredStatus,
+            issuedAt: certData.issuedAt ? new Date(certData.issuedAt) : null,
+            issuedBy: certData.issuedBy,
+            claimedAt: null,
+            revokedAt: null,
+            revokedBy: null,
+            revokeReason: null,
+            dataHash: recoveryDataHash,
+            dataSalt: recoveryDataSalt,
+          },
+        })
+      : await prisma.certificate.create({
+          data: {
+            userId: backup.userId,
+            nftAddress: certData.nftAddress,
+            metadataUri: updatedMetadataUri,
+            txSignature: certData.txSignature,
+            status: restoredStatus,
+            issuedAt: certData.issuedAt ? new Date(certData.issuedAt) : null,
+            issuedBy: certData.issuedBy,
+            claimedAt: null,
+            dataHash: recoveryDataHash,
+            dataSalt: recoveryDataSalt,
+          },
+        });
 
     // Tandai backup sudah digunakan
     await prisma.certificateBackup.update({

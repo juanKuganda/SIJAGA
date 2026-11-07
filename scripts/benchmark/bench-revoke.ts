@@ -17,6 +17,7 @@ import {
   getRpcDetails,
   executeWithProposalRetry,
   getTransactionWithRetry,
+  getExistingTrialCount,
   TransactionReceipt,
 } from "./common";
 
@@ -25,9 +26,18 @@ async function runBenchRevoke() {
   const nIndex = args.indexOf("--n");
   const numTrials = nIndex !== -1 && args[nIndex + 1] ? parseInt(args[nIndex + 1], 10) : 30;
 
+  const offsetIndex = args.indexOf("--offset");
+  const existingCount =
+    offsetIndex !== -1 && args[offsetIndex + 1]
+      ? parseInt(args[offsetIndex + 1], 10)
+      : getExistingTrialCount("REVOKE");
+  const startTrial = existingCount + 1;
+  const endTrial = existingCount + numTrials;
+
   console.log(`=======================================================`);
   console.log(`  SIJAGA BENCHMARK: REVOCATION (Visual Revoke On-Chain)`);
-  console.log(`  Total Trials Planned: ${numTrials}                   `);
+  console.log(`  Current Run Trials: ${numTrials} (Trials ${startTrial}..${endTrial})`);
+  console.log(`  Pre-existing Receipts: ${existingCount}              `);
   console.log(`=======================================================\n`);
 
   const { rpcUrl, provider, host } = getRpcDetails();
@@ -36,8 +46,8 @@ async function runBenchRevoke() {
 
   const receipts: TransactionReceipt[] = [];
 
-  for (let i = 1; i <= numTrials; i++) {
-    console.log(`\n--- [Trial ${i}/${numTrials}] Revocation Test ---`);
+  for (let i = startTrial; i <= endTrial; i++) {
+    console.log(`\n--- [Trial ${i} (${i - startTrial + 1}/${numTrials})] Revocation Test ---`);
 
     // 1. Setup asset untuk direvoke (mint terlebih dahulu)
     const fakeNim = `REVOKE-${String(10000 + i).slice(1)}`;

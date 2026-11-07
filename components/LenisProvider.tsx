@@ -21,7 +21,7 @@ export function LenisProvider({ children }: { children: React.ReactNode }) {
     }
 
     // Expose lenis to window for other components like ScrollExpand to hook into
-    // @ts-ignore
+    // @ts-expect-error lenis is dynamically injected on window
     window.lenis = lenis;
 
     requestAnimationFrame(raf);
@@ -44,7 +44,7 @@ export function LenisProvider({ children }: { children: React.ReactNode }) {
     return () => {
       document.removeEventListener("click", handleAnchorClick);
       lenis.destroy();
-      // @ts-ignore
+      // @ts-expect-error lenis is dynamically injected on window
       delete window.lenis;
     };
   }, []);

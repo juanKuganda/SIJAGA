@@ -21,6 +21,7 @@ import {
   ensureRunMetadata,
   getRpcDetails,
   executeWithProposalRetry,
+  getExistingTrialCount,
   TransactionReceipt,
 } from "./common";
 
@@ -29,9 +30,18 @@ async function runBenchVerify() {
   const nIndex = args.indexOf("--n");
   const numTrials = nIndex !== -1 && args[nIndex + 1] ? parseInt(args[nIndex + 1], 10) : 30;
 
+  const offsetIndex = args.indexOf("--offset");
+  const existingCount =
+    offsetIndex !== -1 && args[offsetIndex + 1]
+      ? parseInt(args[offsetIndex + 1], 10)
+      : getExistingTrialCount("VERIFY");
+  const startTrial = existingCount + 1;
+  const endTrial = existingCount + numTrials;
+
   console.log(`=======================================================`);
   console.log(`  SIJAGA BENCHMARK: VERIFICATION (On-Chain + Challenge)`);
-  console.log(`  Total Trials Planned: ${numTrials}                   `);
+  console.log(`  Current Run Trials: ${numTrials} (Trials ${startTrial}..${endTrial})`);
+  console.log(`  Pre-existing Receipts: ${existingCount}              `);
   console.log(`=======================================================\n`);
 
   const { rpcUrl, provider, host } = getRpcDetails();
@@ -72,8 +82,8 @@ async function runBenchVerify() {
 
   const receipts: TransactionReceipt[] = [];
 
-  for (let i = 1; i <= numTrials; i++) {
-    console.log(`--- [Trial ${i}/${numTrials}] Verification Trial ---`);
+  for (let i = startTrial; i <= endTrial; i++) {
+    console.log(`--- [Trial ${i} (${i - startTrial + 1}/${numTrials})] Verification Trial ---`);
 
     try {
       await executeWithProposalRetry({

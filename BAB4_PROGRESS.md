@@ -103,4 +103,30 @@
   - Modul `getTransactionWithRetry` ditambahkan pada `scripts/benchmark/common.ts` dengan retry ber-backoff untuk mengatasi indexing latency RPC Devnet.
   - `bench-mint.ts` dan `bench-revoke.ts` diperkaya dengan `getTransactionWithRetry`; smoke test Devnet mengonfirmasi `slot`, `feeLamports`, dan `rentDepositLamports` terisi lengkap 100% tanpa nilai null.
   - Validasi ketat: Adversarial classification test 15/15 PASS, `npx tsc --noEmit` exit 0, `npm run lint` exit 0, `npm run build` exit 0.
+- **8 Nov 2026 (Perbaikan 9 Poin Review Pengukuran & 14 Black-Box Test Cases):** Seluruh 9 temuan review selesai diperbaiki dan diverifikasi:
+  1. **BUG `replacedById` diperbaiki:** Baris `Certificate` lama tetap mempertahankan `nftAddress` lama, status `REVOKED`, dan `replacedById` menunjuk ke ID baris `Certificate` baru. Baris baru memiliki status `MINTED` dan `replacedById: null`. Skema Prisma diperbarui dengan relasi `activeCertificate` dan indeks `userId`.
+  2. **Revoke gagal fail-loud:** Jika `revokeSoulboundNFT` pada aset lama gagal saat proses reissue, endpoint mengembalikan HTTP 502, tidak menandai reissue sukses, dan mencatat alert `ORPHANED_ASSET_ALERT` di `AuditLog`.
+  3. **TC-07 & TC-09 memanggil endpoint asli via HTTP:** `TC-07` memanggil `GET /api/verify` (HTTP) dengan aset ber-`updateAuthority` asing (terkonfirmasi `mismatch: "ISSUER"`), dan aset dengan hash DB rusak (terkonfirmasi `mismatch: "HASH"`). `TC-09` memanggil `POST /api/admin/reissue` (HTTP dengan autentikasi `x-admin-key`), memverifikasi aset baru di wallet baru, aset lama `[DIBATALKAN]`, dan link database lama -> baru.
+  4. **Varian tantangan TC-06 lengkap:** Menambahkan varian expired nonce (`NONCE_EXPIRED`) dan tampered message (`MESSAGE_MISMATCH`) selain replay (`NONCE_ALREADY_USED`) dan foreign wallet (`INVALID_SIGNATURE`).
+  5. **TC-11 & TC-12 endpoint asli:** `TC-11` memanggil `POST /api/admin/delete-pii` (HTTP), memverifikasi `dataSalt: null`, membuktikan rekonstruksi hash dengan salt fiktif gagal, dan memverifikasi `piiDeleted: true` di portal publik. `TC-12` menguji dead RPC dan blocked IPFS, memastikan sistem mengembalikan status tidak dapat ditentukan / UNAVAILABLE dan tidak pernah menyatakan ijazah valid.
+  6. **Sinkronisasi lockfile:** `npm install` dan `npm ci` berhasil dieksekusi dengan exit code 0.
+  7. **ESLint rules dikembalikan:** Semua rule ESLint dikembalikan ke level `error`, semua penggunaan `any` dan hooks effect diselesaikan dengan tepat (0 error tersisa).
+  8. **Pembersihan harness:** Hardcoded `adminWallet` diganti dengan `getAdminWalletAddress()`, retry Pinata dicatat pada receipt logger (`pinataRetries`), penomoran trial di-offset dari jumlah receipt tersimpan (`getExistingTrialCount`) agar kontinu antar batch.
+  9. **Verifikasi komprehensif:** `scripts/test-challenge.ts` lulus 100%, `npm run test:tc` lulus 14/14 (100.0%), `npm run lint` lulus (0 error, 40 warning), dan `npm run build` lulus (42 rute statis/dinamis teroptimasi).
+
+---
+
+## 4. Status Pengukuran Batch & Rencana Pelaksanaan Besok
+
+**KOREKSI PERHITUNGAN BATCH DARI PENGGUNA:**
+- **Batch 4 (Jendela 22:00-23:00 WITA):**
+  - Mint: **SELESAI (7 trial: 6 sukses + 1 gagal)**. Trial yang gagal tetap dihitung sebagai data empiris. **JANGAN ulangi mint Batch 4.**
+  - Verify: **1/7 trial selesai**.
+  - Revoke: **0/7 trial**.
+- **Sisa Batch yang Harus Dijalankan Besok:**
+  - **Batch 1 (08:30 WITA):** 8 trial mint, verify, revoke.
+  - **Batch 2 (13:00 WITA):** 8 trial mint, verify, revoke.
+  - **Batch 3 (17:30 WITA):** 7 trial mint, verify, revoke.
+  - **Total Sisa Mint:** 23 trial lagi (hingga total $n=30$).
+  - **Total Verify & Revoke:** Melengkapi sisa Batch 4 dan ketiga batch hingga masing-masing total $n=30$.
 

@@ -1,7 +1,11 @@
+import dns from "node:dns";
+dns.setDefaultResultOrder("ipv4first");
+
 import fs from "fs";
 import path from "path";
 import { Connection, clusterApiUrl } from "@solana/web3.js";
 import { loadEnvConfig } from "@next/env";
+import { getAdminWalletAddress } from "../../lib/metaplex";
 
 // Ensure environment variables (.env.local / .env) are loaded
 loadEnvConfig(process.cwd());
@@ -38,6 +42,7 @@ export interface TransactionReceipt {
   status: "SUCCESS" | "FAILED";
   errorCode?: string | null;
   errorMessage?: string | null;
+  pinataRetries?: number;
 
   // Environment & Provenance
   rpcProvider: string;
@@ -176,11 +181,26 @@ export async function ensureRunMetadata(connection: Connection): Promise<string>
       endpointHost: rpc.host,
     },
     softwareVersions: versions,
-    adminWallet: "Bat5VTbjGqsThS5oERuXVi7d2JY2TBNomJD2ZciaztaQ",
+    adminWallet: getAdminWalletAddress(),
   };
 
   fs.writeFileSync(metaFile, JSON.stringify(meta, null, 2), "utf8");
   return clusterVersion;
+}
+
+/**
+ * Hitung jumlah receipt yang sudah tersimpan untuk operasi tertentu (agar penomoran trial berlanjut antar batch)
+ */
+export function getExistingTrialCount(operation: string): number {
+  const dir = getExperimentsDir();
+  const jsonlFile = path.join(dir, `run-${operation.toLowerCase()}.jsonl`);
+  if (!fs.existsSync(jsonlFile)) {
+    return 0;
+  }
+  const content = fs.readFileSync(jsonlFile, "utf8").trim();
+  if (!content) return 0;
+  const lines = content.split("\n").filter((l) => l.trim().length > 0);
+  return lines.length;
 }
 
 /**
@@ -253,6 +273,7 @@ interface AttemptMetadataRecord {
   slot?: number | null;
   feeLamports?: number | null;
   rentDepositLamports?: number | null;
+  pinataRetries?: number;
 }
 
 interface ErrorLikeRecord {
@@ -305,6 +326,7 @@ export async function executeWithProposalRetry<T>(params: {
         txSignature: meta?.txSignature || meta?.signature,
         feeLamports: meta?.feeLamports,
         rentDepositLamports: meta?.rentDepositLamports,
+        pinataRetries: meta?.pinataRetries,
         status: "SUCCESS",
         rpcProvider,
         rpcEndpoint,

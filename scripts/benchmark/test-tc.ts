@@ -1,3 +1,8 @@
+import dns from "node:dns";
+dns.setDefaultResultOrder("ipv4first");
+
+import http from "node:http";
+import { NextRequest } from "next/server";
 import { Connection, Keypair, Transaction, SystemProgram, sendAndConfirmTransaction } from "@solana/web3.js";
 import bs58 from "bs58";
 import nacl from "tweetnacl";
@@ -14,15 +19,16 @@ import {
   burnV1,
   updatePlugin,
   fetchAsset,
+  create as createMplAsset,
 } from "@metaplex-foundation/mpl-core";
-import { keypairIdentity, publicKey } from "@metaplex-foundation/umi";
+import { keypairIdentity, publicKey, generateSigner } from "@metaplex-foundation/umi";
 import {
   generateCertificateMetadata,
   generateAndUploadCertificateImage,
   uploadMetadataToPinata,
   generateRevokedMetadata,
 } from "../../lib/pinata";
-import { generateDataHash } from "../../lib/crypto";
+import { generateDataHash, verifyDataHash } from "../../lib/crypto";
 import { inspectCertificate } from "../../lib/onchain";
 import {
   createVerificationChallenge,
@@ -30,6 +36,9 @@ import {
 } from "../../lib/challenge";
 import { prisma } from "../../lib/prisma";
 import { getRpcDetails, ensureRunMetadata } from "./common";
+import { GET as verifyGet } from "../../app/api/verify/route";
+import { POST as reissuePost } from "../../app/api/admin/reissue/route";
+import { POST as deletePiiPost } from "../../app/api/admin/delete-pii/route";
 
 export interface TestResult {
   id: string;
@@ -60,6 +69,54 @@ async function runMasterTestCases() {
   const { rpcUrl, provider, host } = getRpcDetails();
   const connection = new Connection(rpcUrl, "confirmed");
   await ensureRunMetadata(connection);
+
+  // ─── Setup Ephemeral Local HTTP Server for Real Endpoint Calls ───
+  let port = 0;
+  const server = http.createServer(async (req, res) => {
+    try {
+      const chunks: Buffer[] = [];
+      for await (const chunk of req) chunks.push(Buffer.from(chunk));
+      const body = chunks.length > 0 ? Buffer.concat(chunks) : undefined;
+
+      const fullUrl = `http://127.0.0.1:${port}${req.url}`;
+      const nextReq = new NextRequest(fullUrl, {
+        method: req.method,
+        headers: req.headers as HeadersInit,
+        body: body,
+      });
+
+      let nextRes: Response;
+      if (req.url?.startsWith("/api/verify")) {
+        nextRes = await verifyGet(nextReq);
+      } else if (req.url?.startsWith("/api/admin/reissue")) {
+        nextRes = await reissuePost(nextReq);
+      } else if (req.url?.startsWith("/api/admin/delete-pii")) {
+        nextRes = await deletePiiPost(nextReq);
+      } else {
+        res.statusCode = 404;
+        res.setHeader("Content-Type", "application/json");
+        res.end(JSON.stringify({ error: "Endpoint not found in test harness" }));
+        return;
+      }
+
+      res.statusCode = nextRes.status;
+      nextRes.headers.forEach((val, key) => res.setHeader(key, val));
+      const responseText = await nextRes.text();
+      res.end(responseText);
+    } catch (err) {
+      res.statusCode = 500;
+      res.setHeader("Content-Type", "application/json");
+      res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
+    }
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(0, () => resolve());
+  });
+  const serverAddress = server.address();
+  port = typeof serverAddress === "object" && serverAddress ? serverAddress.port : 3000;
+  const baseUrl = `http://127.0.0.1:${port}`;
+  console.log(`[Harness] Test HTTP server listening on ${baseUrl}`);
 
   const adminKeypair = getAdminKeypair();
   const adminAddress = getAdminWalletAddress();
@@ -287,23 +344,62 @@ async function runMasterTestCases() {
     message: tc6Challenge.message,
   });
 
+  // 6c: Expired nonce
+  const tc6cChallenge = await createVerificationChallenge(graduateWallet);
+  await prisma.verificationNonce.update({
+    where: { nonce: tc6cChallenge.nonce },
+    data: { expiresAt: new Date(Date.now() - 1000) },
+  });
+  const tc6cSig = nacl.sign.detached(
+    Buffer.from(tc6cChallenge.message, "utf-8"),
+    graduateKeypair.secretKey
+  );
+  const tc6Expired = await verifyVerificationChallenge({
+    walletAddress: graduateWallet,
+    nonce: tc6cChallenge.nonce,
+    signature: bs58.encode(tc6cSig),
+    message: tc6cChallenge.message,
+    expectedOwner: graduateWallet,
+  });
+
+  // 6d: Tampered message
+  const tc6dChallenge = await createVerificationChallenge(graduateWallet);
+  const tc6dTamperedMessage = tc6dChallenge.message + " ";
+  const tc6dSig = nacl.sign.detached(
+    Buffer.from(tc6dTamperedMessage, "utf-8"),
+    graduateKeypair.secretKey
+  );
+  const tc6Tampered = await verifyVerificationChallenge({
+    walletAddress: graduateWallet,
+    nonce: tc6dChallenge.nonce,
+    signature: bs58.encode(tc6dSig),
+    message: tc6dTamperedMessage,
+    expectedOwner: graduateWallet,
+  });
+
   const tc6ReplayErr = !tc6Replay.success ? tc6Replay.error : "NONE";
   const tc6ForeignErr = !tc6Foreign.success ? tc6Foreign.error : "NONE";
+  const tc6ExpiredErr = !tc6Expired.success ? tc6Expired.error : "NONE";
+  const tc6TamperedErr = !tc6Tampered.success ? tc6Tampered.error : "NONE";
 
   const tc6Passed =
     !tc6Replay.success &&
     tc6Replay.error === "NONCE_ALREADY_USED" &&
     !tc6Foreign.success &&
-    tc6Foreign.error === "INVALID_SIGNATURE";
+    tc6Foreign.error === "INVALID_SIGNATURE" &&
+    !tc6Expired.success &&
+    tc6Expired.error === "NONCE_EXPIRED" &&
+    !tc6Tampered.success &&
+    tc6Tampered.error === "MESSAGE_MISMATCH";
 
   recordTest({
     id: "TC-06",
-    scenario: "Signature from another wallet, expired nonce, or replayed message",
+    scenario: "Signature from another wallet, expired nonce, or replayed message (6a replay, 6b foreign, 6c expired, 6d tampered)",
     testClass: "Invalid",
-    expectedResult: "Verification rejected for all invalid variants",
-    observedResult: `Replay rejected: ${tc6ReplayErr}, Foreign rejected: ${tc6ForeignErr}`,
+    expectedResult: "Verification rejected for all invalid variants with specific error codes",
+    observedResult: `Replay: ${tc6ReplayErr}, Foreign: ${tc6ForeignErr}, Expired: ${tc6ExpiredErr}, Tampered: ${tc6TamperedErr}`,
     status: tc6Passed ? "PASS" : "FAIL",
-    evidence: `ReplayErr: ${tc6ReplayErr}, ForeignErr: ${tc6ForeignErr}`,
+    evidence: `6a=${tc6ReplayErr}, 6b=${tc6ForeignErr}, 6c=${tc6ExpiredErr}, 6d=${tc6TamperedErr}`,
   });
 
   // ─────────────────────────────────────────────────────────────────
@@ -326,39 +422,83 @@ async function runMasterTestCases() {
           status: "VERIFIED",
         },
       },
-      certificate: {
-        create: {
-          nftAddress: tc1MintAddress,
-          metadataUri: tc1MetadataUri,
-          status: "MINTED",
-          dataHash: "sha256:TAMPERED_HASH_DOES_NOT_MATCH_ONCHAIN",
-          dataSalt: tc1Salt,
-        },
-      },
     },
-    include: { certificate: true, wallet: true },
+    include: { wallet: true },
   });
 
-  // (b) Hash mismatch test
-  const tc7Inspection = await inspectCertificate(tc1MintAddress);
-  const hashMatches = tc7Inspection.ok && tc7Inspection.dataHash === tc7User.certificate?.dataHash;
+  const tc7Cert = await prisma.certificate.create({
+    data: {
+      userId: tc7User.id,
+      nftAddress: tc1MintAddress,
+      metadataUri: tc1MetadataUri,
+      status: "MINTED",
+      dataHash: "sha256:TAMPERED_HASH_DOES_NOT_MATCH_ONCHAIN",
+      dataSalt: tc1Salt,
+    },
+  });
 
-  // (a) Foreign updateAuthority check simulation
-  const foreignAuthorityInspection = {
-    ...tc7Inspection,
-    updateAuthority: attackerWallet, // foreign address
-  };
-  const issuerMatches = foreignAuthorityInspection.updateAuthority === adminAddress;
+  await prisma.user.update({
+    where: { id: tc7User.id },
+    data: { certificateId: tc7Cert.id },
+  });
 
-  const tc7Passed = !hashMatches && !issuerMatches;
+  // (a) Mint real asset with attackerUmi to produce genuine foreign updateAuthority
+  console.log(`[TC-07a] Minting foreign updateAuthority asset with attacker wallet...`);
+  const attackerAssetSigner = generateSigner(attackerUmi);
+  await createMplAsset(attackerUmi, {
+    asset: attackerAssetSigner,
+    name: "Ijazah Palsu - Foreign Authority",
+    uri: tc1MetadataUri,
+    owner: publicKey(graduateWallet),
+    plugins: [
+      {
+        type: "PermanentFreezeDelegate",
+        frozen: true,
+        authority: { type: "UpdateAuthority" },
+      },
+    ],
+  }).sendAndConfirm(attackerUmi);
+  const foreignMintAddress = attackerAssetSigner.publicKey.toString();
+
+  await prisma.certificate.update({
+    where: { id: tc7Cert.id },
+    data: { nftAddress: foreignMintAddress },
+  });
+
+  // Real HTTP GET /api/verify call for foreign updateAuthority
+  const tc7aRes = await fetch(`${baseUrl}/api/verify?query=${tc7User.nim}`);
+  const tc7aData = await tc7aRes.json();
+  const tc7aPassed =
+    tc7aRes.status === 200 &&
+    tc7aData.verified === false &&
+    tc7aData.mismatch === "ISSUER";
+
+  // (b) Hash mismatch test with real HTTP GET /api/verify call
+  console.log(`[TC-07b] Testing hash mismatch with genuine institution asset...`);
+  await prisma.certificate.update({
+    where: { id: tc7Cert.id },
+    data: {
+      nftAddress: tc1MintAddress,
+      dataHash: "sha256:TAMPERED_HASH_DOES_NOT_MATCH_ONCHAIN",
+    },
+  });
+
+  const tc7bRes = await fetch(`${baseUrl}/api/verify?query=${tc7User.nim}`);
+  const tc7bData = await tc7bRes.json();
+  const tc7bPassed =
+    tc7bRes.status === 200 &&
+    tc7bData.verified === false &&
+    tc7bData.mismatch === "HASH";
+
+  const tc7Passed = tc7aPassed && tc7bPassed;
   recordTest({
     id: "TC-07",
-    scenario: "Asset not issued by institution or hash mismatch: (a) foreign updateAuthority, (b) hash mismatch",
+    scenario: "Asset not issued by institution or hash mismatch: (a) foreign updateAuthority, (b) hash mismatch via GET /api/verify",
     testClass: "Invalid",
     expectedResult: "(a) rejected with mismatch ISSUER, (b) rejected with mismatch HASH",
-    observedResult: `(a) Foreign authority detected (expected ${adminAddress.slice(0, 8)}... got ${attackerWallet.slice(0, 8)}...), (b) Hash mismatch detected`,
+    observedResult: `(a) mismatch=${tc7aData.mismatch} (status ${tc7aRes.status}), (b) mismatch=${tc7bData.mismatch} (status ${tc7bRes.status})`,
     status: tc7Passed ? "PASS" : "FAIL",
-    evidence: `DB Hash: ${tc7User.certificate?.dataHash}, On-Chain Hash: ${tc7Inspection.ok ? tc7Inspection.dataHash : "none"}`,
+    evidence: `TC-07a: mismatch=${tc7aData.mismatch}, TC-07b: mismatch=${tc7bData.mismatch}`,
   });
 
   // ─────────────────────────────────────────────────────────────────
@@ -384,12 +524,13 @@ async function runMasterTestCases() {
 
   // Update DB
   await prisma.certificate.update({
-    where: { id: tc7User.certificate!.id },
+    where: { id: tc7Cert.id },
     data: {
       status: "REVOKED",
       revokedAt: new Date(),
       revokeReason: "TC-08 Test Revocation",
       metadataUri: tc8RevokedMetadataUri,
+      dataHash: tc1Hash,
     },
   });
 
@@ -419,110 +560,107 @@ async function runMasterTestCases() {
   const newStudentWalletKeypair = Keypair.generate();
   const newStudentWallet = newStudentWalletKeypair.publicKey.toBase58();
 
-  // Reset cert to MINTED for re-issuance test
+  // Reset cert to MINTED so it qualifies for re-issuance
   await prisma.certificate.update({
-    where: { id: tc7User.certificate!.id },
+    where: { id: tc7Cert.id },
     data: {
       status: "MINTED",
       revokedAt: null,
       revokeReason: null,
+      dataHash: tc1Hash,
+      dataSalt: tc1Salt,
     },
   });
 
-  // Execute re-issuance via API logic
-  const { hash: tc9NewHash, salt: tc9NewSalt } = generateDataHash(tc7User.nama, tc7User.nim, tc7User.prodi!);
-  const { gatewayUrl: tc9NewImg } = await generateAndUploadCertificateImage(
-    { prodi: tc7User.prodi!, tahunLulus: "2026", dataHash: tc9NewHash },
-    "MINTED"
-  );
-  const tc9NewMeta = generateCertificateMetadata({
-    prodi: tc7User.prodi!,
-    tahunLulus: "2026",
-    dataHash: tc9NewHash,
-    imageUri: tc9NewImg,
-  });
-  const { gatewayUrl: tc9NewMetaUri } = await uploadMetadataToPinata(tc9NewMeta);
-
-  const { mintSigner: tc9Signer, mintAddress: tc9NewMint } = prepareMintSigner();
-  const tc9MintRes = await mintSoulboundNFT({
-    metadataUri: tc9NewMetaUri,
-    walletTujuan: newStudentWallet,
-    mintSigner: tc9Signer,
-  });
-
-  // Revoke old asset
-  await revokeSoulboundNFT({
-    mintAddress: tc1MintAddress,
-    metadataUri: tc8RevokedMetadataUri,
-  });
-
-  // Update DB linking
-  const tc9OldCertId = tc7User.certificate!.id;
-  await prisma.$transaction([
-    prisma.certificateBackup.create({
-      data: {
-        certificateId: tc9OldCertId,
-        userId: tc7User.id,
-        backupData: JSON.stringify({ cert: tc7User.certificate }),
-        nftAddress: tc1MintAddress,
-        reason: "REISSUED to " + newStudentWallet,
-        createdBy: "ADMIN",
-      },
+  // Real HTTP call: POST /api/admin/reissue with admin auth
+  console.log(`[TC-09] Calling POST /api/admin/reissue with x-admin-key...`);
+  const tc9Response = await fetch(`${baseUrl}/api/admin/reissue`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-admin-key": process.env.ADMIN_WALLET_PRIVATE_KEY || "",
+    },
+    body: JSON.stringify({
+      userId: tc7User.id,
+      newWalletAddress: newStudentWallet,
+      reason: "TC-09 Verified Wallet Recovery Reissuance",
     }),
-    prisma.certificate.update({
-      where: { id: tc9OldCertId },
-      data: {
-        nftAddress: tc9NewMint,
-        txSignature: tc9MintRes.signature,
-        metadataUri: tc9NewMetaUri,
-        status: "MINTED",
-        dataHash: tc9NewHash,
-        dataSalt: tc9NewSalt,
-        replacedById: tc9OldCertId,
-        replacedAt: new Date(),
-        onChainOwner: newStudentWallet,
-      },
-    }),
-  ]);
+  });
 
-  const tc9NewInspect = await inspectCertificate(tc9NewMint);
-  const tc9OldInspect = await inspectCertificate(tc1MintAddress);
+  const tc9Data = await tc9Response.json();
+  const tc9Success = tc9Response.status === 200 && tc9Data.success === true;
+  const tc9NewMint = tc9Data.data?.newNftAddress || tc9Data.newCertificate?.nftAddress;
+  const tc9OldMint = tc9Data.data?.oldNftAddress || tc9Data.oldCertificate?.nftAddress;
+  const tc9NewCertId = tc9Data.data?.certificateId || tc9Data.newCertificate?.id;
+
+  // On-chain assertions
+  const tc9NewInspect = tc9NewMint ? await inspectCertificate(tc9NewMint) : null;
+  const tc9OldInspect = tc9OldMint ? await inspectCertificate(tc9OldMint) : null;
+
+  // Database link assertions (old -> new link, replacedById check)
+  const oldCertInDb = await prisma.certificate.findUnique({ where: { id: tc7Cert.id } });
+  const newCertInDb = tc9NewCertId ? await prisma.certificate.findUnique({ where: { id: tc9NewCertId } }) : null;
+  const updatedUserInDb = await prisma.user.findUnique({ where: { id: tc7User.id } });
+
+  const dbLinkValid =
+    oldCertInDb !== null &&
+    oldCertInDb.status === "REVOKED" &&
+    oldCertInDb.nftAddress === tc1MintAddress &&
+    oldCertInDb.replacedById === tc9NewCertId &&
+    newCertInDb !== null &&
+    newCertInDb.status === "MINTED" &&
+    newCertInDb.replacedById === null &&
+    newCertInDb.nftAddress === tc9NewMint &&
+    updatedUserInDb?.certificateId === tc9NewCertId;
+
+  // Verify new wallet via real HTTP GET /api/verify
+  const tc9VerifyRes = await fetch(`${baseUrl}/api/verify?query=${newStudentWallet}`);
+  const tc9VerifyData = await tc9VerifyRes.json();
+  const newWalletVerified =
+    tc9VerifyRes.status === 200 &&
+    tc9VerifyData.verified === true &&
+    tc9VerifyData.data?.nftAddress === tc9NewMint;
 
   const tc9Passed =
-    tc9MintRes.success &&
+    tc9Success &&
+    tc9NewInspect !== null &&
     tc9NewInspect.ok &&
     tc9NewInspect.owner === newStudentWallet &&
+    tc9OldInspect !== null &&
     tc9OldInspect.ok &&
-    tc9OldInspect.name.includes("[DIBATALKAN]");
+    tc9OldInspect.name.includes("[DIBATALKAN]") &&
+    dbLinkValid &&
+    newWalletVerified;
 
   recordTest({
     id: "TC-09",
-    scenario: "Re-issuance to a new wallet after identity verification",
+    scenario: "Re-issuance to a new wallet after identity verification (POST /api/admin/reissue)",
     testClass: "Valid",
-    expectedResult: "New asset issued to new wallet; old asset marked revoked; linked in database",
-    observedResult: `New Mint: ${tc9NewMint} (Owner: ${tc9NewInspect.ok ? tc9NewInspect.owner : ""}), Old Mint: ${tc1MintAddress} ([DIBATALKAN])`,
+    expectedResult: "New asset issued to new wallet; old asset marked revoked; old -> new link in database verified",
+    observedResult: `HTTP status=${tc9Response.status}, DB Old(replacedById=${oldCertInDb?.replacedById}, status=${oldCertInDb?.status}), DB New(id=${newCertInDb?.id}, status=${newCertInDb?.status}), Verified=${newWalletVerified}`,
     status: tc9Passed ? "PASS" : "FAIL",
-    evidence: `New Asset: ${tc9NewMint}, Old Asset: ${tc1MintAddress}`,
+    evidence: `New Mint: ${tc9NewMint}, Old Mint: ${tc9OldMint}, Old Cert replacedById: ${oldCertInDb?.replacedById}`,
   });
 
   // ─────────────────────────────────────────────────────────────────
   // TC-10: Inspect public metadata (IPFS and on-chain)
   // ─────────────────────────────────────────────────────────────────
   console.log(`\n--- Running TC-10 ---`);
-  // Fetch raw IPFS metadata JSON
   let tc10MetadataContent: Record<string, unknown> | null = null;
-  try {
-    const res = await fetch(tc9NewMetaUri);
-    tc10MetadataContent = await res.json();
-  } catch (err) {
-    console.warn("Could not fetch IPFS metadata:", err);
+  if (newCertInDb?.metadataUri) {
+    try {
+      const res = await fetch(newCertInDb.metadataUri);
+      tc10MetadataContent = await res.json();
+    } catch (err) {
+      console.warn("Could not fetch IPFS metadata:", err);
+    }
   }
 
-  const metadataJsonString = JSON.stringify(tc10MetadataContent || tc9NewMeta);
+  const metadataJsonString = JSON.stringify(tc10MetadataContent || {});
   const containsName = metadataJsonString.toLowerCase().includes("budi santoso") || metadataJsonString.toLowerCase().includes("tc-07");
   const containsNim = metadataJsonString.toLowerCase().includes(tc7User.nim.toLowerCase());
   const containsEmail = metadataJsonString.toLowerCase().includes("@untad.ac.id");
-  const containsSalt = metadataJsonString.toLowerCase().includes(tc9NewSalt);
+  const containsSalt = newCertInDb?.dataSalt ? metadataJsonString.toLowerCase().includes(newCertInDb.dataSalt) : false;
 
   const tc10Passed = !containsName && !containsNim && !containsEmail && !containsSalt;
   recordTest({
@@ -532,57 +670,89 @@ async function runMasterTestCases() {
     expectedResult: "Contains no name, NIM, email, or salt in public metadata",
     observedResult: `PII check: Name=${containsName}, NIM=${containsNim}, Email=${containsEmail}, Salt=${containsSalt}`,
     status: tc10Passed ? "PASS" : "FAIL",
-    evidence: `Metadata URI: ${tc9NewMetaUri}, Attributes: ${JSON.stringify(tc9NewMeta.attributes)}`,
+    evidence: `Metadata URI: ${newCertInDb?.metadataUri}, Attributes: ${JSON.stringify(tc10MetadataContent?.attributes ?? [])}`,
   });
 
   // ─────────────────────────────────────────────────────────────────
   // TC-11: Delete personal data and salt in Tier 1, unlinking binding
   // ─────────────────────────────────────────────────────────────────
   console.log(`\n--- Running TC-11 ---`);
-  await prisma.user.update({
-    where: { id: tc7User.id },
-    data: {
-      nama: "[DATA ANONIM]",
-      nim: `ANON-${Date.now()}`,
-      email: `deleted-${Date.now()}@sijaga.removed`,
-      dataDeletedAt: new Date(),
-      dataConsent: false,
+  // Call REAL HTTP endpoint: POST /api/admin/delete-pii
+  console.log(`[TC-11] Calling POST /api/admin/delete-pii with x-admin-key...`);
+  const tc11Res = await fetch(`${baseUrl}/api/admin/delete-pii`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-admin-key": process.env.ADMIN_WALLET_PRIVATE_KEY || "",
     },
-  });
-  await prisma.certificate.update({
-    where: { id: tc9OldCertId },
-    data: { dataSalt: null },
+    body: JSON.stringify({
+      userId: tc7User.id,
+      reason: "TC-11 Student Right to Erasure compliance test",
+    }),
   });
 
-  const tc11Cert = await prisma.certificate.findUnique({ where: { id: tc9OldCertId } });
-  const tc11SaltDeleted = tc11Cert?.dataSalt === null;
+  const tc11Data = await tc11Res.json();
+  const tc11HttpSuccess = tc11Res.status === 200 && tc11Data.success === true;
 
+  // DB verification
+  const tc11UserAfter = await prisma.user.findUnique({ where: { id: tc7User.id } });
+  const tc11CertAfter = tc9NewCertId
+    ? await prisma.certificate.findUnique({ where: { id: tc9NewCertId } })
+    : null;
+  const saltDeleted = tc11CertAfter?.dataSalt === null && tc11UserAfter?.dataDeletedAt !== null;
+
+  // Attempt hash reconstruction with fictitious identities and blank/guessed salts
+  const fakeSalts = ["", "00000000000000000000000000000000", "deadbeefcafebabe1234567890abcdef"];
+  const reconstructAttempts = fakeSalts.map((s) =>
+    verifyDataHash(tc7User.nama, tc7User.nim, tc7User.prodi!, s, tc11CertAfter?.dataHash || "")
+  );
+  const reconstructionFailed = reconstructAttempts.every((attempt) => attempt === false);
+
+  // Real HTTP GET /api/verify check
+  const tc11VerifyRes = await fetch(`${baseUrl}/api/verify?query=${newStudentWallet}`);
+  const tc11VerifyData = await tc11VerifyRes.json();
+  const piiErasedInVerify =
+    tc11VerifyRes.status === 200 &&
+    tc11VerifyData.piiDeleted === true &&
+    tc11VerifyData.verifiedNominative === false;
+
+  const tc11Passed = tc11HttpSuccess && saltDeleted && reconstructionFailed && piiErasedInVerify;
   recordTest({
     id: "TC-11",
-    scenario: "Delete personal data and salt in Tier 1, unlinking binding",
+    scenario: "Delete personal data and salt in Tier 1, unlinking binding (POST /api/admin/delete-pii)",
     testClass: "Valid",
-    expectedResult: "Public hash can no longer be bound to an identity without salt",
-    observedResult: `dataSalt=${tc11Cert?.dataSalt}, Reconstruction without salt is impossible`,
-    status: tc11SaltDeleted ? "PASS" : "FAIL",
-    evidence: `UserId: ${tc7User.id}, Certificate dataSalt: null, dataDeletedAt: set`,
+    expectedResult: "dataSalt is null, reconstruction attempts fail, GET /api/verify reflects piiDeleted: true",
+    observedResult: `HTTP status=${tc11Res.status}, dataSalt=${tc11CertAfter?.dataSalt}, Reconstruction Failed=${reconstructionFailed}, piiDeleted=${tc11VerifyData.piiDeleted}`,
+    status: tc11Passed ? "PASS" : "FAIL",
+    evidence: `UserId: ${tc7User.id}, Salt is null, reconstructionFailed: ${reconstructionFailed}`,
   });
 
   // ─────────────────────────────────────────────────────────────────
   // TC-12: Solana or IPFS unreachable during verification
   // ─────────────────────────────────────────────────────────────────
   console.log(`\n--- Running TC-12 ---`);
-  // Inspect with unreachable dead RPC endpoint or invalid mint
-  const tc12Res = await inspectCertificate("11111111111111111111111111111111");
+  // (a) Dead RPC inspection test
+  const deadRpcRes = await inspectCertificate(tc9NewMint, "http://127.0.0.1:19999");
+  const deadRpcRejected = !deadRpcRes.ok && deadRpcRes.reason === "RPC";
 
-  const tc12Passed = !tc12Res.ok && (tc12Res.reason === "NOT_FOUND" || tc12Res.reason === "RPC");
+  // (b) Blocked / unreachable IPFS inspection test
+  const blockedIpfsRes = await inspectCertificate("11111111111111111111111111111111");
+  const blockedIpfsRejected = !blockedIpfsRes.ok && (blockedIpfsRes.reason === "NOT_FOUND" || blockedIpfsRes.reason === "RPC");
+
+  // Real HTTP verification endpoint assertion: when on-chain is unavailable or invalid, system NEVER declares valid
+  const tc12VerifyRes = await fetch(`${baseUrl}/api/verify?query=11111111111111111111111111111111`);
+  const tc12VerifyData = await tc12VerifyRes.json();
+  const neverDeclaredValid = tc12VerifyData.verified !== true;
+
+  const tc12Passed = deadRpcRejected && blockedIpfsRejected && neverDeclaredValid;
   recordTest({
     id: "TC-12",
     scenario: "Solana or IPFS unreachable during verification",
     testClass: "Invalid",
-    expectedResult: "System does NOT declare diploma valid (status: cannot be determined / UNAVAILABLE)",
-    observedResult: `Returned ok=false with reason=${!tc12Res.ok ? tc12Res.reason : "none"}, never declared valid`,
+    expectedResult: "System does NOT declare diploma valid (status: cannot be determined / UNAVAILABLE / NOT_FOUND)",
+    observedResult: `Dead RPC reason=${!deadRpcRes.ok ? deadRpcRes.reason : "none"}, Blocked IPFS ok=${blockedIpfsRes.ok}, Never valid=${neverDeclaredValid}`,
     status: tc12Passed ? "PASS" : "FAIL",
-    evidence: `Response: ${JSON.stringify(tc12Res)}`,
+    evidence: `DeadRpc: ${JSON.stringify(deadRpcRes)}, BlockedIpfs: ${JSON.stringify(blockedIpfsRes)}`,
   });
 
   // ─────────────────────────────────────────────────────────────────
@@ -630,7 +800,7 @@ async function runMasterTestCases() {
 
   const memoPayload = JSON.stringify({
     type: "SIJAGA_CLAIM",
-    certId: tc9OldCertId,
+    certId: tc9NewCertId,
     mint: tc9NewMint,
   });
 
@@ -651,14 +821,16 @@ async function runMasterTestCases() {
   const claimSuccess = txInfo !== null && !txInfo.meta?.err;
 
   // Update DB status to CLAIMED
-  if (claimSuccess) {
+  if (tc9NewCertId && claimSuccess) {
     await prisma.certificate.update({
-      where: { id: tc9OldCertId },
+      where: { id: tc9NewCertId },
       data: { status: "CLAIMED", claimedAt: new Date() },
     });
   }
 
-  const finalCert = await prisma.certificate.findUnique({ where: { id: tc9OldCertId } });
+  const finalCert = tc9NewCertId
+    ? await prisma.certificate.findUnique({ where: { id: tc9NewCertId } })
+    : null;
 
   const tc14Passed = claimSuccess && finalCert?.status === "CLAIMED";
   recordTest({
@@ -672,10 +844,15 @@ async function runMasterTestCases() {
   });
 
   // Cleanup test user
+  await prisma.user.update({ where: { id: tc7User.id }, data: { certificateId: null } });
+  await prisma.auditLog.deleteMany({ where: { userId: tc7User.id } });
   await prisma.certificateBackup.deleteMany({ where: { userId: tc7User.id } });
   await prisma.certificate.deleteMany({ where: { userId: tc7User.id } });
   await prisma.wallet.deleteMany({ where: { userId: tc7User.id } });
   await prisma.user.delete({ where: { id: tc7User.id } });
+
+  // Close test HTTP server
+  server.close();
 
   // ─────────────────────────────────────────────────────────────────
   // FINAL SUMMARY MATRIX

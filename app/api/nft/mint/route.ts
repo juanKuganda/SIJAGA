@@ -160,24 +160,32 @@ export async function POST(request: NextRequest) {
     const { mintSigner, mintAddress } = prepareMintSigner();
 
 
-    await prisma.certificate.upsert({
-      where: { userId },
-      update: {
-        status: "ISSUING",
-        nftAddress: mintAddress,
-        metadataUri,
-        dataHash,
-        dataSalt,
-        onChainError: null,
-      },
-      create: {
-        userId,
-        status: "ISSUING",
-        nftAddress: mintAddress,
-        metadataUri,
-        dataHash,
-        dataSalt,
-      },
+    const activeCert = user.certificate?.id
+      ? await prisma.certificate.update({
+          where: { id: user.certificate.id },
+          data: {
+            status: "ISSUING",
+            nftAddress: mintAddress,
+            metadataUri,
+            dataHash,
+            dataSalt,
+            onChainError: null,
+          },
+        })
+      : await prisma.certificate.create({
+          data: {
+            userId,
+            status: "ISSUING",
+            nftAddress: mintAddress,
+            metadataUri,
+            dataHash,
+            dataSalt,
+          },
+        });
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { certificateId: activeCert.id },
     });
 
 
@@ -191,7 +199,7 @@ export async function POST(request: NextRequest) {
       // Mint gagal — JANGAN hapus certificate row.
       // Set onChainError agar admin bisa retry.
       await prisma.certificate.update({
-        where: { userId },
+        where: { id: activeCert.id },
         data: {
           onChainError: mintResult.error || "Unknown mint error",
         },
@@ -204,7 +212,7 @@ export async function POST(request: NextRequest) {
     }
 
     const certificate = await prisma.certificate.update({
-      where: { userId },
+      where: { id: activeCert.id },
       data: {
         nftAddress: mintResult.mintAddress,
         txSignature: mintResult.signature,

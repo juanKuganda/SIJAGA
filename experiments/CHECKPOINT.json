@@ -50,7 +50,24 @@
     "adminBalanceSOL": 9.587,
     "directEd25519Dependency": "tweetnacl@^1.0.3",
     "buildStatus": "PASSED",
-    "gate1Hardening": "VERIFIED_PASSED"
+    "lintStatus": "PASSED (0 errors, 40 warnings)",
+    "testTcStatus": "PASSED (14/14, 100%)",
+    "gate1Hardening": "VERIFIED_PASSED",
+    "reviewFindingsResolution": {
+      "item1_replacedById": "RESOLVED - Old Certificate preserved with old nftAddress, status REVOKED, and replacedById pointing to newly minted Certificate row",
+      "item2_revokeFailLoud": "RESOLVED - Revoke failure returns 502 and does not mark reissue success, creates ORPHANED_ASSET_ALERT audit log",
+      "item3_realEndpointsTC07_TC09": "RESOLVED - TC-07 invokes real HTTP GET /api/verify asserting mismatch=ISSUER and mismatch=HASH; TC-09 invokes real HTTP POST /api/admin/reissue and asserts on-chain state, DB links, and new wallet verification",
+      "item4_challengeVariantsTC06": "RESOLVED - TC-06 tests replay, foreign signature, expired nonce, and tampered message",
+      "item5_deletePiiAndUnreachableTC11_TC12": "RESOLVED - TC-11 invokes real POST /api/admin/delete-pii and verifies hash reconstruction failure; TC-12 tests dead RPC and blocked IPFS asserting UNAVAILABLE / never valid",
+      "item6_lockfileSync": "RESOLVED - Synchronized package-lock.json and verified via npm ci",
+      "item7_eslintRulesRestored": "RESOLVED - All rules restored to error, 0 errors remaining",
+      "item8_harnessCleanup": "RESOLVED - Dynamic getAdminWalletAddress, pinataRetries recorded on receipts, and trial numbering offset via getExistingTrialCount",
+      "item9_verificationRunner": "RESOLVED - test-challenge and test:tc verified 100% PASS (14/14)"
+    },
+    "batchExecutionPlan": {
+      "batch4_22_00_WITA": "Mint completed (7 trials: 6 SUCCESS, 1 FAILED). Do NOT rerun Batch 4 mint. Verify: 1/7. Revoke: 0/7.",
+      "remainingTomorrow": "Batch 1 (8 trials, 08:30 WITA), Batch 2 (8 trials, 13:00 WITA), Batch 3 (7 trials, 17:30 WITA). Total remaining mint: 23 trials. Total verify and revoke to reach 30 each."
+    }
   },
-  "lastUpdated": "2026-11-07T23:32:00+08:00"
+  "lastUpdated": "2026-11-08T01:25:00+08:00"
 }

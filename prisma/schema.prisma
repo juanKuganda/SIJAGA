@@ -31,9 +31,11 @@ model User {
   dataDeletedAt      DateTime? // null = aktif, ada tanggal = PII sudah dihapus
   dataDeleteNote     String?
 
-  wallet      Wallet?
-  certificate Certificate?
-  auditLogs   AuditLog[]
+  certificateId      String?   @unique
+  certificate        Certificate? @relation("ActiveCertificate", fields: [certificateId], references: [id])
+  certificates       Certificate[] @relation("UserCertificates")
+  wallet             Wallet?
+  auditLogs          AuditLog[]
 
   @@index([nama])
 }
@@ -52,7 +54,7 @@ model Wallet {
 
 model Certificate {
   id             String      @id @default(cuid())
-  userId         String      @unique
+  userId         String
   nftAddress     String?     @unique   // alamat NFT di Solana
   metadataUri    String?               // link IPFS (Pinata gateway)
   txSignature    String?               // transaction hash
@@ -80,9 +82,11 @@ model Certificate {
   replacedById     String?
   replacedAt       DateTime?
 
-  user           User        @relation(fields: [userId], references: [id])
+  user             User        @relation("UserCertificates", fields: [userId], references: [id])
+  activeUser       User?       @relation("ActiveCertificate")
 
   @@index([dataHash])
+  @@index([userId])
 }
 
 model CertificateBackup {

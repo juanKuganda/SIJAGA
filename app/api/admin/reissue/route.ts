@@ -18,7 +18,7 @@ import { createAuditLog } from "@/lib/audit";
 export async function POST(request: NextRequest) {
   try {
     // 1. Guard: Hanya admin yang berhak melakukan re-issuance
-    const payload = await getAuthUser();
+    const payload = await getAuthUser(request);
     if (!payload || payload.role !== "ADMIN") {
       return NextResponse.json(
         { error: "Unauthorized - hanya admin yang bisa melakukan penerbitan ulang" },
@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 5. Visual Revoke Aset Lama di Blockchain Solana (Fail-closed)
+    // 5. Visual Revoke Aset Lama di Blockchain Solana (FAIL LOUD per Review Point 2)
     const { gatewayUrl: revokedImageUrl } = await generateAndUploadCertificateImage(
       {
         prodi: user.prodi,
@@ -190,16 +190,35 @@ export async function POST(request: NextRequest) {
       metadataUri: revokedMetadataUri,
     });
 
+    // FAIL LOUD: Jika revoke aset lama gagal, JANGAN tandai sukses, catat orphaned asset!
     if (!revokeResult.success) {
       console.error(
-        "[Reissue] Peringatan: Aset baru berhasil dicetak tapi revoke aset lama gagal:",
+        "[Reissue FAIL LOUD] Revoke aset lama gagal! Orphaned asset terdeteksi:",
+        newMintAddress,
         revokeResult.error
       );
-      // Catatan: Aset baru sudah dicetak, catat error di audit log
+
+      await createAuditLog(
+        user.id,
+        "ORPHANED_ASSET_ALERT",
+        `Penerbitan ulang GAGAL pada tahap revoke aset lama ${oldNftAddress}. Aset baru ${newMintAddress} telah terlanjur tercetak di Solana dan harus dibersihkan secara manual. Error revoke: ${revokeResult.error}`,
+        request.headers.get("x-forwarded-for") || "unknown"
+      );
+
+      return NextResponse.json(
+        {
+          error: `Gagal mencabut ijazah lama di blockchain: ${revokeResult.error}. Aset baru (${newMintAddress}) dicatat sebagai orphaned asset di audit log untuk pembersihan.`,
+          orphanedAsset: newMintAddress,
+          oldNftAddress,
+        },
+        { status: 502 }
+      );
     }
 
-    // 6. Simpan riwayat ijazah lama ke CertificateBackup & update Certificate ke ijazah baru
-    await prisma.$transaction([
+    // 6. Database Update (Review Point 1):
+    // Baris lama TETAP dengan nftAddress lama, status REVOKED, dan replacedById -> id baris baru.
+    // Baris baru dibuat untuk aset baru dengan status MINTED.
+    const [_, newCert] = await prisma.$transaction([
       // Backup & riwayat ijazah lama
       prisma.certificateBackup.create({
         data: {
@@ -224,6 +243,25 @@ export async function POST(request: NextRequest) {
         },
       }),
 
+      // Buat baris Certificate BARU untuk aset baru
+      prisma.certificate.create({
+        data: {
+          userId: user.id,
+          nftAddress: newMintAddress,
+          txSignature: mintResult.signature,
+          metadataUri: newMetadataUri,
+          status: "MINTED",
+          dataHash: newDataHash,
+          dataSalt: newDataSalt,
+          issuedAt: new Date(),
+          issuedBy: payload.userId,
+          onChainOwner: newWalletAddress,
+          onChainFrozen: true,
+          onChainHash: newDataHash,
+          onChainCheckedAt: new Date(),
+        },
+      }),
+
       // Update wallet mahasiswa ke wallet baru
       prisma.wallet.upsert({
         where: { userId: user.id },
@@ -241,55 +279,60 @@ export async function POST(request: NextRequest) {
           verifiedBy: payload.userId,
         },
       }),
-
-      // Update sertifikat aktif dengan link riwayat (replacedById & replacedAt)
-      prisma.certificate.update({
-        where: { id: currentCert.id },
-        data: {
-          nftAddress: newMintAddress,
-          txSignature: mintResult.signature,
-          metadataUri: newMetadataUri,
-          status: "MINTED",
-          dataHash: newDataHash,
-          dataSalt: newDataSalt,
-          issuedAt: new Date(),
-          issuedBy: payload.userId,
-          claimedAt: null,
-          revokedAt: null,
-          revokedBy: null,
-          revokeReason: null,
-          replacedById: oldCertId,
-          replacedAt: new Date(),
-          onChainOwner: newWalletAddress,
-          onChainFrozen: true,
-          onChainHash: newDataHash,
-          onChainCheckedAt: new Date(),
-          onChainError: null,
-        },
-      }),
     ]);
+
+    // Update baris Certificate LAMA: tetap simpan nftAddress lama, status REVOKED, replacedById -> newCert.id
+    await prisma.certificate.update({
+      where: { id: oldCertId },
+      data: {
+        status: "REVOKED",
+        revokedAt: new Date(),
+        revokedBy: payload.userId,
+        revokeReason: `REISSUED to wallet ${newWalletAddress}: ${reason}`,
+        replacedById: newCert.id,
+        replacedAt: new Date(),
+      },
+    });
+
+    // Update active certificateId pada model User
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        certificateId: newCert.id,
+      },
+    });
 
     // 7. Catat Audit Log
     await createAuditLog(
       user.id,
       "NFT_REISSUE",
-      `Ijazah diterbitkan ulang ke wallet baru ${newWalletAddress} oleh admin ${payload.userId}. Aset lama: ${oldNftAddress}. Alasan: ${reason}`,
+      `Ijazah diterbitkan ulang ke wallet baru ${newWalletAddress} oleh admin ${payload.userId}. Aset lama: ${oldNftAddress} (ID: ${oldCertId}) -> Aset baru: ${newMintAddress} (ID: ${newCert.id}). Alasan: ${reason}`,
       request.headers.get("x-forwarded-for") || "unknown"
     );
 
     return NextResponse.json({
       success: true,
       message: "Ijazah berhasil diterbitkan ulang ke wallet baru",
+      data: {
+        certificateId: newCert.id,
+        newNftAddress: newMintAddress,
+        oldNftAddress: oldNftAddress,
+        replacedById: newCert.id,
+        newOwner: newWalletAddress,
+      },
       newCertificate: {
+        id: newCert.id,
         nftAddress: newMintAddress,
         txSignature: mintResult.signature,
         walletAddress: newWalletAddress,
         status: "MINTED",
       },
       oldCertificate: {
+        id: oldCertId,
         nftAddress: oldNftAddress,
         status: "REVOKED",
         revokeTxSignature: revokeResult.signature || null,
+        replacedById: newCert.id,
       },
     });
   } catch (error) {
@@ -300,4 +343,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

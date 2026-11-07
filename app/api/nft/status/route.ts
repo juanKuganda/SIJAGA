@@ -13,8 +13,9 @@ export async function GET(_request: NextRequest) {
     }
 
     // Ambil data certificate
-    const certificate = await prisma.certificate.findUnique({
+    const certificate = await prisma.certificate.findFirst({
       where: { userId: payload.userId },
+      orderBy: { createdAt: "desc" },
     });
 
     return NextResponse.json({ certificate });

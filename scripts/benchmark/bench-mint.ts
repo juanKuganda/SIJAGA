@@ -16,6 +16,7 @@ import {
   getRpcDetails,
   executeWithProposalRetry,
   getTransactionWithRetry,
+  getExistingTrialCount,
   TransactionReceipt,
 } from "./common";
 
@@ -24,9 +25,18 @@ async function runBenchMint() {
   const nIndex = args.indexOf("--n");
   const numTrials = nIndex !== -1 && args[nIndex + 1] ? parseInt(args[nIndex + 1], 10) : 30;
 
+  const offsetIndex = args.indexOf("--offset");
+  const existingCount =
+    offsetIndex !== -1 && args[offsetIndex + 1]
+      ? parseInt(args[offsetIndex + 1], 10)
+      : getExistingTrialCount("MINT");
+  const startTrial = existingCount + 1;
+  const endTrial = existingCount + numTrials;
+
   console.log(`=======================================================`);
   console.log(`  SIJAGA BENCHMARK: MINTING (Soulbound NFT Issuance)   `);
-  console.log(`  Total Trials Planned: ${numTrials}                   `);
+  console.log(`  Current Run Trials: ${numTrials} (Trials ${startTrial}..${endTrial})`);
+  console.log(`  Pre-existing Receipts: ${existingCount}              `);
   console.log(`=======================================================\n`);
 
   const { rpcUrl, provider, host } = getRpcDetails();
@@ -39,8 +49,8 @@ async function runBenchMint() {
 
   const receipts: TransactionReceipt[] = [];
 
-  for (let i = 1; i <= numTrials; i++) {
-    console.log(`\n--- [Trial ${i}/${numTrials}] Starting Diploma Issuance ---`);
+  for (let i = startTrial; i <= endTrial; i++) {
+    console.log(`\n--- [Trial ${i} (${i - startTrial + 1}/${numTrials})] Starting Diploma Issuance ---`);
 
     // Data mahasiswa fiktif
     const fakeNim = `F551${String(10000 + i).slice(1)}`;
@@ -67,7 +77,7 @@ async function runBenchMint() {
           const ipfsStart = Date.now();
           const { hash: dataHash } = generateDataHash(fakeNama, fakeNim, fakeProdi);
 
-          const { gatewayUrl: imageUrl } = await generateAndUploadCertificateImage(
+          const imageUploadRes = await generateAndUploadCertificateImage(
             {
               prodi: fakeProdi,
               tahunLulus: fakeTahunLulus,
@@ -75,6 +85,7 @@ async function runBenchMint() {
             },
             "MINTED"
           );
+          const imageUrl = imageUploadRes.gatewayUrl;
 
           const metadata = generateCertificateMetadata({
             prodi: fakeProdi,
@@ -83,8 +94,10 @@ async function runBenchMint() {
             imageUri: imageUrl,
           });
 
-          const { gatewayUrl: metadataUri } = await uploadMetadataToPinata(metadata);
+          const metaUploadRes = await uploadMetadataToPinata(metadata);
+          const metadataUri = metaUploadRes.gatewayUrl;
           const ipfsElapsedSeconds = (Date.now() - ipfsStart) / 1000;
+          const pinataRetries = ((imageUploadRes.attempts || 1) - 1) + ((metaUploadRes.attempts || 1) - 1);
 
           // 2. On-Chain Phase: Mint Soulbound NFT
           const onchainStart = Date.now();
@@ -148,6 +161,7 @@ async function runBenchMint() {
             mintAddress: mintRes.mintAddress,
             ipfsElapsedSeconds,
             onchainElapsedSeconds,
+            pinataRetries,
             feeLamports,
             rentDepositLamports,
             slot,

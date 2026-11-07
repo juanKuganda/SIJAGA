@@ -145,7 +145,7 @@ export async function DELETE(request: NextRequest) {
           where: { id: payload.userId },
           data: updateData,
         }),
-        prisma.certificate.update({
+        prisma.certificate.updateMany({
           where: { userId: payload.userId },
           data: { dataSalt: null },
         }),

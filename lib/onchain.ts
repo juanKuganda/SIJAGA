@@ -145,10 +145,11 @@ function isFrozen(
  * sebagai `ok: false` dengan reason yang jelas.
  */
 export async function inspectCertificate(
-  mintAddress: string
+  mintAddress: string,
+  customRpcUrl?: string
 ): Promise<OnChainInspect> {
   try {
-    const umi = createUmiInstance();
+    const umi = createUmiInstance(customRpcUrl);
 
     // 1. Fetch asset dari Solana
     let asset: Awaited<ReturnType<typeof fetchAsset>>;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { Blink, useAction, ActionAdapter } from '@dialectlabs/blinks';
 import { setProxyUrl } from '@dialectlabs/blinks-core';
 import '@dialectlabs/blinks/index.css';
@@ -41,12 +41,7 @@ const mockAdapter: ActionAdapter = {
 export default function PreviewBlinksPage() {
   const [nimInput, setNimInput] = useState('F55123061');
   const [actionUrl, setActionUrl] = useState('');
-
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const isMounted = useSyncExternalStore(() => () => {}, () => true, () => false);
 
   if (!isMounted) return null;
 

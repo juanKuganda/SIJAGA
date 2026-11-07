@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use, useCallback } from "react";
+import { useEffect, useState, use, useSyncExternalStore } from "react";
 import { Blink, useAction, ActionAdapter } from "@dialectlabs/blinks";
 import { setProxyUrl } from "@dialectlabs/blinks-core";
 import "@dialectlabs/blinks/index.css";
@@ -104,21 +104,21 @@ function createWalletAdapter(): ActionAdapter {
 interface PhantomProvider {
   isPhantom?: boolean;
   connect: () => Promise<{ publicKey: { toString: () => string } }>;
-  signTransaction: (tx: any) => Promise<any>;
+  signTransaction: <T>(tx: T) => Promise<T>;
   signMessage: (msg: Uint8Array) => Promise<{ signature: Uint8Array }>;
 }
 
 interface SolflareProvider {
   isSolflare?: boolean;
   connect: () => Promise<{ publicKey: { toString: () => string } }>;
-  signTransaction: (tx: any) => Promise<any>;
+  signTransaction: <T>(tx: T) => Promise<T>;
   signMessage: (msg: Uint8Array) => Promise<{ signature: Uint8Array }>;
 }
 
 interface BackpackProvider {
   isBackpack?: boolean;
   connect: () => Promise<{ publicKey: { toString: () => string } }>;
-  signTransaction: (tx: any) => Promise<any>;
+  signTransaction: <T>(tx: T) => Promise<T>;
   signMessage: (msg: Uint8Array) => Promise<{ signature: Uint8Array }>;
 }
 
@@ -160,21 +160,21 @@ export default function ClaimPage({
   const resolvedParams = use(params);
   const [adapter, setAdapter] = useState<ActionAdapter | null>(null);
   const [noWallet, setNoWallet] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const isMounted = useSyncExternalStore(() => () => {}, () => true, () => false);
 
   const actionUrl = `${process.env.NEXT_PUBLIC_APP_URL || ""}/api/actions/claim?nim=${resolvedParams.nim}`;
 
   useEffect(() => {
-    setIsMounted(true);
-
-    // Cek wallet availability
-    const provider = getWalletProvider();
-    if (provider) {
-      setAdapter(createWalletAdapter());
-    } else {
-      setNoWallet(true);
-    }
+    // Cek wallet availability asynchronously to avoid synchronous effect setState
+    const timer = setTimeout(() => {
+      const provider = getWalletProvider();
+      if (provider) {
+        setAdapter(createWalletAdapter());
+      } else {
+        setNoWallet(true);
+      }
+    }, 0);
+    return () => clearTimeout(timer);
   }, [resolvedParams.nim]);
 
   return (

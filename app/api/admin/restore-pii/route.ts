@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
       // 1.5. Pulihkan dataSalt ke tabel Certificate agar verifikasi hash kembali berfungsi
       ...(backupData.certificate && backupData.certificate.dataSalt
         ? [
-            prisma.certificate.update({
+            prisma.certificate.updateMany({
               where: { userId },
               data: { dataSalt: backupData.certificate.dataSalt },
             }),

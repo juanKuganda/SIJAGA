@@ -83,8 +83,9 @@ function createFetchWithRetry(maxRetries = MAX_RETRIES) {
  * Inisialisasi Umi instance untuk Metaplex
  * Menggunakan custom fetch dengan retry logic
  */
-export function createUmiInstance() {
+export function createUmiInstance(customRpcUrl?: string) {
   const rpcUrl =
+    customRpcUrl ||
     process.env.SOLANA_RPC_URL || process.env.NEXT_PUBLIC_SOLANA_RPC || "https://api.devnet.solana.com";
 
   if (process.env.NODE_ENV === "development") {

@@ -189,7 +189,7 @@ export async function POST(request: NextRequest) {
 
   await prisma.$transaction(async (tx) => {
     await tx.certificate.update({
-      where: { userId: user.id },
+      where: { id: user.certificate!.id },
       data: {
         status: "CLAIMED",
         claimedAt: new Date(),

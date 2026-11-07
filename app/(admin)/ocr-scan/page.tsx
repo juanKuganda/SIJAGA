@@ -186,7 +186,7 @@ export default function OcrScanPage() {
         if (formHash) {
           const sHash = formHash?.toLowerCase().trim() || "";
           
-          results = results.filter((m: any) => {
+          results = results.filter((m: { certificate?: { dataHash?: string | null } | null }) => {
             const mHash = (m.certificate?.dataHash || "").toLowerCase();
             
             // Match Hash if provided (exact or includes 16 chars)

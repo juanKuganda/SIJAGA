@@ -94,14 +94,18 @@ export async function GET(request: NextRequest) {
     }
 
     // Cek Autentikasi untuk menentukan level akses PII
-    const authUser = await getAuthUser();
+    const authUser = await getAuthUser(request);
     const isOwner = authUser?.userId === userWithWallet.userId;
     const isAdmin = authUser?.role === "ADMIN";
     const canSeePII = isOwner || isAdmin;
 
-    // Cari certificate
-    const certificate = await prisma.certificate.findUnique({
+    // Cari certificate (ambil yang aktif atau terbaru)
+    const certificate = await prisma.certificate.findFirst({
       where: { userId: userWithWallet.userId },
+      orderBy: [
+        { status: "asc" },
+        { createdAt: "desc" },
+      ],
     });
 
     // ═══════════════════════════════════════════════════════════

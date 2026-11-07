@@ -18,14 +18,14 @@ interface Wallet {
 interface PhantomProvider {
   isPhantom?: boolean;
   connect: () => Promise<{ publicKey: { toString: () => string } }>;
-  signTransaction: (tx: any) => Promise<any>;
+  signTransaction: <T>(tx: T) => Promise<T>;
   signMessage: (msg: Uint8Array) => Promise<{ signature: Uint8Array }>;
 }
 
 interface SolflareProvider {
   isSolflare?: boolean;
   connect: () => Promise<{ publicKey: { toString: () => string } }>;
-  signTransaction: (tx: any) => Promise<any>;
+  signTransaction: <T>(tx: T) => Promise<T>;
   signMessage: (msg: Uint8Array) => Promise<{ signature: Uint8Array }>;
 }
 
@@ -259,8 +259,8 @@ export default function WalletPage() {
               
                     setSuccess("Wallet berhasil dihubungkan! Menunggu verifikasi admin.");
                     setWallet(data.wallet);
-                  } catch (err: any) {
-                    setError(err.message || "Terjadi kesalahan saat menghubungkan wallet.");
+                  } catch (err: unknown) {
+                    setError(err instanceof Error ? err.message : "Terjadi kesalahan saat menghubungkan wallet.");
                   } finally {
                     setSubmitting(false);
                   }

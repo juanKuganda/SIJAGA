@@ -14,7 +14,7 @@ import { getAuthUser } from "@/lib/auth";
  */
 export async function POST(request: NextRequest) {
   try {
-    const payload = await getAuthUser();
+    const payload = await getAuthUser(request);
     if (!payload || payload.role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized - hanya admin" }, { status: 401 });
     }
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
       // 2. Hapus dataSalt dari Certificate (hash di IPFS tetap ada tapi tidak berguna tanpa salt)
       ...(user.certificate
         ? [
-            prisma.certificate.update({
+            prisma.certificate.updateMany({
               where: { userId },
               data: { dataSalt: null },
             }),
