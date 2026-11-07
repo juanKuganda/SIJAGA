@@ -1,0 +1,2 @@
+operation,trialIndex,attempt,status,elapsedSeconds,onchainElapsedSeconds,ipfsElapsedSeconds,feeLamports,rentDepositLamports,slot,txSignature,errorCode,wallClockTime,date
+MINT,1,1,SUCCESS,14.886,4.045,9.212,10000,3252600,519688688,5rjbPFnRkDMpGZUqidjpJbzQrWYQLJWtdaeNrLhPqM9jNZS9UGs8kkvhSGVxqiF4LDgttvgvUo4JAnAzUXxJqGcA,,22.23.06,2026-11-07
