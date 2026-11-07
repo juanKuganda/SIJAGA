@@ -131,6 +131,17 @@ export function getAdminKeypair(): Keypair {
 }
 
 /**
+ * Dapatkan alamat publik wallet admin institusi.
+ * Mengutamakan ADMIN_WALLET_ADDRESS jika diset, atau menurunkan langsung dari ADMIN_WALLET_PRIVATE_KEY.
+ */
+export function getAdminWalletAddress(): string {
+  if (process.env.ADMIN_WALLET_ADDRESS) {
+    return process.env.ADMIN_WALLET_ADDRESS;
+  }
+  return getAdminKeypair().publicKey.toBase58();
+}
+
+/**
  * Pre-generate mint signer keypair.
  * Panggil SEBELUM upsert ke DB agar nftAddress bisa disimpan
  * sebelum TX dikirim ke Solana.

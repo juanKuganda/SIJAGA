@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { Connection, clusterApiUrl, PublicKey } from "@solana/web3.js";
 import { actionJson, actionOptions, appUrl } from "@/lib/solana-actions";
 import { prisma } from "@/lib/prisma";
+import { getAdminWalletAddress } from "@/lib/metaplex";
 
 export const OPTIONS = actionOptions;
 
@@ -19,11 +20,14 @@ export async function POST(request: NextRequest) {
 
   if (!nim) return actionError("NIM tidak ditemukan");
 
-  // Blink client mengirim: { signature, account }
+  // Blink client mengirim: { signature }
   const body = await request.json();
-  const { signature, account } = body;
+  const { signature } = body;
 
   if (!signature) return actionError("Transaction signature tidak ditemukan");
+
+  // Fee payer check: log if not admin
+  const adminAddress = getAdminWalletAddress();
 
   // VERIFIKASI: cek transaksi benar-benar ada di blockchain
   const rpcUrl = process.env.SOLANA_RPC_URL || clusterApiUrl("devnet");
@@ -63,23 +67,30 @@ export async function POST(request: NextRequest) {
       return actionError("Transaksi gagal di blockchain", 400);
     }
 
-    // 3. Validasi signer = wallet terdaftar user
+    // 3. Validasi signer:
+    // Sesuai DG-1 Opsi A, fee payer (kunci akun 0) adalah admin (institusi sponsor).
+    // Mahasiswa menandatangani transaksi sebagai signer kedua (yang mengotorisasi Memo).
+    const accountKeys = txInfo.transaction.message.getAccountKeys();
+    const feePayer = accountKeys.get(0)?.toBase58();
+    if (feePayer !== adminAddress) {
+      console.warn("[ClaimCallback] Fee payer is different from configured admin address:", feePayer);
+    }
+
+    const numRequiredSignatures = txInfo.transaction.message.header.numRequiredSignatures;
+    const allSigners: string[] = [];
+
+    for (let i = 0; i < numRequiredSignatures && i < accountKeys.length; i++) {
+      const pubkey = accountKeys.get(i)?.toBase58();
+      if (pubkey) allSigners.push(pubkey);
+    }
+
     if (user.wallet?.walletAddress) {
-      const accountKeys = txInfo.transaction.message.getAccountKeys();
-      const signers: string[] = [];
+      const studentWallet = user.wallet.walletAddress;
+      const studentIsSigner = allSigners.includes(studentWallet);
 
-      // First account is always fee payer/signer in a transaction
-      if (accountKeys.length > 0) {
-        signers.push(accountKeys.get(0)?.toBase58() || "");
-      }
-
-      const walletIsSigner = signers.some(
-        (s) => s === user.wallet?.walletAddress
-      );
-
-      if (!walletIsSigner) {
+      if (!studentIsSigner) {
         return actionError(
-          "Fee payer/signer bukan wallet terdaftar mahasiswa",
+          "Signer transaksi bukan wallet terdaftar mahasiswa",
           403
         );
       }
@@ -93,8 +104,6 @@ export async function POST(request: NextRequest) {
       "compiledInstructions" in txInfo.transaction.message
         ? (txInfo.transaction.message as { compiledInstructions: Array<{ programIdIndex: number; data: Uint8Array }> }).compiledInstructions
         : null;
-
-    const accountKeys = txInfo.transaction.message.getAccountKeys();
 
     if (compiledInstructions) {
       for (const ix of compiledInstructions) {

@@ -1,0 +1,55 @@
+{
+  "project": "SIJAGA Bab 4 Experiments",
+  "branch": "feat/bab4-experiments",
+  "baseBranch": "main",
+  "baseCommit": "3fe64f0744e8c5a4638a2bcb4fbe736cf247a0c0",
+  "baseCommitDescription": "Merge pull request #18 from juanKuganda/dev",
+  "decisionGates": {
+    "DG-1": "OPTION_A_OWNER_APPROVED",
+    "DG-1_notes": "Opsi A DISETUJUI pemilik (7 Nov 2026). Institusi mensponsori fee transaksi klaim (admin sebagai feePayer dengan partial signing). Mahasiswa tidak butuh saldo SOL. Biaya dicatat terpisah.",
+    "DG-2": "AUTHOR_PROPOSAL",
+    "DG-2_notes": "BELUM dikonfirmasi pembimbing. Pertemuan dengan pembimbing Senin 9 Nov 2026. Bekerja dengan ambang batas Tabel 3.5 sebagai working criteria dan status dicatat secara jujur sebagai AUTHOR_PROPOSAL."
+  },
+  "currentPhase": "PHASE_1",
+  "currentTask": "P1.1",
+  "completedTasks": [
+    "P0.0_SETUP_TRACKER",
+    "P0.1_CHALLENGE_ENDPOINT",
+    "P0.2_ISSUER_CHECK",
+    "P0.3_REISSUE_ENDPOINT",
+    "P0.4_CLAIM_FEE_SPONSORSHIP",
+    "P0.5_VERIFY_DELETE_PII_SALT",
+    "P0.6_VERIFY_ENV_AND_BUILD"
+  ],
+  "taskQueue": [
+    "P1.1_BENCHMARK_SUITE_SETUP",
+    "P1.2_TRANSACTION_RECEIPT_LOGGER",
+    "P1.3_RETRY_POLICY_IMPLEMENTATION",
+    "P1.4_MEASUREMENT_PLAN_PREPARATION",
+    "P2.1_PERFORMANCE_EXPERIMENT",
+    "P2.2_NEGATIVE_TESTS",
+    "P2.3_CHALLENGE_TESTS",
+    "P2.4_VALIDITY_TESTS",
+    "P2.5_PRIVACY_TESTS",
+    "P2.6_DEMONSTRATION_TRACE",
+    "P3.1_PER_OPERATION_STATS",
+    "P3.2_THRESHOLD_COMPARISON",
+    "P3.3_TC_RESULTS_TABLE",
+    "P3.4_COST_PROJECTION",
+    "P3.5_PRIVACY_FINDINGS_LIMITATIONS",
+    "P3.6_GENERATE_BAB4_RESULTS_DOC"
+  ],
+  "nextAction": "P1.1: Bangun measurement harness di scripts/benchmark/ (common.ts receipt logger, bench-mint, bench-revoke, bench-verify, bench-negative, test-tc)",
+  "environment": {
+    "nodeVersion": "v25.7.0",
+    "solanaCluster": "devnet",
+    "solanaCoreVersion": "4.4.1",
+    "rpcHost": "devnet.helius-rpc.com",
+    "adminKeypairSource": "Diturunkan dari ADMIN_WALLET_PRIVATE_KEY di .env.local",
+    "adminPublicKey": "Bat5VTbjGqsThS5oERuXVi7d2JY2TBNomJD2ZciaztaQ",
+    "adminBalanceSOL": 9.587,
+    "directEd25519Dependency": "tweetnacl@^1.0.3",
+    "buildStatus": "PASSED"
+  },
+  "lastUpdated": "2026-11-07T21:00:00+08:00"
+}

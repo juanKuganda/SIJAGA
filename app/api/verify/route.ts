@@ -4,6 +4,7 @@ import { verifySchema } from "@/lib/validation";
 import { verifyDataHash } from "@/lib/crypto";
 import { getAuthUser } from "@/lib/auth";
 import { inspectCertificate } from "@/lib/onchain";
+import { getAdminWalletAddress } from "@/lib/metaplex";
 
 /**
  * GET /api/verify — Verifikasi publik ijazah (3 lapisan)
@@ -228,6 +229,19 @@ export async function GET(request: NextRequest) {
 
     // ─── On-chain checks ──────────────────────────────────────
 
+    // Check 3b: updateAuthority on-chain === admin wallet address (TC-07a)
+    let expectedAdminAddress = "";
+    try {
+      expectedAdminAddress = getAdminWalletAddress();
+    } catch {
+      expectedAdminAddress = process.env.ADMIN_WALLET_ADDRESS || "";
+    }
+    const issuerMatch = Boolean(
+      expectedAdminAddress &&
+      inspection.updateAuthority &&
+      inspection.updateAuthority === expectedAdminAddress
+    );
+
     // Check 4: dataHash on-chain === dataHash DB
     const hashMatch =
       inspection.dataHash !== null &&
@@ -248,8 +262,10 @@ export async function GET(request: NextRequest) {
 
     // ─── Determine mismatch ───────────────────────────────────
 
-    let mismatch: string | null = null;
-    if (inspection.dataHash === null) {
+    let mismatch: "ISSUER" | "HASH" | "OWNER" | "FROZEN" | "STATUS" | null = null;
+    if (expectedAdminAddress && !issuerMatch) {
+      mismatch = "ISSUER";
+    } else if (inspection.dataHash === null) {
       mismatch = "HASH";
     } else if (!hashMatch) {
       mismatch = "HASH";
@@ -263,10 +279,8 @@ export async function GET(request: NextRequest) {
 
     // ─── Final decision ───────────────────────────────────────
 
-    // ─── Final decision ───────────────────────────────────────
-
     const onChainValid =
-      hashMatch && ownerMatch && frozenCheck && nameConsistent;
+      issuerMatch && hashMatch && ownerMatch && frozenCheck && nameConsistent;
 
     const verifiedOnChain = !!onChainValid;
     const verifiedNominative = !piiDeleted && hashVerified === true;

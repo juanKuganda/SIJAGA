@@ -3,6 +3,7 @@ import { actionJson, actionOptions, appUrl } from "@/lib/solana-actions";
 import { actionError } from "@/lib/actions-cors";
 import { prisma } from "@/lib/prisma";
 import { inspectCertificate } from "@/lib/onchain";
+import { getAdminWalletAddress } from "@/lib/metaplex";
 
 export async function OPTIONS() {
   return actionOptions();
@@ -98,6 +99,18 @@ export async function GET(request: NextRequest) {
     const inspection = await inspectCertificate(cert.nftAddress);
 
     if (inspection.ok) {
+      let expectedAdminAddress = "";
+      try {
+        expectedAdminAddress = getAdminWalletAddress();
+      } catch {
+        expectedAdminAddress = process.env.ADMIN_WALLET_ADDRESS || "";
+      }
+      const issuerMatch = Boolean(
+        expectedAdminAddress &&
+        inspection.updateAuthority &&
+        inspection.updateAuthority === expectedAdminAddress
+      );
+
       const hashMatch =
         inspection.dataHash !== null &&
         cert.dataHash !== null &&
@@ -111,7 +124,10 @@ export async function GET(request: NextRequest) {
       const nameShowsRevoked = inspection.name.includes("[DIBATALKAN]");
       const nameConsistent = !nameShowsRevoked;
 
-      if (!nameConsistent) {
+      if (!issuerMatch) {
+        onChainLabel = "❌ Penerbit tidak valid (bukan institusi)";
+        onChainValid = false;
+      } else if (!nameConsistent) {
         onChainLabel = "❌ Dicabut di blockchain";
         onChainValid = false;
       } else if (!frozenCheck) {

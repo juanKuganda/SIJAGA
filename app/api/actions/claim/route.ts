@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { actionJson, actionOptions, appUrl } from "@/lib/solana-actions";
 import { prisma } from "@/lib/prisma";
+import { getAdminKeypair } from "@/lib/metaplex";
 import {
   Connection,
   PublicKey,
@@ -157,16 +158,18 @@ export async function POST(request: NextRequest) {
   }
 
   // Buat transaksi Memo sebagai bukti klaim
+  // SPONSORSHIP (DG-1 Opsi A): Institusi (admin) menjadi feePayer sehingga mahasiswa tidak perlu saldo SOL
+  const adminKeypair = getAdminKeypair();
   const rpcUrl = process.env.SOLANA_RPC_URL || clusterApiUrl("devnet");
   const connection = new Connection(rpcUrl, "confirmed");
   const { blockhash } = await connection.getLatestBlockhash("finalized");
 
   const transaction = new Transaction({
-    feePayer: walletPublicKey,
+    feePayer: adminKeypair.publicKey,
     recentBlockhash: blockhash,
   });
 
-  // Tambah Memo instruction sebagai bukti on-chain
+  // Tambah Memo instruction sebagai bukti on-chain yang diotorisasi wallet mahasiswa
   // PRIVACY: Jangan taruh dataHash di plaintext memo
   const memoMessage = JSON.stringify({
     type: "SIJAGA_CLAIM",
@@ -178,7 +181,10 @@ export async function POST(request: NextRequest) {
     createMemoInstruction(memoMessage, [walletPublicKey])
   );
 
-  // Serialize transaksi ke base64 (belum signed)
+  // Admin melakukan partial sign sebagai sponsor feePayer
+  transaction.partialSign(adminKeypair);
+
+  // Serialize transaksi ke base64 (akan ditandatangani wallet mahasiswa berikutnya)
   const serializedTransaction = transaction
     .serialize({ requireAllSignatures: false })
     .toString("base64");

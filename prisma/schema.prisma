@@ -76,6 +76,10 @@ model Certificate {
   onChainCheckedAt DateTime?   // kapan terakhir dicek on-chain
   onChainError     String?     // alasan gagal sync (revoke gagal, RPC down)
 
+  // Re-issuance audit trail (P0.3 - TC-09)
+  replacedById     String?
+  replacedAt       DateTime?
+
   user           User        @relation(fields: [userId], references: [id])
 
   @@index([dataHash])
@@ -125,3 +129,17 @@ enum CertStatus {
   CLAIMED
   REVOKED
 }
+
+model VerificationNonce {
+  id            String    @id @default(cuid())
+  nonce         String    @unique
+  walletAddress String
+  message       String
+  expiresAt     DateTime
+  usedAt        DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@index([walletAddress])
+  @@index([nonce])
+}
+
