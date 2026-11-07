@@ -1,0 +1,166 @@
+diff -u -r a/scripts/benchmark/bench-mint.ts b/scripts/benchmark/bench-mint.ts
+--- a/scripts/benchmark/bench-mint.ts	2026-11-07 23:22:26.587660337 +0800
++++ b/scripts/benchmark/bench-mint.ts	2026-11-07 23:22:26.590681207 +0800
+@@ -15,6 +15,7 @@
+   ensureRunMetadata,
+   getRpcDetails,
+   executeWithProposalRetry,
++  getTransactionWithRetry,
+   TransactionReceipt,
+ } from "./common";
+ 
+@@ -107,10 +108,7 @@
+           let rentDepositLamports: number | null = null;
+ 
+           try {
+-            const txInfo = await connection.getTransaction(mintRes.signature, {
+-              commitment: "confirmed",
+-              maxSupportedTransactionVersion: 0,
+-            });
++            const txInfo = await getTransactionWithRetry(connection, mintRes.signature, 3, 500);
+             if (txInfo) {
+               feeLamports = txInfo.meta?.fee ?? null;
+               slot = txInfo.slot;
+@@ -123,10 +121,17 @@
+             }
+ 
+             if (rentDepositLamports === null && mintRes.mintAddress) {
+-              rentDepositLamports = await connection.getBalance(
+-                new PublicKey(mintRes.mintAddress),
+-                "confirmed"
+-              );
++              for (let bAttempt = 1; bAttempt <= 3; bAttempt++) {
++                try {
++                  rentDepositLamports = await connection.getBalance(
++                    new PublicKey(mintRes.mintAddress),
++                    "confirmed"
++                  );
++                  if (rentDepositLamports !== null) break;
++                } catch {
++                  if (bAttempt < 3) await new Promise((r) => setTimeout(r, 500 * bAttempt));
++                }
++              }
+             }
+           } catch (err) {
+             console.warn(`[Trial ${i}] Could not fetch txInfo for fee:`, err);
+diff -u -r a/scripts/benchmark/bench-revoke.ts b/scripts/benchmark/bench-revoke.ts
+--- a/scripts/benchmark/bench-revoke.ts	2026-11-07 23:22:26.588944294 +0800
++++ b/scripts/benchmark/bench-revoke.ts	2026-11-07 23:22:26.591111256 +0800
+@@ -16,6 +16,7 @@
+   ensureRunMetadata,
+   getRpcDetails,
+   executeWithProposalRetry,
++  getTransactionWithRetry,
+   TransactionReceipt,
+ } from "./common";
+ 
+@@ -116,10 +117,7 @@
+           let slot: number | null = null;
+ 
+           try {
+-            const txInfo = await connection.getTransaction(revokeRes.signature, {
+-              commitment: "confirmed",
+-              maxSupportedTransactionVersion: 0,
+-            });
++            const txInfo = await getTransactionWithRetry(connection, revokeRes.signature, 3, 500);
+             if (txInfo) {
+               feeLamports = txInfo.meta?.fee ?? null;
+               slot = txInfo.slot;
+diff -u -r a/scripts/benchmark/common.ts b/scripts/benchmark/common.ts
+--- a/scripts/benchmark/common.ts	2026-11-07 23:22:26.586629969 +0800
++++ b/scripts/benchmark/common.ts	2026-11-07 23:22:26.590135663 +0800
+@@ -194,6 +194,7 @@
+     cause?: { message?: unknown; code?: unknown };
+     name?: unknown;
+     code?: unknown;
++    logs?: unknown;
+   };
+ 
+   const msg = typeof errObj?.message === "string" ? errObj.message.toLowerCase() : String(error).toLowerCase();
+@@ -201,21 +202,22 @@
+   const causeCode = typeof errObj?.cause?.code === "string" ? errObj.cause.code.toLowerCase() : "";
+   const name = typeof errObj?.name === "string" ? errObj.name.toLowerCase() : "";
+   const code = typeof errObj?.code === "string" ? errObj.code.toLowerCase() : "";
++  const logs = Array.isArray(errObj?.logs) ? errObj.logs.join(" ").toLowerCase() : "";
+ 
+-  // Guard: Deterministic contract rejections must NEVER be classified as network errors
++  const combined = `${msg} ${causeMsg} ${causeCode} ${name} ${code} ${logs}`;
++
++  // Guard: Deterministic contract rejections must NEVER be classified as network errors (check full combined context)
+   if (
+-    msg.includes("frozen") ||
+-    msg.includes("permanentfreeze") ||
+-    msg.includes("custom program error") ||
+-    msg.includes("instructionerror") ||
+-    msg.includes("unauthorized") ||
+-    msg.includes("signature verification failed")
++    combined.includes("frozen") ||
++    combined.includes("permanentfreeze") ||
++    combined.includes("custom program error") ||
++    combined.includes("instructionerror") ||
++    combined.includes("unauthorized") ||
++    combined.includes("signature verification failed")
+   ) {
+     return false;
+   }
+ 
+-  const combined = `${msg} ${causeMsg} ${causeCode} ${name} ${code}`;
+-
+   return (
+     combined.includes("fetch failed") ||
+     combined.includes("timeout") ||
+@@ -231,6 +233,12 @@
+     combined.includes("429") ||
+     combined.includes("too many requests") ||
+     combined.includes("rate limit") ||
++    combined.includes("502") ||
++    combined.includes("503") ||
++    combined.includes("504") ||
++    combined.includes("bad gateway") ||
++    combined.includes("service unavailable") ||
++    combined.includes("gateway time") ||
+     combined.includes("transactionexpired") ||
+     combined.includes("node is behind")
+   );
+@@ -354,3 +362,41 @@
+ 
+   throw new Error(`Exhausted 2 attempts for ${operationName} trial ${trialIndex}`);
+ }
++
++
++/**
++ * Helper untuk mengambil parsed transaction info dengan retry (default 3 attempts, backoff 500ms * attempt)
++ * untuk mengatasi RPC indexing latency dan transient network blips saat pengayaan receipt transaksi.
++ */
++export async function getTransactionWithRetry(
++  connection: Connection,
++  signature: string,
++  maxAttempts: number = 3,
++  delayMs: number = 500
++) {
++  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
++    try {
++      const txInfo = await connection.getTransaction(signature, {
++        commitment: "confirmed",
++        maxSupportedTransactionVersion: 0,
++      });
++      if (txInfo) {
++        return txInfo;
++      }
++    } catch (err) {
++      if (attempt === maxAttempts) {
++        console.warn(
++          `[Receipt Enrichment] Failed to fetch transaction ${signature} after ${maxAttempts} attempts:`,
++          err instanceof Error ? err.message : err
++        );
++        return null;
++      }
++    }
++
++    if (attempt < maxAttempts) {
++      await new Promise((resolve) => setTimeout(resolve, delayMs * attempt));
++    }
++  }
++
++  return null;
++}

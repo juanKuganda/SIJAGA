@@ -16,6 +16,7 @@ import {
   ensureRunMetadata,
   getRpcDetails,
   executeWithProposalRetry,
+  getTransactionWithRetry,
   TransactionReceipt,
 } from "./common";
 
@@ -116,10 +117,7 @@ async function runBenchRevoke() {
           let slot: number | null = null;
 
           try {
-            const txInfo = await connection.getTransaction(revokeRes.signature, {
-              commitment: "confirmed",
-              maxSupportedTransactionVersion: 0,
-            });
+            const txInfo = await getTransactionWithRetry(connection, revokeRes.signature, 3, 500);
             if (txInfo) {
               feeLamports = txInfo.meta?.fee ?? null;
               slot = txInfo.slot;
@@ -166,8 +164,12 @@ async function runBenchRevoke() {
   console.log(`=======================================================\n`);
 }
 
-runBenchRevoke().catch((e) => {
-  console.error("Bench-revoke error:", e);
-  process.exit(1);
-});
+runBenchRevoke()
+  .then(() => {
+    process.exit(0);
+  })
+  .catch((e) => {
+    console.error("Bench-revoke error:", e);
+    process.exit(1);
+  });
 

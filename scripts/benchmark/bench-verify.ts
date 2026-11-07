@@ -148,8 +148,12 @@ async function runBenchVerify() {
   console.log(`=======================================================\n`);
 }
 
-runBenchVerify().catch((e) => {
-  console.error("Bench-verify error:", e);
-  process.exit(1);
-});
+runBenchVerify()
+  .then(() => {
+    process.exit(0);
+  })
+  .catch((e) => {
+    console.error("Bench-verify error:", e);
+    process.exit(1);
+  });
 

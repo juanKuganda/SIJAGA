@@ -240,7 +240,11 @@ async function runBenchNegative() {
   console.log(`=======================================================\n`);
 }
 
-runBenchNegative().catch((err) => {
-  console.error("Bench-negative error:", err);
-  process.exit(1);
-});
+runBenchNegative()
+  .then(() => {
+    process.exit(0);
+  })
+  .catch((err) => {
+    console.error("Bench-negative error:", err);
+    process.exit(1);
+  });

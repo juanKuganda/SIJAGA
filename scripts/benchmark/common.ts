@@ -194,6 +194,7 @@ export function isNetworkError(error: unknown): boolean {
     cause?: { message?: unknown; code?: unknown };
     name?: unknown;
     code?: unknown;
+    logs?: unknown;
   };
 
   const msg = typeof errObj?.message === "string" ? errObj.message.toLowerCase() : String(error).toLowerCase();
@@ -201,20 +202,21 @@ export function isNetworkError(error: unknown): boolean {
   const causeCode = typeof errObj?.cause?.code === "string" ? errObj.cause.code.toLowerCase() : "";
   const name = typeof errObj?.name === "string" ? errObj.name.toLowerCase() : "";
   const code = typeof errObj?.code === "string" ? errObj.code.toLowerCase() : "";
+  const logs = Array.isArray(errObj?.logs) ? errObj.logs.join(" ").toLowerCase() : "";
 
-  // Guard: Deterministic contract rejections must NEVER be classified as network errors
+  const combined = `${msg} ${causeMsg} ${causeCode} ${name} ${code} ${logs}`;
+
+  // Guard: Deterministic contract rejections must NEVER be classified as network errors (check full combined context)
   if (
-    msg.includes("frozen") ||
-    msg.includes("permanentfreeze") ||
-    msg.includes("custom program error") ||
-    msg.includes("instructionerror") ||
-    msg.includes("unauthorized") ||
-    msg.includes("signature verification failed")
+    combined.includes("frozen") ||
+    combined.includes("permanentfreeze") ||
+    combined.includes("custom program error") ||
+    combined.includes("instructionerror") ||
+    combined.includes("unauthorized") ||
+    combined.includes("signature verification failed")
   ) {
     return false;
   }
-
-  const combined = `${msg} ${causeMsg} ${causeCode} ${name} ${code}`;
 
   return (
     combined.includes("fetch failed") ||
@@ -231,6 +233,12 @@ export function isNetworkError(error: unknown): boolean {
     combined.includes("429") ||
     combined.includes("too many requests") ||
     combined.includes("rate limit") ||
+    combined.includes("502") ||
+    combined.includes("503") ||
+    combined.includes("504") ||
+    combined.includes("bad gateway") ||
+    combined.includes("service unavailable") ||
+    combined.includes("gateway time") ||
     combined.includes("transactionexpired") ||
     combined.includes("node is behind")
   );
@@ -353,4 +361,42 @@ export async function executeWithProposalRetry<T>(params: {
   }
 
   throw new Error(`Exhausted 2 attempts for ${operationName} trial ${trialIndex}`);
+}
+
+
+/**
+ * Helper untuk mengambil parsed transaction info dengan retry (default 3 attempts, backoff 500ms * attempt)
+ * untuk mengatasi RPC indexing latency dan transient network blips saat pengayaan receipt transaksi.
+ */
+export async function getTransactionWithRetry(
+  connection: Connection,
+  signature: string,
+  maxAttempts: number = 3,
+  delayMs: number = 500
+) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const txInfo = await connection.getTransaction(signature, {
+        commitment: "confirmed",
+        maxSupportedTransactionVersion: 0,
+      });
+      if (txInfo) {
+        return txInfo;
+      }
+    } catch (err) {
+      if (attempt === maxAttempts) {
+        console.warn(
+          `[Receipt Enrichment] Failed to fetch transaction ${signature} after ${maxAttempts} attempts:`,
+          err instanceof Error ? err.message : err
+        );
+        return null;
+      }
+    }
+
+    if (attempt < maxAttempts) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs * attempt));
+    }
+  }
+
+  return null;
 }

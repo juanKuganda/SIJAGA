@@ -57,13 +57,22 @@
 
 ---
 
-### Fase 1 — Pembuatan Measurement Harness — [CURRENT PHASE]
-- [ ] **P1.1: Pembuatan Direktori & Modul `scripts/benchmark/`**
-- [ ] **P1.2: Pencatatan Transaksi Lengkap (Receipt Logger JSONL & CSV)**
-- [ ] **P1.3: Penerapan Retry Policy Maks 2 Kali (Error Jaringan)**
-- [ ] **P1.4: Jadwal Pengukuran $n=30$ Tersebar Waktu**
+### Fase 1 — Pembuatan Measurement Harness — [SELESAI 100%]
+- [x] **P1.1: Pembuatan Direktori & Modul `scripts/benchmark/`**
+  - Seluruh modul pengujian tersedia: `common.ts`, `bench-mint.ts`, `bench-revoke.ts`, `bench-verify.ts`, `bench-negative.ts`, `test-tc.ts`.
+  - Semua 14 error TypeScript berhasil diatasi (`asset: asset.publicKey`, `updatePlugin`, penyempitan discriminated union `ChallengeVerificationResult`).
+  - Pembersihan ESLint tuntas; `npx tsc --noEmit`, `npm run lint`, dan `npm run build` lulus 100% dengan exit code 0.
+- [x] **P1.2: Pencatatan Transaksi Lengkap (Receipt Logger JSONL & CSV)**
+  - `recordReceipt()` mencatat 19 field mandat P1.2 secara dual-stream ke `experiments/<YYYY-MM-DD>/run-<op>.jsonl` dan `summary-<op>.csv`.
+  - Snapshot harian `run-metadata.json` menyimpan provider RPC, host, cluster version, dan versi software.
+- [x] **P1.3: Penerapan Retry Policy Maks 2 Kali (Error Jaringan)**
+  - `executeWithProposalRetry()` menerapkan batas maksimal 2 attempts secara ketat hanya untuk error jaringan transient (bukan error deterministik/program).
+  - Attempt 1 failure dan Attempt 2 retry tercatat terpisah pada receipt untuk kalkulasi laju sukses 1-attempt dan 2-attempt.
+- [x] **P1.4: Jadwal Pengukuran $n=30$ Tersebar Waktu**
+  - Rencana pengukuran 30 trial per operasi didokumentasikan di `scripts/benchmark/README.md` dengan matriks 4 batch waktu berbeda (WITA / UTC) untuk menangkap variabilitas jaringan.
+  - Smoke test Devnet berhasil dieksekusi dengan receipt terverifikasi (Mint: `CLmHhVKTM5QeonTwWFCKA9h2phgfacLYb4J4ZbAMFohR`, Tx: `aacAZgh2DPYjM3Ce1dJfvq2MzwDNpXSR3Nkx2a3xrDPbi1TmKzMJjwR2Tt26yHJ9AYhnG9JGzVuin786LdSWqGC`).
 
-### Fase 2 — Eksekusi 14 Test Case & Pengujian Performa
+### Fase 2 — Eksekusi 14 Test Case & Pengujian Performa — [CURRENT PHASE]
 - [ ] **P2.1: Performance Experiment (Mint, Revoke, Verify $n=30$)**
 - [ ] **P2.2: Negative Tests (TC-02, TC-03, TC-04, TC-13 via raw Metaplex Core instructions)**
 - [ ] **P2.3: Challenge Tests (TC-05, TC-06)**
@@ -87,3 +96,11 @@
 - **7 Nov 2026:** Koreksi DG-1 (`OPTION_A_OWNER_APPROVED`) dan DG-2 (`AUTHOR_PROPOSAL`) diterapkan.
 - **7 Nov 2026:** Implementasi P0.1 (challenge endpoint), P0.2 (ISSUER check), P0.3 (reissue endpoint), P0.4 (claim sponsorship), P0.5 (delete-pii salt).
 - **7 Nov 2026:** `npm run build` sukses 100% tanpa error. Fase 0 selesai tuntas.
+- **7 Nov 2026:** Fase 1 selesai 100%: 14 error TypeScript diatasi, receipt logger ganda JSONL/CSV & metadata klaster selesai, retry policy P1.3 diterapkan, jadwal time-spread P1.4 didokumentasikan di `scripts/benchmark/README.md`. `npx tsc --noEmit`, `npm run lint`, `npm run build`, dan smoke test Devnet lulus 100%.
+- **7 Nov 2026 (Gate 1 Iteration 2 Hardening):** Perbaikan ketahanan harness diterapkan dan diverifikasi:
+  - `isNetworkError` diperbarui dengan evaluasi simetris pada seluruh konteks (`msg`, `cause`, `code`, `logs`) sehingga error deterministik kontrak (frozen, custom program error) tidak pernah di-retry secara keliru.
+  - Dukungan eksplisit kode transient gateway (HTTP 502, 503, 504, bad gateway, gateway timeout) ditambahkan ke `isNetworkError`.
+  - Modul `getTransactionWithRetry` ditambahkan pada `scripts/benchmark/common.ts` dengan retry ber-backoff untuk mengatasi indexing latency RPC Devnet.
+  - `bench-mint.ts` dan `bench-revoke.ts` diperkaya dengan `getTransactionWithRetry`; smoke test Devnet mengonfirmasi `slot`, `feeLamports`, dan `rentDepositLamports` terisi lengkap 100% tanpa nilai null.
+  - Validasi ketat: Adversarial classification test 15/15 PASS, `npx tsc --noEmit` exit 0, `npm run lint` exit 0, `npm run build` exit 0.
+

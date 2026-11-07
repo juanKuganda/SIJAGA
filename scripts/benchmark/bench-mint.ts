@@ -15,6 +15,7 @@ import {
   ensureRunMetadata,
   getRpcDetails,
   executeWithProposalRetry,
+  getTransactionWithRetry,
   TransactionReceipt,
 } from "./common";
 
@@ -107,10 +108,7 @@ async function runBenchMint() {
           let rentDepositLamports: number | null = null;
 
           try {
-            const txInfo = await connection.getTransaction(mintRes.signature, {
-              commitment: "confirmed",
-              maxSupportedTransactionVersion: 0,
-            });
+            const txInfo = await getTransactionWithRetry(connection, mintRes.signature, 3, 500);
             if (txInfo) {
               feeLamports = txInfo.meta?.fee ?? null;
               slot = txInfo.slot;
@@ -123,10 +121,17 @@ async function runBenchMint() {
             }
 
             if (rentDepositLamports === null && mintRes.mintAddress) {
-              rentDepositLamports = await connection.getBalance(
-                new PublicKey(mintRes.mintAddress),
-                "confirmed"
-              );
+              for (let bAttempt = 1; bAttempt <= 3; bAttempt++) {
+                try {
+                  rentDepositLamports = await connection.getBalance(
+                    new PublicKey(mintRes.mintAddress),
+                    "confirmed"
+                  );
+                  if (rentDepositLamports !== null) break;
+                } catch {
+                  if (bAttempt < 3) await new Promise((r) => setTimeout(r, 500 * bAttempt));
+                }
+              }
             }
           } catch (err) {
             console.warn(`[Trial ${i}] Could not fetch txInfo for fee:`, err);
@@ -181,8 +186,12 @@ async function runBenchMint() {
   console.log(`=======================================================\n`);
 }
 
-runBenchMint().catch((e) => {
-  console.error("Bench-mint error:", e);
-  process.exit(1);
-});
+runBenchMint()
+  .then(() => {
+    process.exit(0);
+  })
+  .catch((e) => {
+    console.error("Bench-mint error:", e);
+    process.exit(1);
+  });
 

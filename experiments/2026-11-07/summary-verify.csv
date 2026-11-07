@@ -1,0 +1,2 @@
+operation,trialIndex,attempt,status,elapsedSeconds,onchainElapsedSeconds,ipfsElapsedSeconds,feeLamports,rentDepositLamports,slot,txSignature,errorCode,wallClockTime,date
+VERIFY,1,1,SUCCESS,16.293,,,,,,,,23.02.53,2026-11-07
