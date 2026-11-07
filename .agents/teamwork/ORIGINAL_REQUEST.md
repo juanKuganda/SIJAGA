@@ -41,3 +41,12 @@ All on-chain transactions must run strictly on Solana Devnet using fictitious st
 ### Deliverables and Tracking
 - [ ] `bab4-results.md` is generated with complete statistical summaries, threshold comparisons, cost calculations, and discrepancy log.
 - [ ] `BAB4_PROGRESS.md` and `experiments/CHECKPOINT.json` are fully updated to reflect 100% completion of Phases 1, 2, and 3.
+
+## Follow-up — 2026-11-07T15:52:18Z
+
+User instruction: Please PAUSE / PEND Milestone 2 immediately now that Milestone 1 is complete.
+
+The user states:
+"kalau milestone 1 sudah selesai pending dlu milestone 2 karena kan test ini di pecah dengan 4 jam berbeda"
+
+Please halt/pause the execution of the full Milestone 2 benchmarks ($n=30$ runs and test suite) so that the trials can be scheduled and executed across the 4 different time windows as required by the measurement plan. Await explicit scheduling or instruction before resuming Milestone 2 execution.

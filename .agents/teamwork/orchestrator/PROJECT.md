@@ -27,8 +27,8 @@
 ## Milestones
 | # | Name | Scope | Dependencies | Status |
 |---|------|-------|-------------|--------|
-| M1 | Measurement Harness & Type Fixes | Phase 1 (P1.1 - P1.4), typecheck/lint/build fixes | Phase 0 (Done) | IN_PROGRESS |
-| M2 | Test Cases & Performance Experiments | Phase 2 (P2.1 - P2.6) on Solana Devnet | M1 | PLANNED |
+| M1 | Measurement Harness & Type Fixes | Phase 1 (P1.1 - P1.4), typecheck/lint/build fixes | Phase 0 (Done) | DONE |
+| M2 | Test Cases & Performance Experiments | Phase 2 (P2.1 - P2.6) on Solana Devnet | M1 | PAUSED: PENDING_USER_SCHEDULE (4-time-window split) |
 | M3 | Results Analysis & Documentation | Phase 3 (P3.1 - P3.6), `bab4-results.md`, progress/checkpoint updates | M2 | PLANNED |
 
 ## Interface Contracts

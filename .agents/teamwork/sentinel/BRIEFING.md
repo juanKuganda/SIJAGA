@@ -18,12 +18,12 @@ Conduct task interview, route to orchestrator, and monitor execution to completi
 - n=30 benchmarks and TC-01..TC-14 must be executed and logged
 
 ## User Context
-- **Last user request**: Approved task prompt received for Bab 4 experiments execution.
-- **Pending clarifications**: none
-- **Delivered results**: none
+- **Last user request**: PAUSE / PEND Milestone 2 immediately — tests must be split across 4 distinct time windows.
+- **Pending clarifications**: Awaiting user schedule/instruction for Milestone 2 time windows.
+- **Delivered results**: Milestone 1 complete (0 build/lint/type errors, smoke test verified on Devnet).
 
 ## Project Status
-- **Phase**: in progress
+- **Phase**: paused (Milestone 1 complete; Milestone 2 pended per user directive)
 
 ## Victory Audit Status
 - **Triggered**: no

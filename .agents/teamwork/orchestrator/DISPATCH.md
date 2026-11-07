@@ -42,3 +42,17 @@ All on-chain transactions must run strictly on Solana Devnet using fictitious st
 - [ ] `bab4-results.md` is generated with complete statistical summaries, threshold comparisons, cost calculations, and discrepancy log.
 - [ ] `BAB4_PROGRESS.md` and `experiments/CHECKPOINT.json` are fully updated to reflect 100% completion of Phases 1, 2, and 3.
 
+## 2026-11-07T15:52:30Z
+
+**CRITICAL USER DIRECTIVE**: PAUSE / PEND MILESTONE 2 IMMEDIATELY.
+
+The user has instructed:
+"kalau milestone 1 sudah selesai pending dlu milestone 2 karena kan test ini di pecah dengan 4 jam berbeda"
+
+Directive:
+1. Immediately pause/halt the execution of the full Milestone 2 performance benchmarks ($n=30$ Devnet runs) and test suite. Do NOT run active benchmark loads now.
+2. If any explorer or worker subagents were dispatched for Milestone 2 execution, pause them or instruct them to stand down / hold state.
+3. Keep all artifacts, checkpoints (`experiments/CHECKPOINT.json`), and progress logs intact.
+4. Prepare the 4-time-window scheduling plan as noted in `scripts/benchmark/README.md` and thesis plan, but wait for explicit user scheduling/instruction before running each window.
+5. Confirm once Milestone 2 execution has been paused and the swarm is standing by.
+
