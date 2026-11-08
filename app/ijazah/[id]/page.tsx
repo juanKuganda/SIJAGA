@@ -86,19 +86,33 @@ function extractRawSignature(signedResult: unknown): Uint8Array | null {
     );
   }
 
-  // Base58 encoded signature string
+  // Base58 or Base64 encoded signature string
   if (typeof signedResult === "string") {
     try {
-      return bs58.decode(signedResult);
+      const decoded = bs58.decode(signedResult);
+      if (decoded.length === 64) return decoded;
     } catch {
-      return null;
+      // not valid base58
     }
+    try {
+      const binStr = atob(signedResult);
+      if (binStr.length === 64) {
+        return Uint8Array.from(binStr, (c) => c.charCodeAt(0));
+      }
+    } catch {
+      // not valid base64
+    }
+    return null;
   }
 
-  // Object wrapper { signature: Uint8Array | string | number[] | { data: number[] } }
-  if (typeof signedResult === "object" && "signature" in signedResult) {
-    const s = (signedResult as { signature: unknown }).signature;
-    return extractRawSignature(s);
+  // Object wrapper { signature: ... } or { sig: ... }
+  if (typeof signedResult === "object") {
+    if ("signature" in signedResult) {
+      return extractRawSignature((signedResult as { signature: unknown }).signature);
+    }
+    if ("sig" in signedResult) {
+      return extractRawSignature((signedResult as { sig: unknown }).sig);
+    }
   }
 
   // Node Buffer-like JSON: { type: "Buffer", data: [...] }
@@ -119,13 +133,30 @@ function extractRawSignature(signedResult: unknown): Uint8Array | null {
 }
 
 function isUserRejection(err: unknown): boolean {
-  const e = err as { code?: number; message?: string };
+  if (typeof err === "string") {
+    const lower = err.toLowerCase();
+    return (
+      lower.includes("reject") ||
+      lower.includes("cancel") ||
+      lower.includes("denied") ||
+      lower.includes("declined")
+    );
+  }
+  const e = err as {
+    code?: number | string;
+    message?: string;
+    error?: { code?: number | string; message?: string };
+  };
+  const code = e?.code || e?.error?.code;
+  const msg = (e?.message || e?.error?.message || "").toLowerCase();
   return (
-    e?.code === 4001 ||
-    (typeof e?.message === "string" &&
-      (e.message.toLowerCase().includes("reject") ||
-        e.message.toLowerCase().includes("cancel") ||
-        e.message.toLowerCase().includes("user rejected")))
+    code === 4001 ||
+    code === "4001" ||
+    msg.includes("reject") ||
+    msg.includes("cancel") ||
+    msg.includes("denied") ||
+    msg.includes("declined") ||
+    msg.includes("user rejected")
   );
 }
 
@@ -199,6 +230,12 @@ export default function IjazahPreviewPage({
     const checkWallet = () => {
       const provider = getWalletProvider();
       setNoWallet(!provider);
+      if (provider) {
+        const pk = (provider as unknown as { publicKey?: { toString: () => string } }).publicKey;
+        if (pk) {
+          setConnectedWallet(pk.toString());
+        }
+      }
     };
 
     // Langsung cek
@@ -207,9 +244,29 @@ export default function IjazahPreviewPage({
     // Cek ulang setelah jeda singkat untuk ekstensi yang terinjeksi lambat
     const timer = setTimeout(checkWallet, 600);
     window.addEventListener("solana#initialized", checkWallet, { once: true });
+
+    const handleAccountChange = (pk: { toString: () => string } | null) => {
+      if (pk) {
+        setConnectedWallet(pk.toString());
+      } else {
+        setConnectedWallet(null);
+      }
+      setChallengeStatus("idle");
+      setChallengeData(null);
+      setErrorCode(null);
+      setErrorMessage(null);
+    };
+
+    const prov = getWalletProvider() as unknown as {
+      on?: (event: string, cb: (pk: { toString: () => string } | null) => void) => void;
+      removeListener?: (event: string, cb: (pk: { toString: () => string } | null) => void) => void;
+    };
+    prov?.on?.("accountChanged", handleAccountChange);
+
     return () => {
       clearTimeout(timer);
       window.removeEventListener("solana#initialized", checkWallet);
+      prov?.removeListener?.("accountChanged", handleAccountChange);
     };
   }, []);
 
@@ -232,7 +289,7 @@ export default function IjazahPreviewPage({
     try {
       // 1. connecting
       setChallengeStatus("connecting");
-      let conn: { publicKey: { toString: () => string } };
+      let conn: { publicKey?: { toString: () => string } } | undefined;
       try {
         conn = await provider.connect();
       } catch (connErr: unknown) {
@@ -245,7 +302,14 @@ export default function IjazahPreviewPage({
         throw connErr;
       }
 
-      walletAddress = conn.publicKey.toString();
+      const pubkeyObj =
+        conn?.publicKey ||
+        (provider as unknown as { publicKey?: { toString: () => string } })?.publicKey;
+      if (!pubkeyObj) {
+        throw new Error("Tidak dapat memperoleh alamat publik dari dompet.");
+      }
+
+      walletAddress = pubkeyObj.toString().trim();
       setConnectedWallet(walletAddress);
 
       // 2. challenge diminta
@@ -301,10 +365,10 @@ export default function IjazahPreviewPage({
       }
 
       const rawSig = extractRawSignature(signedResult);
-      if (!rawSig || rawSig.length === 0) {
+      if (!rawSig || rawSig.length !== 64) {
         setChallengeStatus("gagal");
         setErrorCode("MALFORMED_INPUT");
-        setErrorMessage("Format tanda tangan dari dompet tidak dikenali.");
+        setErrorMessage("Format tanda tangan dari dompet tidak valid (harus 64 bytes).");
         return;
       }
 
@@ -314,7 +378,7 @@ export default function IjazahPreviewPage({
       setChallengeStatus("memverifikasi");
       // expectedOwner diambil dari alamat pemilik ijazah (cert.walletAddress).
       // Bila belum ada wallet terdaftar pada sertifikat, kirim sentinel agar verifikasi menolak dengan OWNER_MISMATCH.
-      const expectedOwner = cert?.walletAddress || "UNREGISTERED_OWNER";
+      const expectedOwner = (cert?.walletAddress && cert.walletAddress.trim()) || "UNREGISTERED_OWNER";
 
       const verifyRes = await fetch("/api/verify/challenge", {
         method: "POST",
@@ -888,6 +952,8 @@ export default function IjazahPreviewPage({
                   ? "Menunggu Tanda Tangan..."
                   : challengeStatus === "memverifikasi"
                   ? "Memverifikasi..."
+                  : challengeStatus === "sukses"
+                  ? "Verifikasi Ulang"
                   : "Hubungkan Dompet & Tanda Tangani"}
               </button>
 
