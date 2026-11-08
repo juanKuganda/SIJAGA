@@ -105,7 +105,7 @@ function extractRawSignature(signedResult: unknown): Uint8Array | null {
     return null;
   }
 
-  // Object wrapper { signature: ... } or { sig: ... }
+  // Object wrapper { signature: ... } or { sig: ... } or { data: ... }
   if (typeof signedResult === "object") {
     if ("signature" in signedResult) {
       return extractRawSignature((signedResult as { signature: unknown }).signature);
@@ -113,15 +113,9 @@ function extractRawSignature(signedResult: unknown): Uint8Array | null {
     if ("sig" in signedResult) {
       return extractRawSignature((signedResult as { sig: unknown }).sig);
     }
-  }
-
-  // Node Buffer-like JSON: { type: "Buffer", data: [...] }
-  if (
-    typeof signedResult === "object" &&
-    "data" in signedResult &&
-    Array.isArray((signedResult as { data: unknown }).data)
-  ) {
-    return new Uint8Array((signedResult as { data: number[] }).data);
+    if ("data" in signedResult) {
+      return extractRawSignature((signedResult as { data: unknown }).data);
+    }
   }
 
   // Array of numbers
@@ -227,23 +221,7 @@ export default function IjazahPreviewPage({
 
   // Cek keberadaan wallet saat mount & dengarkan event solana#initialized
   useEffect(() => {
-    const checkWallet = () => {
-      const provider = getWalletProvider();
-      setNoWallet(!provider);
-      if (provider) {
-        const pk = (provider as unknown as { publicKey?: { toString: () => string } }).publicKey;
-        if (pk) {
-          setConnectedWallet(pk.toString());
-        }
-      }
-    };
-
-    // Langsung cek
-    checkWallet();
-
-    // Cek ulang setelah jeda singkat untuk ekstensi yang terinjeksi lambat
-    const timer = setTimeout(checkWallet, 600);
-    window.addEventListener("solana#initialized", checkWallet, { once: true });
+    let activeProv: unknown = null;
 
     const handleAccountChange = (pk: { toString: () => string } | null) => {
       if (pk) {
@@ -257,16 +235,53 @@ export default function IjazahPreviewPage({
       setErrorMessage(null);
     };
 
-    const prov = getWalletProvider() as unknown as {
-      on?: (event: string, cb: (pk: { toString: () => string } | null) => void) => void;
-      removeListener?: (event: string, cb: (pk: { toString: () => string } | null) => void) => void;
+    const attachProvider = (prov: unknown) => {
+      if (!prov || prov === activeProv) return;
+      const old = activeProv as {
+        removeListener?: (e: string, cb: unknown) => void;
+        off?: (e: string, cb: unknown) => void;
+      } | null;
+      old?.removeListener?.("accountChanged", handleAccountChange);
+      old?.off?.("accountChanged", handleAccountChange);
+
+      activeProv = prov;
+      const current = prov as {
+        on?: (e: string, cb: unknown) => void;
+      };
+      current?.on?.("accountChanged", handleAccountChange);
     };
-    prov?.on?.("accountChanged", handleAccountChange);
+
+    const checkWallet = (markNoWalletIfMissing = false) => {
+      const provider = getWalletProvider();
+      if (provider) {
+        setNoWallet(false);
+        attachProvider(provider);
+        const pk = (provider as unknown as { publicKey?: { toString: () => string } }).publicKey;
+        if (pk) {
+          setConnectedWallet(pk.toString());
+        }
+      } else if (markNoWalletIfMissing) {
+        setNoWallet(true);
+      }
+    };
+
+    // Cek awal tanpa langsung menampilkan banner jika extension belum terinjeksi
+    checkWallet(false);
+
+    // Cek ulang setelah jeda singkat untuk ekstensi yang terinjeksi lambat
+    const timer = setTimeout(() => checkWallet(true), 600);
+    const onSolanaInitialized = () => checkWallet(false);
+    window.addEventListener("solana#initialized", onSolanaInitialized, { once: true });
 
     return () => {
       clearTimeout(timer);
-      window.removeEventListener("solana#initialized", checkWallet);
+      window.removeEventListener("solana#initialized", onSolanaInitialized);
+      const prov = activeProv as {
+        removeListener?: (e: string, cb: unknown) => void;
+        off?: (e: string, cb: unknown) => void;
+      } | null;
       prov?.removeListener?.("accountChanged", handleAccountChange);
+      prov?.off?.("accountChanged", handleAccountChange);
     };
   }, []);
 
@@ -304,12 +319,18 @@ export default function IjazahPreviewPage({
 
       const pubkeyObj =
         conn?.publicKey ||
-        (provider as unknown as { publicKey?: { toString: () => string } })?.publicKey;
+        (provider as unknown as { publicKey?: { toString: () => string; toBase58?: () => string } })?.publicKey;
       if (!pubkeyObj) {
         throw new Error("Tidak dapat memperoleh alamat publik dari dompet.");
       }
 
-      walletAddress = pubkeyObj.toString().trim();
+      const rawPub =
+        typeof pubkeyObj === "string"
+          ? pubkeyObj
+          : typeof (pubkeyObj as { toBase58?: () => string }).toBase58 === "function"
+          ? (pubkeyObj as { toBase58: () => string }).toBase58()
+          : pubkeyObj.toString();
+      walletAddress = rawPub.trim();
       setConnectedWallet(walletAddress);
 
       // 2. challenge diminta
