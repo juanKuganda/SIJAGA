@@ -73,7 +73,9 @@
   - Smoke test Devnet berhasil dieksekusi dengan receipt terverifikasi (Mint: `CLmHhVKTM5QeonTwWFCKA9h2phgfacLYb4J4ZbAMFohR`, Tx: `aacAZgh2DPYjM3Ce1dJfvq2MzwDNpXSR3Nkx2a3xrDPbi1TmKzMJjwR2Tt26yHJ9AYhnG9JGzVuin786LdSWqGC`).
 
 ### Fase 2 — Eksekusi 14 Test Case & Pengujian Performa — [CURRENT PHASE]
-- [ ] **P2.1: Performance Experiment (Mint, Revoke, Verify $n=30$)**
+- [x] **P2.1: Performance Experiment (Mint, Revoke, Verify $n=30$)** — [SELESAI 100%]
+  - Target 30 trial per operasi (total 90 trial) terpenuhi secara empiris tersebar pada 4 jendela waktu (Batch 4, Batch 1, Batch 2, Batch 3) di Solana Devnet.
+  - Seluruh receipt transaksi JSONL dan ringkasan CSV tercatat di `experiments/2026-11-07/` dan `experiments/2026-11-08/`.
 - [ ] **P2.2: Negative Tests (TC-02, TC-03, TC-04, TC-13 via raw Metaplex Core instructions)**
 - [ ] **P2.3: Challenge Tests (TC-05, TC-06)**
 - [ ] **P2.4: Validity Tests (TC-07, TC-08, TC-09, TC-12, TC-14)**
@@ -132,17 +134,15 @@
   - Verify: **8/8 trial sukses** (Trial #10 s/d #17, mencakup 2 trial smoke #10..#11 + 6 trial reguler #12..#17). Median p50: 6.79 s (On-chain RPC p50: 1.13 s, IPFS p50: 5.10 s, Challenge p50: 0.52 s).
   - Revoke: **8/8 trial sukses** (Trial #9 s/d #16). Median p50: 14.98 s (On-chain p50: 7.56 s).
   - Ketahanan `bench-revoke.ts` diperkuat dengan retry otomatis pada tahap setup base asset saat terjadi DNS blip.
-- **Total Akumulasi Tersimpan Saat Ini:**
-  - **Mint**: **23 / 30 trial** (76.7% progress).
-  - **Verify**: **17 / 30 trial** (56.7% progress).
-  - **Revoke**: **16 / 30 trial** (53.3% progress).
-  - **Saldo Admin Wallet**: **8.621 SOL** di Solana Devnet (sangat aman).
-
-- **Jadwal Sisa Batch Hari Ini (8 Nov 2026):**
-  - **Batch 3 (~17:30 – 18:00 WITA):**
-    - Mint: 7 trial (Trial #24 s/d #30) $\rightarrow$ **Minting SELESAI 30/30 (100%)**.
-    - Verify: 13 trial (Trial #18 s/d #30) $\rightarrow$ **Verifikasi SELESAI 30/30 (100%)**.
-    - Revoke: 14 trial (Trial #17 s/d #30) $\rightarrow$ **Revocation SELESAI 30/30 (100%)**.
-    - Setelah Batch 3: Seluruh target 30 trial per operasi (total 90 trial) genap terpenuhi, langsung dilanjutkan ke Fase 3 (analisis statistik, perbandingan ambang batas, tabel hasil TC, proyeksi biaya, dan penyusunan dokumen Bab IV).
+- **Batch 3 (Jendela Sore 17:30–17:43 WITA, 8 Nov 2026) — [SELESAI 100%]:**
+  - Mint: **7 trial selesai** (Trial #24 s/d #30: 6 sukses + 1 block height exceeded/congestion failure). Median p50: 12.54 s (On-chain p50: 3.99 s).
+  - Verify: **13/13 trial sukses** (Trial #18 s/d #30). Median p50: 7.86 s (On-chain RPC p50: 0.98 s, IPFS p50: 5.84 s, Challenge p50: 0.41 s).
+  - Revoke: **14/14 trial sukses** (Trial #17 s/d #30). Median p50: 9.93 s (On-chain p50: 3.74 s).
+- **Total Akumulasi Tersimpan (Target n=30 per Operasi Tercapai Penuh):**
+  - **Mint**: **30 / 30 trial (100% COMPLETE)**.
+  - **Verify**: **30 / 30 trial (100% COMPLETE)**.
+  - **Revoke**: **30 / 30 trial (100% COMPLETE)**.
+  - **Saldo Admin Wallet**: **8.551 SOL** di Solana Devnet (sangat aman).
+  - **Status**: Seluruh pengujian performa P2.1 selesai 100%. Siap dilanjutkan ke P2.6 / Phase 3 sesuai aba-aba pengguna.
 
 
