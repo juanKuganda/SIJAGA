@@ -127,25 +127,22 @@
   - Mint: **8/8 trial sukses** (Trial #8 s/d #15). Median p50: 10.96 s (On-chain p50: 4.15 s).
   - Verify: **8/8 trial sukses** (Trial #2 s/d #9). Median p50: 6.80 s.
   - Revoke: **8/8 trial sukses** (Trial #1 s/d #8). Median p50: 10.40 s (On-chain p50: 4.15 s).
-- **Batch 2 Instrumentasi & Smoke Test (12:22 WITA, 8 Nov 2026):**
-  - Rincian langkah `onchainElapsedSeconds` (RPC), `ipfsElapsedSeconds` (IPFS JSON), dan `challengeElapsedSeconds` diimplementasikan di `inspectCertificate` dan `bench-verify.ts`.
-  - Definisi median standar (ganjil = nilai tengah, genap = rata-rata dua nilai tengah) diterapkan di `common.ts`, `bench-mint.ts`, `bench-verify.ts`, dan `bench-revoke.ts`.
-  - `mintAddress` ditambahkan pada receipt verifikasi.
-  - Smoke test 2 trial verifikasi (Trial #10 dan #11) sukses 100% dan dicatat sebagai 2 trial pertama Batch 2.
+- **Batch 2 (Jendela Siang 14:00–14:25 WITA, 8 Nov 2026) — [SELESAI 100%]:**
+  - Mint: **8/8 trial sukses** (Trial #16 s/d #23). Median p50: 14.83 s (On-chain p50: 5.31 s).
+  - Verify: **8/8 trial sukses** (Trial #10 s/d #17, mencakup 2 trial smoke #10..#11 + 6 trial reguler #12..#17). Median p50: 6.79 s (On-chain RPC p50: 1.13 s, IPFS p50: 5.10 s, Challenge p50: 0.52 s).
+  - Revoke: **8/8 trial sukses** (Trial #9 s/d #16). Median p50: 14.98 s (On-chain p50: 7.56 s).
+  - Ketahanan `bench-revoke.ts` diperkuat dengan retry otomatis pada tahap setup base asset saat terjadi DNS blip.
 - **Total Akumulasi Tersimpan Saat Ini:**
-  - **Mint**: **15 / 30 trial** (50% progress).
-  - **Verify**: **11 / 30 trial** (36.7% progress).
-  - **Revoke**: **8 / 30 trial** (26.7% progress).
-  - **Saldo Admin Wallet**: **8.675 SOL** di Solana Devnet (sangat aman).
+  - **Mint**: **23 / 30 trial** (76.7% progress).
+  - **Verify**: **17 / 30 trial** (56.7% progress).
+  - **Revoke**: **16 / 30 trial** (53.3% progress).
+  - **Saldo Admin Wallet**: **8.621 SOL** di Solana Devnet (sangat aman).
 
 - **Jadwal Sisa Batch Hari Ini (8 Nov 2026):**
-  - **Batch 2 (~14:00 – 14:30 WITA):**
-    - Mint: 8 trial (Trial #16 s/d #23).
-    - Verify: **6 trial lagi** (Trial #12 s/d #17, karena #10 dan #11 sudah selesai di smoke test).
-    - Revoke: 8 trial (Trial #9 s/d #16).
   - **Batch 3 (~17:30 – 18:00 WITA):**
     - Mint: 7 trial (Trial #24 s/d #30) $\rightarrow$ **Minting SELESAI 30/30 (100%)**.
     - Verify: 13 trial (Trial #18 s/d #30) $\rightarrow$ **Verifikasi SELESAI 30/30 (100%)**.
     - Revoke: 14 trial (Trial #17 s/d #30) $\rightarrow$ **Revocation SELESAI 30/30 (100%)**.
+    - Setelah Batch 3: Seluruh target 30 trial per operasi (total 90 trial) genap terpenuhi, langsung dilanjutkan ke Fase 3 (analisis statistik, perbandingan ambang batas, tabel hasil TC, proyeksi biaya, dan penyusunan dokumen Bab IV).
 
 

@@ -217,7 +217,7 @@ export function getExistingTrialCount(operation: string): number {
   const baseDir = path.join(process.cwd(), "experiments");
   if (!fs.existsSync(baseDir)) return 0;
 
-  let total = 0;
+  let maxTrial = 0;
   const entries = fs.readdirSync(baseDir, { withFileTypes: true });
   for (const entry of entries) {
     if (entry.isDirectory() && /^\d{4}-\d{2}-\d{2}$/.test(entry.name)) {
@@ -226,12 +226,21 @@ export function getExistingTrialCount(operation: string): number {
         const content = fs.readFileSync(jsonlFile, "utf8").trim();
         if (content) {
           const lines = content.split("\n").filter((l) => l.trim().length > 0);
-          total += lines.length;
+          for (const l of lines) {
+            try {
+              const r = JSON.parse(l);
+              if (typeof r.trialIndex === "number" && r.trialIndex > maxTrial) {
+                maxTrial = r.trialIndex;
+              }
+            } catch {
+              // ignore
+            }
+          }
         }
       }
     }
   }
-  return total;
+  return maxTrial;
 }
 
 /**

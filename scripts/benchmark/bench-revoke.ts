@@ -50,36 +50,53 @@ async function runBenchRevoke() {
   for (let i = startTrial; i <= endTrial; i++) {
     console.log(`\n--- [Trial ${i} (${i - startTrial + 1}/${numTrials})] Revocation Test ---`);
 
-    // 1. Setup asset untuk direvoke (mint terlebih dahulu)
-    const fakeNim = `REVOKE-${String(10000 + i).slice(1)}`;
-    const studentWallet = Keypair.generate().publicKey.toBase58();
+    // 1. Setup asset untuk direvoke (mint terlebih dahulu) dengan retry tangguh
+    let mintAddress: string | null = null;
+    for (let setupAttempt = 1; setupAttempt <= 3; setupAttempt++) {
+      try {
+        const fakeNim = `REVOKE-${String(10000 + i).slice(1)}`;
+        const studentWallet = Keypair.generate().publicKey.toBase58();
 
-    const { hash: dataHash } = generateDataHash("Revoke Test Subject", fakeNim, "Teknik Informatika");
-    const { gatewayUrl: initialImageUrl } = await generateAndUploadCertificateImage(
-      { prodi: "Teknik Informatika", tahunLulus: "2026", dataHash },
-      "MINTED"
-    );
-    const initialMetadata = generateCertificateMetadata({
-      prodi: "Teknik Informatika",
-      tahunLulus: "2026",
-      dataHash,
-      imageUri: initialImageUrl,
-    });
-    const { gatewayUrl: initialMetadataUri } = await uploadMetadataToPinata(initialMetadata);
+        const { hash: dataHash } = generateDataHash("Revoke Test Subject", fakeNim, "Teknik Informatika");
+        const { gatewayUrl: initialImageUrl } = await generateAndUploadCertificateImage(
+          { prodi: "Teknik Informatika", tahunLulus: "2026", dataHash },
+          "MINTED"
+        );
+        const initialMetadata = generateCertificateMetadata({
+          prodi: "Teknik Informatika",
+          tahunLulus: "2026",
+          dataHash,
+          imageUri: initialImageUrl,
+        });
+        const { gatewayUrl: initialMetadataUri } = await uploadMetadataToPinata(initialMetadata);
 
-    const { mintSigner } = prepareMintSigner();
-    const mintRes = await mintSoulboundNFT({
-      metadataUri: initialMetadataUri,
-      walletTujuan: studentWallet,
-      mintSigner,
-    });
+        const { mintSigner } = prepareMintSigner();
+        const mintRes = await mintSoulboundNFT({
+          metadataUri: initialMetadataUri,
+          walletTujuan: studentWallet,
+          mintSigner,
+        });
 
-    if (!mintRes.success || !mintRes.mintAddress) {
-      console.warn(`[Trial ${i}] Gagal setup mint untuk revoke, skip trial.`);
+        if (mintRes.success && mintRes.mintAddress) {
+          mintAddress = mintRes.mintAddress;
+          break;
+        }
+      } catch (setupErr) {
+        console.warn(
+          `[Trial ${i}] Base asset setup attempt ${setupAttempt}/3 failed:`,
+          setupErr instanceof Error ? setupErr.message : setupErr
+        );
+        if (setupAttempt < 3) {
+          await new Promise((r) => setTimeout(r, 2000 * setupAttempt));
+        }
+      }
+    }
+
+    if (!mintAddress) {
+      console.warn(`[Trial ${i}] Gagal setup mint untuk revoke setelah 3 attempts, skip trial.`);
       continue;
     }
 
-    const mintAddress = mintRes.mintAddress;
     console.log(`[Trial ${i}] Base asset ready: ${mintAddress}`);
 
     // 2. Ukur Operasi Revoke
