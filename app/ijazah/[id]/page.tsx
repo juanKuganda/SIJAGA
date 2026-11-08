@@ -73,6 +73,62 @@ function getWalletProvider(): PhantomProvider | SolflareProvider | BackpackProvi
   return null;
 }
 
+function extractRawSignature(signedResult: unknown): Uint8Array | null {
+  if (!signedResult) return null;
+
+  // Direct Uint8Array or cross-realm typed array
+  if (signedResult instanceof Uint8Array) return signedResult;
+  if (ArrayBuffer.isView(signedResult) && !(signedResult instanceof DataView)) {
+    return new Uint8Array(
+      (signedResult as ArrayBufferView).buffer,
+      (signedResult as ArrayBufferView).byteOffset,
+      (signedResult as ArrayBufferView).byteLength
+    );
+  }
+
+  // Base58 encoded signature string
+  if (typeof signedResult === "string") {
+    try {
+      return bs58.decode(signedResult);
+    } catch {
+      return null;
+    }
+  }
+
+  // Object wrapper { signature: Uint8Array | string | number[] | { data: number[] } }
+  if (typeof signedResult === "object" && "signature" in signedResult) {
+    const s = (signedResult as { signature: unknown }).signature;
+    return extractRawSignature(s);
+  }
+
+  // Node Buffer-like JSON: { type: "Buffer", data: [...] }
+  if (
+    typeof signedResult === "object" &&
+    "data" in signedResult &&
+    Array.isArray((signedResult as { data: unknown }).data)
+  ) {
+    return new Uint8Array((signedResult as { data: number[] }).data);
+  }
+
+  // Array of numbers
+  if (Array.isArray(signedResult)) {
+    return new Uint8Array(signedResult);
+  }
+
+  return null;
+}
+
+function isUserRejection(err: unknown): boolean {
+  const e = err as { code?: number; message?: string };
+  return (
+    e?.code === 4001 ||
+    (typeof e?.message === "string" &&
+      (e.message.toLowerCase().includes("reject") ||
+        e.message.toLowerCase().includes("cancel") ||
+        e.message.toLowerCase().includes("user rejected")))
+  );
+}
+
 interface CertificateData {
   nama: string;
   nim: string;
@@ -138,19 +194,28 @@ export default function IjazahPreviewPage({
     return () => clearInterval(timer);
   }, [challengeData, challengeStatus]);
 
-  // Cek keberadaan wallet saat mount
+  // Cek keberadaan wallet saat mount & dengarkan event solana#initialized
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const checkWallet = () => {
       const provider = getWalletProvider();
-      if (!provider) {
-        setNoWallet(true);
-      }
-    }, 500);
-    return () => clearTimeout(timer);
+      setNoWallet(!provider);
+    };
+
+    // Langsung cek
+    checkWallet();
+
+    // Cek ulang setelah jeda singkat untuk ekstensi yang terinjeksi lambat
+    const timer = setTimeout(checkWallet, 600);
+    window.addEventListener("solana#initialized", checkWallet, { once: true });
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("solana#initialized", checkWallet);
+    };
   }, []);
 
   const handleVerifyOwnership = async () => {
     setIsExpired(false);
+    setTimeLeft(300);
     setErrorCode(null);
     setErrorMessage(null);
 
@@ -167,7 +232,19 @@ export default function IjazahPreviewPage({
     try {
       // 1. connecting
       setChallengeStatus("connecting");
-      const conn = await provider.connect();
+      let conn: { publicKey: { toString: () => string } };
+      try {
+        conn = await provider.connect();
+      } catch (connErr: unknown) {
+        if (isUserRejection(connErr)) {
+          setChallengeStatus("gagal");
+          setErrorCode("USER_REJECTED");
+          setErrorMessage("Koneksi dompet dibatalkan oleh pengguna.");
+          return;
+        }
+        throw connErr;
+      }
+
       walletAddress = conn.publicKey.toString();
       setConnectedWallet(walletAddress);
 
@@ -202,36 +279,29 @@ export default function IjazahPreviewPage({
 
       let signedResult: unknown;
       try {
-        signedResult = await provider.signMessage(msgBytes, "utf8");
+        try {
+          signedResult = await provider.signMessage(msgBytes, "utf8");
+        } catch (firstErr: unknown) {
+          if (isUserRejection(firstErr)) {
+            throw firstErr;
+          }
+          // Fallback tanpa parameter display jika provider hanya menerima 1 argumen
+          signedResult = await provider.signMessage(msgBytes);
+        }
       } catch (signErr: unknown) {
-        const err = signErr as { code?: number; message?: string };
         setChallengeStatus("gagal");
-        const isRejected =
-          err?.code === 4001 ||
-          err?.message?.toLowerCase().includes("reject") ||
-          err?.message?.toLowerCase().includes("cancel") ||
-          err?.message?.toLowerCase().includes("user rejected");
+        const isRejected = isUserRejection(signErr);
         setErrorCode(isRejected ? "USER_REJECTED" : "SIGNATURE_REJECTED");
         setErrorMessage(
           isRejected
             ? "Penandatanganan pesan dibatalkan oleh pengguna di dompet."
-            : err?.message || "Gagal menandatangani pesan tantangan."
+            : (signErr as Error)?.message || "Gagal menandatangani pesan tantangan."
         );
         return;
       }
 
-      let rawSig: Uint8Array;
-      if (signedResult instanceof Uint8Array) {
-        rawSig = signedResult;
-      } else if (
-        signedResult &&
-        typeof signedResult === "object" &&
-        "signature" in signedResult &&
-        (signedResult as { signature: unknown }).signature
-      ) {
-        const s = (signedResult as { signature: unknown }).signature;
-        rawSig = s instanceof Uint8Array ? s : new Uint8Array(s as ArrayLike<number>);
-      } else {
+      const rawSig = extractRawSignature(signedResult);
+      if (!rawSig || rawSig.length === 0) {
         setChallengeStatus("gagal");
         setErrorCode("MALFORMED_INPUT");
         setErrorMessage("Format tanda tangan dari dompet tidak dikenali.");
@@ -242,6 +312,10 @@ export default function IjazahPreviewPage({
 
       // 4. memverifikasi
       setChallengeStatus("memverifikasi");
+      // expectedOwner diambil dari alamat pemilik ijazah (cert.walletAddress).
+      // Bila belum ada wallet terdaftar pada sertifikat, kirim sentinel agar verifikasi menolak dengan OWNER_MISMATCH.
+      const expectedOwner = cert?.walletAddress || "UNREGISTERED_OWNER";
+
       const verifyRes = await fetch("/api/verify/challenge", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -251,7 +325,7 @@ export default function IjazahPreviewPage({
           nonce: freshChallenge.nonce,
           signature,
           message: freshChallenge.message,
-          expectedOwner: cert?.walletAddress || undefined,
+          expectedOwner,
         }),
       });
 
@@ -267,10 +341,15 @@ export default function IjazahPreviewPage({
         setErrorMessage(verifyJson.message || verifyJson.error || "Verifikasi tanda tangan gagal.");
       }
     } catch (err: unknown) {
-      const errorObj = err as Error;
       setChallengeStatus("gagal");
-      setErrorCode("CLIENT_ERROR");
-      setErrorMessage(errorObj?.message || "Terjadi kesalahan saat memproses verifikasi.");
+      if (isUserRejection(err)) {
+        setErrorCode("USER_REJECTED");
+        setErrorMessage("Koneksi atau penandatanganan dibatalkan oleh pengguna di dompet.");
+      } else {
+        const errorObj = err as Error;
+        setErrorCode("CLIENT_ERROR");
+        setErrorMessage(errorObj?.message || "Terjadi kesalahan saat memproses verifikasi.");
+      }
     }
   };
 
