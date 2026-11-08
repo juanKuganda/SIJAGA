@@ -116,17 +116,31 @@
 
 ---
 
-## 4. Status Pengukuran Batch & Rencana Pelaksanaan Besok
+## 4. Status Pengukuran Batch & Realisasi Pelaksanaan
 
-**KOREKSI PERHITUNGAN BATCH DARI PENGGUNA:**
-- **Batch 4 (Jendela 22:00-23:00 WITA):**
-  - Mint: **SELESAI (7 trial: 6 sukses + 1 gagal)**. Trial yang gagal tetap dihitung sebagai data empiris. **JANGAN ulangi mint Batch 4.**
-  - Verify: **1/7 trial selesai**.
-  - Revoke: **0/7 trial**.
-- **Sisa Batch yang Harus Dijalankan Besok:**
-  - **Batch 1 (08:30 WITA):** 8 trial mint, verify, revoke.
-  - **Batch 2 (13:00 WITA):** 8 trial mint, verify, revoke.
-  - **Batch 3 (17:30 WITA):** 7 trial mint, verify, revoke.
-  - **Total Sisa Mint:** 23 trial lagi (hingga total $n=30$).
-  - **Total Verify & Revoke:** Melengkapi sisa Batch 4 dan ketiga batch hingga masing-masing total $n=30$.
+**STATUS REALISASI PER BATCH (n=30 TARGET PER OPERASI):**
+- **Batch 4 (Jendela Malam 22:00–23:00 WITA, 7 Nov 2026):**
+  - Mint: **7 trial selesai** (6 sukses + 1 gagal; trial gagal tetap dicatat sebagai data empiris).
+  - Verify: **1 trial selesai** (Trial #1).
+  - Revoke: **0 trial**.
+- **Batch 1 (Jendela Pagi/Siang 11:00–11:25 WITA, 8 Nov 2026) — [SELESAI 100%]:**
+  - Mint: **8/8 trial sukses** (Trial #8 s/d #15). Median p50: 10.96 s (On-chain p50: 4.15 s).
+  - Verify: **8/8 trial sukses** (Trial #2 s/d #9). Median p50: 6.80 s.
+  - Revoke: **8/8 trial sukses** (Trial #1 s/d #8). Median p50: 10.40 s (On-chain p50: 4.15 s).
+- **Total Akumulasi Tersimpan Saat Ini:**
+  - **Mint**: **15 / 30 trial** (50% progress).
+  - **Verify**: **9 / 30 trial** (30% progress).
+  - **Revoke**: **8 / 30 trial** (26.7% progress).
+  - **Saldo Admin Wallet**: **8.680 SOL** di Solana Devnet (sangat aman).
+
+- **Jadwal Batch Berikutnya Hari Ini (8 Nov 2026):**
+  - **Batch 2 (~14:00 – 14:30 WITA):**
+    - Mint: 8 trial (Trial #16 s/d #23).
+    - Verify: 8 trial (Trial #10 s/d #17).
+    - Revoke: 8 trial (Trial #9 s/d #16).
+  - **Batch 3 (~17:30 – 18:00 WITA):**
+    - Mint: 7 trial (Trial #24 s/d #30) $\rightarrow$ **Minting SELESAI 30/30 (100%)**.
+    - Verify: 13 trial (Trial #18 s/d #30) $\rightarrow$ **Verifikasi SELESAI 30/30 (100%)**.
+    - Revoke: 14 trial (Trial #17 s/d #30) $\rightarrow$ **Revocation SELESAI 30/30 (100%)**.
+
 

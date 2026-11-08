@@ -192,15 +192,24 @@ export async function ensureRunMetadata(connection: Connection): Promise<string>
  * Hitung jumlah receipt yang sudah tersimpan untuk operasi tertentu (agar penomoran trial berlanjut antar batch)
  */
 export function getExistingTrialCount(operation: string): number {
-  const dir = getExperimentsDir();
-  const jsonlFile = path.join(dir, `run-${operation.toLowerCase()}.jsonl`);
-  if (!fs.existsSync(jsonlFile)) {
-    return 0;
+  const baseDir = path.join(process.cwd(), "experiments");
+  if (!fs.existsSync(baseDir)) return 0;
+
+  let total = 0;
+  const entries = fs.readdirSync(baseDir, { withFileTypes: true });
+  for (const entry of entries) {
+    if (entry.isDirectory() && /^\d{4}-\d{2}-\d{2}$/.test(entry.name)) {
+      const jsonlFile = path.join(baseDir, entry.name, `run-${operation.toLowerCase()}.jsonl`);
+      if (fs.existsSync(jsonlFile)) {
+        const content = fs.readFileSync(jsonlFile, "utf8").trim();
+        if (content) {
+          const lines = content.split("\n").filter((l) => l.trim().length > 0);
+          total += lines.length;
+        }
+      }
+    }
   }
-  const content = fs.readFileSync(jsonlFile, "utf8").trim();
-  if (!content) return 0;
-  const lines = content.split("\n").filter((l) => l.trim().length > 0);
-  return lines.length;
+  return total;
 }
 
 /**

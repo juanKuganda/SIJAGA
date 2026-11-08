@@ -47,7 +47,7 @@
     "rpcHost": "devnet.helius-rpc.com",
     "adminKeypairSource": "Diturunkan dari ADMIN_WALLET_PRIVATE_KEY di .env.local",
     "adminPublicKey": "Bat5VTbjGqsThS5oERuXVi7d2JY2TBNomJD2ZciaztaQ",
-    "adminBalanceSOL": 9.587,
+    "adminBalanceSOL": 8.68,
     "directEd25519Dependency": "tweetnacl@^1.0.3",
     "buildStatus": "PASSED",
     "lintStatus": "PASSED (0 errors, 40 warnings)",
@@ -61,13 +61,19 @@
       "item5_deletePiiAndUnreachableTC11_TC12": "RESOLVED - TC-11 invokes real POST /api/admin/delete-pii and verifies hash reconstruction failure; TC-12 tests dead RPC and blocked IPFS asserting UNAVAILABLE / never valid",
       "item6_lockfileSync": "RESOLVED - Synchronized package-lock.json and verified via npm ci",
       "item7_eslintRulesRestored": "RESOLVED - All rules restored to error, 0 errors remaining",
-      "item8_harnessCleanup": "RESOLVED - Dynamic getAdminWalletAddress, pinataRetries recorded on receipts, and trial numbering offset via getExistingTrialCount",
+      "item8_harnessCleanup": "RESOLVED - Dynamic getAdminWalletAddress, pinataRetries recorded on receipts, and trial numbering offset via getExistingTrialCount across all experiment dates",
       "item9_verificationRunner": "RESOLVED - test-challenge and test:tc verified 100% PASS (14/14)"
     },
     "batchExecutionPlan": {
-      "batch4_22_00_WITA": "Mint completed (7 trials: 6 SUCCESS, 1 FAILED). Do NOT rerun Batch 4 mint. Verify: 1/7. Revoke: 0/7.",
-      "remainingTomorrow": "Batch 1 (8 trials, 08:30 WITA), Batch 2 (8 trials, 13:00 WITA), Batch 3 (7 trials, 17:30 WITA). Total remaining mint: 23 trials. Total verify and revoke to reach 30 each."
+      "batch4_22_00_WITA": "Mint completed (7 trials: 6 SUCCESS, 1 FAILED). Do NOT rerun Batch 4 mint. Verify: 1 trial (Trial #1). Revoke: 0 trials.",
+      "batch1_11_00_WITA": "COMPLETED 100% (8 Nov 2026). Mint: 8/8 (Trials 8..15). Verify: 8/8 (Trials 2..9). Revoke: 8/8 (Trials 1..8).",
+      "cumulativeProgress": {
+        "mintTrials": "15 / 30",
+        "verifyTrials": "9 / 30",
+        "revokeTrials": "8 / 30"
+      },
+      "remainingPlanToday": "Batch 2 (~14:00 WITA: 8 mint, 8 verify, 8 revoke) and Batch 3 (~17:30 WITA: 7 mint, 13 verify, 14 revoke) to reach exactly 30/30 trials across all 3 operations."
     }
   },
-  "lastUpdated": "2026-11-08T01:25:00+08:00"
+  "lastUpdated": "2026-11-08T11:22:00+08:00"
 }

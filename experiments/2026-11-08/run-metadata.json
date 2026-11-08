@@ -1,0 +1,19 @@
+{
+  "date": "2026-11-08",
+  "createdAt": "2026-11-08T03:17:34.861Z",
+  "cluster": "devnet",
+  "clusterVersion": "solana-core: 4.4.1, feature-set: 2681577653",
+  "rpc": {
+    "provider": "Helius",
+    "endpointHost": "devnet.helius-rpc.com"
+  },
+  "softwareVersions": {
+    "node": "v25.7.0",
+    "solanaWeb3": "^1.98.4",
+    "mplCore": "^1.10.0",
+    "umi": "^1.5.1",
+    "pinata": "^2.5.6",
+    "next": "^16.3.0"
+  },
+  "adminWallet": "Bat5VTbjGqsThS5oERuXVi7d2JY2TBNomJD2ZciaztaQ"
+}
