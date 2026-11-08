@@ -75,3 +75,4 @@ Jalankan `npm run build` dan `lint` untuk memastikan compile bersih tanpa error.
 - [ ] Perintah `npm run build` berhasil dieksekusi tanpa error.
 - [ ] Perintah `npm run lint` berhasil dieksekusi tanpa error.
 - [ ] Seluruh perubahan di-commit dan di-push ke branch `feat/bab4-experiments`.
+
