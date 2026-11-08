@@ -22,6 +22,7 @@ import {
   getRpcDetails,
   executeWithProposalRetry,
   getExistingTrialCount,
+  calculateMedian,
   TransactionReceipt,
 } from "./common";
 
@@ -105,7 +106,11 @@ async function runBenchVerify() {
             throw new Error(`Inspect failed: ${inspection.reason}`);
           }
 
+          const onchainElapsedSeconds = (inspection.timings?.rpcMs ?? 0) / 1000;
+          const ipfsElapsedSeconds = (inspection.timings?.ipfsMs ?? 0) / 1000;
+
           // 2. Cryptographic challenge-response
+          const challengeStart = Date.now();
           const challenge = await createVerificationChallenge(studentWallet);
           const sig = nacl.sign.detached(
             Buffer.from(challenge.message, "utf-8"),
@@ -125,11 +130,18 @@ async function runBenchVerify() {
             throw new Error(`Challenge verify failed: ${verifyRes.error}`);
           }
 
+          const challengeElapsedSeconds = (Date.now() - challengeStart) / 1000;
           const elapsedSeconds = (Date.now() - startTime) / 1000;
-          console.log(`✓ Trial ${i} Success: Latency = ${elapsedSeconds.toFixed(3)}s`);
+          console.log(
+            `✓ Trial ${i} Success: Total = ${elapsedSeconds.toFixed(3)}s (RPC: ${onchainElapsedSeconds.toFixed(3)}s, IPFS: ${ipfsElapsedSeconds.toFixed(3)}s, Challenge: ${challengeElapsedSeconds.toFixed(3)}s)`
+          );
 
           return {
             elapsedSeconds,
+            onchainElapsedSeconds,
+            ipfsElapsedSeconds,
+            challengeElapsedSeconds,
+            mintAddress,
           };
         },
       });
@@ -141,8 +153,15 @@ async function runBenchVerify() {
   // Summary statistics
   const successReceipts = receipts.filter((r) => r.status === "SUCCESS");
   const times = successReceipts.map((r) => r.elapsedSeconds).sort((a, b) => a - b);
+  const onchainTimes = successReceipts.map((r) => r.onchainElapsedSeconds ?? 0);
+  const ipfsTimes = successReceipts.map((r) => r.ipfsElapsedSeconds ?? 0);
+  const challengeTimes = successReceipts.map((r) => r.challengeElapsedSeconds ?? 0);
 
-  const median = times[Math.floor(times.length / 2)] || 0;
+  const median = calculateMedian(times);
+  const onchainMedian = calculateMedian(onchainTimes);
+  const ipfsMedian = calculateMedian(ipfsTimes);
+  const challengeMedian = calculateMedian(challengeTimes);
+
   const p95Index = Math.min(Math.floor(times.length * 0.95), times.length - 1);
   const p95 = times[p95Index] || 0;
   const min = times[0] || 0;
@@ -153,6 +172,9 @@ async function runBenchVerify() {
   console.log(`=======================================================`);
   console.log(`- Total Success: ${successReceipts.length}/${receipts.length}`);
   console.log(`- Median Latency (p50): ${median.toFixed(3)} s (Threshold: <= 5.0 s)`);
+  console.log(`  * On-Chain RPC Median: ${onchainMedian.toFixed(3)} s`);
+  console.log(`  * IPFS Gateway Median: ${ipfsMedian.toFixed(3)} s`);
+  console.log(`  * Challenge-Response Median: ${challengeMedian.toFixed(3)} s`);
   console.log(`- 95th Percentile (p95): ${p95.toFixed(3)} s`);
   console.log(`- Min: ${min.toFixed(3)} s | Max: ${max.toFixed(3)} s`);
   console.log(`=======================================================\n`);

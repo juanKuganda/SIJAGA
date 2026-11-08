@@ -127,16 +127,21 @@
   - Mint: **8/8 trial sukses** (Trial #8 s/d #15). Median p50: 10.96 s (On-chain p50: 4.15 s).
   - Verify: **8/8 trial sukses** (Trial #2 s/d #9). Median p50: 6.80 s.
   - Revoke: **8/8 trial sukses** (Trial #1 s/d #8). Median p50: 10.40 s (On-chain p50: 4.15 s).
+- **Batch 2 Instrumentasi & Smoke Test (12:22 WITA, 8 Nov 2026):**
+  - Rincian langkah `onchainElapsedSeconds` (RPC), `ipfsElapsedSeconds` (IPFS JSON), dan `challengeElapsedSeconds` diimplementasikan di `inspectCertificate` dan `bench-verify.ts`.
+  - Definisi median standar (ganjil = nilai tengah, genap = rata-rata dua nilai tengah) diterapkan di `common.ts`, `bench-mint.ts`, `bench-verify.ts`, dan `bench-revoke.ts`.
+  - `mintAddress` ditambahkan pada receipt verifikasi.
+  - Smoke test 2 trial verifikasi (Trial #10 dan #11) sukses 100% dan dicatat sebagai 2 trial pertama Batch 2.
 - **Total Akumulasi Tersimpan Saat Ini:**
   - **Mint**: **15 / 30 trial** (50% progress).
-  - **Verify**: **9 / 30 trial** (30% progress).
+  - **Verify**: **11 / 30 trial** (36.7% progress).
   - **Revoke**: **8 / 30 trial** (26.7% progress).
-  - **Saldo Admin Wallet**: **8.680 SOL** di Solana Devnet (sangat aman).
+  - **Saldo Admin Wallet**: **8.675 SOL** di Solana Devnet (sangat aman).
 
-- **Jadwal Batch Berikutnya Hari Ini (8 Nov 2026):**
+- **Jadwal Sisa Batch Hari Ini (8 Nov 2026):**
   - **Batch 2 (~14:00 – 14:30 WITA):**
     - Mint: 8 trial (Trial #16 s/d #23).
-    - Verify: 8 trial (Trial #10 s/d #17).
+    - Verify: **6 trial lagi** (Trial #12 s/d #17, karena #10 dan #11 sudah selesai di smoke test).
     - Revoke: 8 trial (Trial #9 s/d #16).
   - **Batch 3 (~17:30 – 18:00 WITA):**
     - Mint: 7 trial (Trial #24 s/d #30) $\rightarrow$ **Minting SELESAI 30/30 (100%)**.

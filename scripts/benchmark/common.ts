@@ -31,10 +31,12 @@ export interface TransactionReceipt {
   elapsedSeconds: number;
   onchainElapsedSeconds?: number;
   ipfsElapsedSeconds?: number;
+  challengeElapsedSeconds?: number;
 
   // Blockchain Data
   slot?: number | null;
   txSignature?: string | null;
+  mintAddress?: string | null;
   feeLamports?: number | null;
   rentDepositLamports?: number | null;
 
@@ -120,6 +122,8 @@ export function recordReceipt(receipt: TransactionReceipt) {
     "elapsedSeconds",
     "onchainElapsedSeconds",
     "ipfsElapsedSeconds",
+    "challengeElapsedSeconds",
+    "mintAddress",
     "feeLamports",
     "rentDepositLamports",
     "slot",
@@ -131,6 +135,22 @@ export function recordReceipt(receipt: TransactionReceipt) {
 
   if (!fs.existsSync(csvFile)) {
     fs.writeFileSync(csvFile, csvHeaders.join(",") + "\n", "utf8");
+  } else {
+    // Migrasi format CSV jika file dibuat sebelum kolom baru ditambahkan
+    const existingContent = fs.readFileSync(csvFile, "utf8");
+    const firstLine = existingContent.split("\n")[0] || "";
+    if (!firstLine.includes("challengeElapsedSeconds")) {
+      const rows = existingContent.split("\n");
+      const migratedRows = rows.map((row, idx) => {
+        if (idx === 0) return csvHeaders.join(",");
+        if (!row.trim()) return row;
+        const cols = row.split(",");
+        // Sisipkan 2 kolom kosong setelah ipfsElapsedSeconds (index 7)
+        cols.splice(7, 0, "", "");
+        return cols.join(",");
+      });
+      fs.writeFileSync(csvFile, migratedRows.join("\n"), "utf8");
+    }
   }
 
   const csvRow = [
@@ -141,6 +161,8 @@ export function recordReceipt(receipt: TransactionReceipt) {
     receipt.elapsedSeconds.toFixed(3),
     receipt.onchainElapsedSeconds !== undefined ? receipt.onchainElapsedSeconds.toFixed(3) : "",
     receipt.ipfsElapsedSeconds !== undefined ? receipt.ipfsElapsedSeconds.toFixed(3) : "",
+    receipt.challengeElapsedSeconds !== undefined ? receipt.challengeElapsedSeconds.toFixed(3) : "",
+    receipt.mintAddress ? `"${receipt.mintAddress}"` : "",
     receipt.feeLamports ?? "",
     receipt.rentDepositLamports ?? "",
     receipt.slot ?? "",
@@ -279,6 +301,7 @@ interface AttemptMetadataRecord {
   mintAddress?: string;
   onchainElapsedSeconds?: number;
   ipfsElapsedSeconds?: number;
+  challengeElapsedSeconds?: number;
   slot?: number | null;
   feeLamports?: number | null;
   rentDepositLamports?: number | null;
@@ -331,8 +354,10 @@ export async function executeWithProposalRetry<T>(params: {
         elapsedSeconds,
         onchainElapsedSeconds: meta?.onchainElapsedSeconds,
         ipfsElapsedSeconds: meta?.ipfsElapsedSeconds,
+        challengeElapsedSeconds: meta?.challengeElapsedSeconds,
         slot: meta?.slot,
         txSignature: meta?.txSignature || meta?.signature,
+        mintAddress: meta?.mintAddress,
         feeLamports: meta?.feeLamports,
         rentDepositLamports: meta?.rentDepositLamports,
         pinataRetries: meta?.pinataRetries,
@@ -430,4 +455,19 @@ export async function getTransactionWithRetry(
   }
 
   return null;
+}
+
+/**
+ * Kalkulasi median standar:
+ * - n ganjil = nilai tengah
+ * - n genap = rata-rata dari dua nilai tengah
+ */
+export function calculateMedian(values: number[]): number {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  if (sorted.length % 2 === 1) {
+    return sorted[mid];
+  }
+  return (sorted[mid - 1] + sorted[mid]) / 2;
 }

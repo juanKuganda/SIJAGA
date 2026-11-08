@@ -25,10 +25,18 @@ export type OnChainInspect =
       frozen: boolean;
       dataHash: string | null;
       updateAuthority: string;
+      timings?: {
+        rpcMs: number;
+        ipfsMs: number;
+      };
     }
   | {
       ok: false;
       reason: "NOT_FOUND" | "RPC" | "METADATA" | "NO_HASH";
+      timings?: {
+        rpcMs?: number;
+        ipfsMs?: number;
+      };
     };
 
 // ─── Helper: fetch metadata JSON with timeout ────────────────────
@@ -148,14 +156,18 @@ export async function inspectCertificate(
   mintAddress: string,
   customRpcUrl?: string
 ): Promise<OnChainInspect> {
+  const timings = { rpcMs: 0, ipfsMs: 0 };
   try {
     const umi = createUmiInstance(customRpcUrl);
 
     // 1. Fetch asset dari Solana
     let asset: Awaited<ReturnType<typeof fetchAsset>>;
+    const rpcStart = Date.now();
     try {
       asset = await fetchAsset(umi, publicKey(mintAddress));
+      timings.rpcMs = Date.now() - rpcStart;
     } catch (fetchErr) {
+      timings.rpcMs = Date.now() - rpcStart;
       const msg =
         fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
 
@@ -165,12 +177,12 @@ export async function inspectCertificate(
         msg.includes("Account does not exist") ||
         msg.includes("could not find account")
       ) {
-        return { ok: false, reason: "NOT_FOUND" };
+        return { ok: false, reason: "NOT_FOUND", timings };
       }
 
       // RPC error (timeout, rate limit, dll)
       console.error("[OnChain] RPC error fetching asset:", msg);
-      return { ok: false, reason: "RPC" };
+      return { ok: false, reason: "RPC", timings };
     }
 
     // 2. Extract basic fields
@@ -191,14 +203,16 @@ export async function inspectCertificate(
 
     // 3. Fetch metadata JSON dari URI
     if (!uri) {
-      return { ok: false, reason: "METADATA" };
+      return { ok: false, reason: "METADATA", timings };
     }
 
+    const ipfsStart = Date.now();
     const metadata = await fetchMetadataJson(uri);
+    timings.ipfsMs = Date.now() - ipfsStart;
     if (!metadata) {
       // Fail-closed: metadata fetch gagal = inspeksi gagal
       // Tidak boleh return ok: true tanpa dataHash — bisa bypass hash check
-      return { ok: false, reason: "METADATA" };
+      return { ok: false, reason: "METADATA", timings };
     }
 
     // 4. Extract Data Hash dari attributes
@@ -212,12 +226,13 @@ export async function inspectCertificate(
       frozen,
       dataHash,
       updateAuthority,
+      timings,
     };
   } catch (error) {
     console.error(
       "[OnChain] Unexpected error in inspectCertificate:",
       error instanceof Error ? error.message : error
     );
-    return { ok: false, reason: "RPC" };
+    return { ok: false, reason: "RPC", timings };
   }
 }

@@ -67,13 +67,14 @@
     "batchExecutionPlan": {
       "batch4_22_00_WITA": "Mint completed (7 trials: 6 SUCCESS, 1 FAILED). Do NOT rerun Batch 4 mint. Verify: 1 trial (Trial #1). Revoke: 0 trials.",
       "batch1_11_00_WITA": "COMPLETED 100% (8 Nov 2026). Mint: 8/8 (Trials 8..15). Verify: 8/8 (Trials 2..9). Revoke: 8/8 (Trials 1..8).",
+      "batch2_verify_smoke": "COMPLETED 2 trials (Trials 10..11) with granular timing (onchainElapsedSeconds, ipfsElapsedSeconds, challengeElapsedSeconds) and mintAddress. Counted towards Batch 2.",
       "cumulativeProgress": {
         "mintTrials": "15 / 30",
-        "verifyTrials": "9 / 30",
+        "verifyTrials": "11 / 30",
         "revokeTrials": "8 / 30"
       },
-      "remainingPlanToday": "Batch 2 (~14:00 WITA: 8 mint, 8 verify, 8 revoke) and Batch 3 (~17:30 WITA: 7 mint, 13 verify, 14 revoke) to reach exactly 30/30 trials across all 3 operations."
+      "remainingPlanToday": "Batch 2 (~14:00 WITA: 8 mint #16..#23, 6 verify #12..#17, 8 revoke #9..#16) and Batch 3 (~17:30 WITA: 7 mint #24..#30, 13 verify #18..#30, 14 revoke #17..#30) to reach exactly 30/30 trials across all 3 operations."
     }
   },
-  "lastUpdated": "2026-11-08T11:22:00+08:00"
+  "lastUpdated": "2026-11-08T12:24:00+08:00"
 }

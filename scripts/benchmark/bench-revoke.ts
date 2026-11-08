@@ -18,6 +18,7 @@ import {
   executeWithProposalRetry,
   getTransactionWithRetry,
   getExistingTrialCount,
+  calculateMedian,
   TransactionReceipt,
 } from "./common";
 
@@ -160,7 +161,8 @@ async function runBenchRevoke() {
   const times = successReceipts.map((r) => r.elapsedSeconds).sort((a, b) => a - b);
   const onchainTimes = successReceipts.map((r) => r.onchainElapsedSeconds || 0).sort((a, b) => a - b);
 
-  const median = times[Math.floor(times.length / 2)] || 0;
+  const median = calculateMedian(times);
+  const onchainMedian = calculateMedian(onchainTimes);
   const p95Index = Math.min(Math.floor(times.length * 0.95), times.length - 1);
   const p95 = times[p95Index] || 0;
 
@@ -170,7 +172,7 @@ async function runBenchRevoke() {
   console.log(`- Total Success: ${successReceipts.length}/${receipts.length}`);
   console.log(`- Median Time (p50): ${median.toFixed(2)} s`);
   console.log(`- 95th Percentile (p95): ${p95.toFixed(2)} s`);
-  console.log(`- On-Chain Only Median: ${(onchainTimes[Math.floor(onchainTimes.length / 2)] || 0).toFixed(2)} s`);
+  console.log(`- On-Chain Only Median: ${onchainMedian.toFixed(2)} s`);
   console.log(`=======================================================\n`);
 }
 

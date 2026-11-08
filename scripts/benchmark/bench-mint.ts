@@ -17,6 +17,7 @@ import {
   executeWithProposalRetry,
   getTransactionWithRetry,
   getExistingTrialCount,
+  calculateMedian,
   TransactionReceipt,
 } from "./common";
 
@@ -180,7 +181,8 @@ async function runBenchMint() {
     .map((r) => r.onchainElapsedSeconds || 0)
     .sort((a, b) => a - b);
 
-  const median = times[Math.floor(times.length / 2)] || 0;
+  const median = calculateMedian(times);
+  const onchainMedian = calculateMedian(onchainTimes);
   const p95Index = Math.min(Math.floor(times.length * 0.95), times.length - 1);
   const p95 = times[p95Index] || 0;
   const min = times[0] || 0;
@@ -195,7 +197,7 @@ async function runBenchMint() {
   console.log(`  * 95th Percentile (p95): ${p95.toFixed(2)} s`);
   console.log(`  * Min: ${min.toFixed(2)} s | Max: ${max.toFixed(2)} s`);
   console.log(`- On-Chain Only Time:`);
-  console.log(`  * Median (p50): ${(onchainTimes[Math.floor(onchainTimes.length / 2)] || 0).toFixed(2)} s`);
+  console.log(`  * Median (p50): ${onchainMedian.toFixed(2)} s`);
   console.log(`  * Max: ${(onchainTimes[onchainTimes.length - 1] || 0).toFixed(2)} s`);
   console.log(`=======================================================\n`);
 }
