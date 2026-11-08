@@ -80,7 +80,34 @@
 - [ ] **P2.3: Challenge Tests (TC-05, TC-06)**
 - [ ] **P2.4: Validity Tests (TC-07, TC-08, TC-09, TC-12, TC-14)**
 - [ ] **P2.5: Privacy Tests (TC-10, TC-11)**
-- [ ] **P2.6: End-to-end Demonstration Trace (TC-01)**
+- [x] **P2.6: End-to-end Demonstration Trace (TC-01)** — [SELESAI 100%]
+  - Eksekusi trace demonstrasi penerbitan dan verifikasi ijazah digital end-to-end melalui HTTP endpoint aplikasi Next.js (bukan skrip benchmark).
+  - Alur lengkap: registrasi mahasiswa Tier 1 fiktif, autentikasi sesi via cookie, persetujuan data (UU PDP), registrasi wallet mahasiswa, persetujuan admin ke status `VERIFIED`, penerbitan ijazah Soulbound NFT via `POST /api/nft/mint`, verifikasi on-chain hash matching, dan verifikasi publik via `GET /api/verify`.
+  - **Tabel Bukti Verifikasi Trace P2.6 (TC-01):**
+    | Parameter / Tahapan | Nilai / Bukti Eksekusi |
+    |---|---|
+    | **Fictitious Student Name** | `Trace Test` |
+    | **Fictitious Student NIM** | `TRACE414503` |
+    | **Fictitious Student Email** | `trace.test.1794135414503@sijaga.ac.id` |
+    | **User ID (Tier 1 DB)** | `43cbe972-c3e5-416d-bcae-c0649b0990b9` |
+    | **Student Solana Wallet** | `FGpNtVV1bewy5p8YcHAifvEsEZ9ScKeSbjVcF7uE1V5D` |
+    | **Wallet Record ID** | `cmw7pxl7d0003ijxge341lbp3` |
+    | **Admin Approval HTTP** | `POST /api/wallet/verify` -> Status: `VERIFIED` (HTTP 200) |
+    | **Certificate Record ID** | `cmw7pykyz0009ijxgm0zy8cg0` |
+    | **Issuance Endpoint HTTP** | `POST /api/nft/mint` -> Status: `MINTED` (HTTP 200) |
+    | **Mint Address (Metaplex Core)** | `FDQKnrLVQdZqP4efoNarLb87gmZj529kebFPz8SVMQCc` |
+    | **Transaction Signature** | `3sEL99rJVvw2QZt9faUDyGcEa4JvroVTTDjCapWBjSutaGjeEhGZmqGSqwsC25DYH9B6t16qMV2ufmnYmTSrZyE9` |
+    | **Metadata URI (IPFS)** | `https://gateway.pinata.cloud/ipfs/QmPuymRiKnzd6pPqVS5jdDbCtHpZGyXz5bXLaaJRdLmn2j` |
+    | **Tier 1 Stored Data Hash** | `sha256:56a51c98cce45b2675301c1727964c3dd90b58bcac6d120ebed97eebaf600244` |
+    | **On-Chain Fetched Data Hash** | `sha256:56a51c98cce45b2675301c1727964c3dd90b58bcac6d120ebed97eebaf600244` |
+    | **Data Hash Assertion** | **IDENTICAL / PASS** (`assert.strictEqual(onChainHash, tier1Hash)`) |
+    | **On-Chain Frozen Status** | `true` (PermanentFreezeDelegate terpasang & aktif) |
+    | **On-Chain Update Authority** | `Bat5VTbjGqsThS5oERuXVi7d2JY2TBNomJD2ZciaztaQ` (Institusi Untad) |
+    | **Public Verification Route** | `GET /api/verify?query=TRACE414503` (HTTP 200) |
+    | **Verification Route Outcome** | `verified: true`, `verifiedOnChain: true`, `verifiedNominative: true`, `hashVerified: true`, `mismatch: null`, `onChain.status: "VALID"` |
+  - **Langkah-langkah Non-HTTP Eksplisit:**
+    1. Pembuatan user fiktif awal menggunakan helper seed pattern (`@neondatabase/auth` client + `prisma.user.create`) per klausul R1 karena Server Action Next.js di mode Turbopack dev memerlukan request context browser khusus.
+    2. Pemanggilan `inspectCertificate` (`lib/onchain.ts`) untuk pembacaan langsung RPC Solana Devnet dan IPFS metadata JSON guna membandingkan string hash on-chain dengan database Tier 1.
 
 ### Fase 3 — Analisis & Penyusunan Dokumen Bab IV
 - [ ] **P3.1: Tabel Statistik per Operasi**
@@ -115,6 +142,7 @@
   7. **ESLint rules dikembalikan:** Semua rule ESLint dikembalikan ke level `error`, semua penggunaan `any` dan hooks effect diselesaikan dengan tepat (0 error tersisa).
   8. **Pembersihan harness:** Hardcoded `adminWallet` diganti dengan `getAdminWalletAddress()`, retry Pinata dicatat pada receipt logger (`pinataRetries`), penomoran trial di-offset dari jumlah receipt tersimpan (`getExistingTrialCount`) agar kontinu antar batch.
   9. **Verifikasi komprehensif:** `scripts/test-challenge.ts` lulus 100%, `npm run test:tc` lulus 14/14 (100.0%), `npm run lint` lulus (0 error, 40 warning), dan `npm run build` lulus (42 rute statis/dinamis teroptimasi).
+- **8 Nov 2026 (P2.6 Demonstration Trace TC-01):** Evaluasi trace end-to-end penerbitan dan verifikasi ijazah digital melalui HTTP application endpoints Next.js dev server lokal selesai 100%. User fiktif ("Trace Test", NIM: TRACE414503, ID: 43cbe972-c3e5-416d-bcae-c0649b0990b9) berhasil melewati seluruh alur: HTTP consent, HTTP wallet registration (FGpNtVV1bewy5p8YcHAifvEsEZ9ScKeSbjVcF7uE1V5D), HTTP admin wallet verification, dan HTTP issuance POST /api/nft/mint (Mint Address: FDQKnrLVQdZqP4efoNarLb87gmZj529kebFPz8SVMQCc, Tx: 3sEL99rJVvw2QZt9faUDyGcEa4JvroVTTDjCapWBjSutaGjeEhGZmqGSqwsC25DYH9B6t16qMV2ufmnYmTSrZyE9). Nilai hash Tier 1 (sha256:56a51c98cce45b2675301c1727964c3dd90b58bcac6d120ebed97eebaf600244) terbukti identik 100% dengan on-chain data hash dari IPFS metadata attributes. Verifikasi publik melalui GET /api/verify?query=TRACE414503 menghasilkan status valid (verified: true, verifiedOnChain: true, mismatch: null, onChain.status: "VALID").
 
 ---
 
