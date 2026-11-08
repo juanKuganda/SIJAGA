@@ -1,0 +1,20 @@
+=== Testing TC-05 & TC-06 (Verification Challenge) ===
+Owner Wallet: ACNAmu2uYSdFsMB2gkwY9h5rXcq3gYZfRergDipxB31B
+Foreign Wallet: CvXHyPFEpXbhVCMrJo2DruDRY81QjTBeVg9inNZBi7m7
+
+[TC-05] Testing valid signature...
+✓ TC-05 PASSED: Valid signature verified successfully.
+
+[TC-06a] Testing replayed nonce (single-use enforcement)...
+✓ TC-06a PASSED: Replayed nonce rejected (NONCE_ALREADY_USED).
+
+[TC-06b] Testing foreign wallet signature...
+✓ TC-06b PASSED: Foreign wallet rejected (3a: INVALID_SIGNATURE, 3b: WALLET_MISMATCH).
+
+[TC-06c] Testing expired nonce...
+✓ TC-06c PASSED: Expired nonce rejected (NONCE_EXPIRED).
+
+[TC-06d] Testing tampered message (even one byte)...
+✓ TC-06d PASSED: Tampered message rejected (MESSAGE_MISMATCH).
+
+=== ALL TC-05 & TC-06 CHALLENGE TESTS PASSED! ===

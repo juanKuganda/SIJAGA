@@ -1,0 +1,259 @@
+
+> sijaga@0.1.0 test:tc
+> node --env-file=.env.local ./node_modules/tsx/dist/cli.mjs scripts/benchmark/test-tc.ts
+
+=======================================================
+  SIJAGA 14 BLACK-BOX TEST CASES RUNNER (TC-01..TC-14) 
+=======================================================
+
+[Harness] Test HTTP server listening on http://127.0.0.1:40045
+[Config] Admin Wallet: Bat5VTbjGqsThS5oERuXVi7d2JY2TBNomJD2ZciaztaQ
+[Config] RPC: Helius (devnet.helius-rpc.com)
+
+[Setup] Funding test wallets for on-chain interactions...
+[Setup] Funding confirmed.
+
+--- Running TC-01 ---
+`z-index` is currently not supported.
+`z-index` is currently not supported.
+[Metaplex] Starting NFT mint to: 7ap6x8hHfu5tq8NYvijKajfuTZQ2DJM54TpF5H7P9dhz
+[Metaplex] Mint address: 3EL8ni8mvPDG17zBwJqQDX4oLzkVqBCsk9ViKRC4rufd
+[Metaplex] Recipient: 7ap6x8hHfu5tq8NYvijKajfuTZQ2DJM54TpF5H7P9dhz
+[Metaplex] Metadata URI: https://gateway.pinata.cloud/ipfs/QmQbjzPY3YTTTSMY28NoDAo69XKXnuDgwWdC462jppCzT9
+[Metaplex] NFT minted successfully!
+[Metaplex] Signature: AMLz8YnTd8Yq5zQ9QTEXT1VamK1MutJKuD68D6AB7Kw4csMWqQJu8FWSD6t9S6WKcZ1gjmx7FfFczHmdYunJ1QK
+[Metaplex] Mint address: 3EL8ni8mvPDG17zBwJqQDX4oLzkVqBCsk9ViKRC4rufd
+
+[TC-01] ✅ PASS - Institution issues diploma asset to graduate wallet
+   Expected: Owner = graduate wallet, frozen: true, issuer = institution address
+   Observed: Owner=7ap6x8hHfu5tq8NYvijKajfuTZQ2DJM54TpF5H7P9dhz, frozen=true, updateAuthority=Bat5VTbjGqsThS5oERuXVi7d2JY2TBNomJD2ZciaztaQ
+   Evidence: Mint: 3EL8ni8mvPDG17zBwJqQDX4oLzkVqBCsk9ViKRC4rufd, Tx: AMLz8YnTd8Yq5zQ9QTEXT1VamK1MutJKuD68D6AB7Kw4csMWqQJu8FWSD6t9S6WKcZ1gjmx7FfFczHmdYunJ1QK
+
+--- Running TC-02 ---
+
+[TC-02] ✅ PASS - Owner tries to transfer asset to another wallet
+   Expected: Transaction rejected by network while frozen: true
+   Observed: Rejected on-chain: Invalid Authority
+
+Source: Program > mplCore [CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94...
+   Evidence: Asset: 3EL8ni8mvPDG17zBwJqQDX4oLzkVqBCsk9ViKRC4rufd, Error: Invalid Authority
+
+Source: Program > mplCore [CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d]
+
+Caused 
+
+--- Running TC-03 ---
+
+[TC-03] ✅ PASS - Non-owner tries to transfer asset
+   Expected: Transaction rejected by network
+   Observed: Rejected on-chain: Invalid Authority
+
+Source: Program > mplCore [CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94...
+   Evidence: Attacker: 7682auXfUaxh5TJsegqtxGTmuhSf4WUtZKLPkAuX7Ewr, Error: Invalid Authority
+
+Source: Program > mplCore [CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d]
+
+Caused 
+
+--- Running TC-04 ---
+
+[TC-04] ✅ PASS - Owner tries to burn asset
+   Expected: Transaction rejected by network while frozen: true
+   Observed: Rejected on-chain: Invalid Authority
+
+Source: Program > mplCore [CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94...
+   Evidence: Asset: 3EL8ni8mvPDG17zBwJqQDX4oLzkVqBCsk9ViKRC4rufd, Error: Invalid Authority
+
+Source: Program > mplCore [CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d]
+
+Caused 
+
+--- Running TC-05 ---
+
+[TC-05] ✅ PASS - Holder signs verifier challenge message (nonce, context, expiry)
+   Expected: Signature valid and wallet = asset owner
+   Observed: Signature verified valid, wallet matches owner
+   Evidence: Nonce: 87e1413499a91c5e96226392d1433c2d, Sig: 2stULChLd11dHbdyYATygyPoJWmMsJ8B...
+
+--- Running TC-06 ---
+
+[TC-06] ✅ PASS - Signature from another wallet, expired nonce, or replayed message (6a replay, 6b foreign, 6c expired, 6d tampered)
+   Expected: Verification rejected for all invalid variants with specific error codes
+   Observed: Replay: NONCE_ALREADY_USED, Foreign: INVALID_SIGNATURE, Expired: NONCE_EXPIRED, Tampered: MESSAGE_MISMATCH
+   Evidence: 6a=NONCE_ALREADY_USED, 6b=INVALID_SIGNATURE, 6c=NONCE_EXPIRED, 6d=MESSAGE_MISMATCH
+
+--- Running TC-07 ---
+[TC-07a] Minting foreign updateAuthority asset with attacker wallet...
+[neon-auth] Cookie validation error before getSession upstream call {
+  component: 'server-api',
+  detail: '`cookies` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context',
+  err: Error: `cookies` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context
+      at throwForMissingRequestStore (/home/junnnnnnnn/Code/sijaga/node_modules/next/src/server/app-render/work-unit-async-storage.external.ts:447:9)
+      at cookies (/home/junnnnnnnn/Code/sijaga/node_modules/next/src/server/request/cookies.ts:155:30)
+      at createNextRequestContext (/home/junnnnnnnn/Code/sijaga/node_modules/@neondatabase/auth/dist/next/server/index.mjs:12:28)
+      at Proxy.baseServer.getSession (/home/junnnnnnnn/Code/sijaga/node_modules/@neondatabase/auth/dist/server-b0OzGjXl.mjs:1055:39)
+      at getAuthUser (/home/junnnnnnnn/Code/sijaga/lib/auth.ts:53:30)
+      at GET (/home/junnnnnnnn/Code/sijaga/app/api/verify/route.ts:97:28)
+      at async Server.<anonymous> (/home/junnnnnnnn/Code/sijaga/scripts/benchmark/test-tc.ts:90:19)
+}
+[TC-07b] Testing hash mismatch with genuine institution asset...
+ws error: 
+[neon-auth] Cookie validation error before getSession upstream call {
+  component: 'server-api',
+  detail: '`cookies` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context',
+  err: Error: `cookies` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context
+      at throwForMissingRequestStore (/home/junnnnnnnn/Code/sijaga/node_modules/next/src/server/app-render/work-unit-async-storage.external.ts:447:9)
+      at cookies (/home/junnnnnnnn/Code/sijaga/node_modules/next/src/server/request/cookies.ts:155:30)
+      at createNextRequestContext (/home/junnnnnnnn/Code/sijaga/node_modules/@neondatabase/auth/dist/next/server/index.mjs:12:28)
+      at Proxy.baseServer.getSession (/home/junnnnnnnn/Code/sijaga/node_modules/@neondatabase/auth/dist/server-b0OzGjXl.mjs:1055:39)
+      at getAuthUser (/home/junnnnnnnn/Code/sijaga/lib/auth.ts:53:30)
+      at GET (/home/junnnnnnnn/Code/sijaga/app/api/verify/route.ts:97:28)
+      at async Server.<anonymous> (/home/junnnnnnnn/Code/sijaga/scripts/benchmark/test-tc.ts:90:19)
+}
+ws error: 
+
+[TC-07] ✅ PASS - Asset not issued by institution or hash mismatch: (a) foreign updateAuthority, (b) hash mismatch via GET /api/verify
+   Expected: (a) rejected with mismatch ISSUER, (b) rejected with mismatch HASH
+   Observed: (a) mismatch=ISSUER (status 200), (b) mismatch=HASH (status 200)
+   Evidence: TC-07a: mismatch=ISSUER, TC-07b: mismatch=HASH
+
+--- Running TC-08 ---
+`z-index` is currently not supported.
+`z-index` is currently not supported.
+`z-index` is currently not supported.
+[Metaplex] Starting NFT revoke for: 3EL8ni8mvPDG17zBwJqQDX4oLzkVqBCsk9ViKRC4rufd
+[Metaplex] NFT revoked successfully!
+
+[TC-08] ✅ PASS - Institution performs visual revocation
+   Expected: Verifier sees status DIBATALKAN from current URI; Tier 1 status = revoked
+   Observed: Name="[DIBATALKAN] Ijazah S1", URI=https://gateway.pinata.cloud/ipfs/QmcBhT6moawT4GfnEhCc9enWNSbeNoH67pzVdwXXw4sp3z
+   Evidence: Tx: 5cUgxZkpjum9xgLXfdbnCtJ92EsBFEadRTAZk9P6kJrkF6c57fg5Pj8a5aRohcmX3mfezKn2gqVSaecCBTt3fSYB, Revoked URI: https://gateway.pinata.cloud/ipfs/QmcBhT6moawT4GfnEhCc9enWNSbeNoH67pzVdwXXw4sp3z
+
+--- Running TC-09 ---
+[TC-09] Calling POST /api/admin/reissue with x-admin-key...
+`z-index` is currently not supported.
+`z-index` is currently not supported.
+ws error: read ECONNRESET
+[Metaplex] Starting NFT mint to: 9nDrVCYwNXEtSZqiYgjU4eq1WDxnZx8HFPc4th3DDBo6
+[Metaplex] Mint address: BSjM8JSmuFmCKFFS33W6jbSjCPibSqC6H79zcnsVy6or
+[Metaplex] Recipient: 9nDrVCYwNXEtSZqiYgjU4eq1WDxnZx8HFPc4th3DDBo6
+[Metaplex] Metadata URI: https://gateway.pinata.cloud/ipfs/QmTd3FCD5zqDqh6jrhNdNdeRkyvkEe9RNJ5mEwRBmsFjYu
+[Metaplex] NFT minted successfully!
+[Metaplex] Signature: 2fQcXyFddALqCHaNjzgTV14rUFBw3YmqHLYDxTmtqgGV5jVEt45L9a2dmUGzYnSsTt2igoJG7rKwWEtnb5ZqiVS6
+[Metaplex] Mint address: BSjM8JSmuFmCKFFS33W6jbSjCPibSqC6H79zcnsVy6or
+`z-index` is currently not supported.
+`z-index` is currently not supported.
+`z-index` is currently not supported.
+[Metaplex] Starting NFT revoke for: 3EL8ni8mvPDG17zBwJqQDX4oLzkVqBCsk9ViKRC4rufd
+[Metaplex] NFT revoked successfully!
+[neon-auth] Cookie validation error before getSession upstream call {
+  component: 'server-api',
+  detail: '`cookies` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context',
+  err: Error: `cookies` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context
+      at throwForMissingRequestStore (/home/junnnnnnnn/Code/sijaga/node_modules/next/src/server/app-render/work-unit-async-storage.external.ts:447:9)
+      at cookies (/home/junnnnnnnn/Code/sijaga/node_modules/next/src/server/request/cookies.ts:155:30)
+      at createNextRequestContext (/home/junnnnnnnn/Code/sijaga/node_modules/@neondatabase/auth/dist/next/server/index.mjs:12:28)
+      at Proxy.baseServer.getSession (/home/junnnnnnnn/Code/sijaga/node_modules/@neondatabase/auth/dist/server-b0OzGjXl.mjs:1055:39)
+      at getAuthUser (/home/junnnnnnnn/Code/sijaga/lib/auth.ts:53:30)
+      at GET (/home/junnnnnnnn/Code/sijaga/app/api/verify/route.ts:97:28)
+      at async Server.<anonymous> (/home/junnnnnnnn/Code/sijaga/scripts/benchmark/test-tc.ts:90:19)
+}
+
+[TC-09] ✅ PASS - Re-issuance to a new wallet after identity verification (POST /api/admin/reissue)
+   Expected: New asset issued to new wallet; old asset marked revoked; old -> new link in database verified
+   Observed: HTTP status=200, DB Old(replacedById=cmw7nxjkj000aij9vdxvws4t4, status=REVOKED), DB New(id=cmw7nxjkj000aij9vdxvws4t4, status=MINTED), Verified=true
+   Evidence: New Mint: BSjM8JSmuFmCKFFS33W6jbSjCPibSqC6H79zcnsVy6or, Old Mint: 3EL8ni8mvPDG17zBwJqQDX4oLzkVqBCsk9ViKRC4rufd, Old Cert replacedById: cmw7nxjkj000aij9vdxvws4t4
+
+--- Running TC-10 ---
+
+[TC-10] ✅ PASS - Inspect public metadata (IPFS and on-chain)
+   Expected: Contains no name, NIM, email, or salt in public metadata
+   Observed: PII check: Name=false, NIM=false, Email=false, Salt=false
+   Evidence: Metadata URI: https://gateway.pinata.cloud/ipfs/QmTd3FCD5zqDqh6jrhNdNdeRkyvkEe9RNJ5mEwRBmsFjYu, Attributes: [{"trait_type":"Institusi","value":"Universitas Tadulako"},{"trait_type":"Program Studi","value":"Teknik Informatika"},{"trait_type":"Tahun Lulus","value":"2026"},{"trait_type":"Jenjang","value":"Sarjana (S1)"},{"trait_type":"Tipe","value":"Soulbound"},{"trait_type":"Data Hash","value":"sha256:e6c89eeeb112020c4d020eb1e1bc158b91fdf960e351a0ecbcca0f7b2a32841a"}]
+
+--- Running TC-11 ---
+[TC-11] Calling POST /api/admin/delete-pii with x-admin-key...
+[neon-auth] Cookie validation error before getSession upstream call {
+  component: 'server-api',
+  detail: '`cookies` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context',
+  err: Error: `cookies` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context
+      at throwForMissingRequestStore (/home/junnnnnnnn/Code/sijaga/node_modules/next/src/server/app-render/work-unit-async-storage.external.ts:447:9)
+      at cookies (/home/junnnnnnnn/Code/sijaga/node_modules/next/src/server/request/cookies.ts:155:30)
+      at createNextRequestContext (/home/junnnnnnnn/Code/sijaga/node_modules/@neondatabase/auth/dist/next/server/index.mjs:12:28)
+      at Proxy.baseServer.getSession (/home/junnnnnnnn/Code/sijaga/node_modules/@neondatabase/auth/dist/server-b0OzGjXl.mjs:1055:39)
+      at getAuthUser (/home/junnnnnnnn/Code/sijaga/lib/auth.ts:53:30)
+      at GET (/home/junnnnnnnn/Code/sijaga/app/api/verify/route.ts:97:28)
+      at async Server.<anonymous> (/home/junnnnnnnn/Code/sijaga/scripts/benchmark/test-tc.ts:90:19)
+}
+ws error: 
+ws error: 
+
+[TC-11] ✅ PASS - Delete personal data and salt in Tier 1, unlinking binding (POST /api/admin/delete-pii)
+   Expected: dataSalt is null, reconstruction attempts fail, GET /api/verify reflects piiDeleted: true
+   Observed: HTTP status=200, dataSalt=null, Reconstruction Failed=true, piiDeleted=true
+   Evidence: UserId: cmw7nw9gm0004ij9vs7qecnwb, Salt is null, reconstructionFailed: true
+
+--- Running TC-12 ---
+[Metaplex] Fetch attempt 1/3 failed: fetch failed
+[Metaplex] Fetch attempt 2/3 failed: fetch failed
+[Metaplex] Fetch attempt 3/3 failed: fetch failed
+[OnChain] RPC error fetching asset: failed to get info about account BSjM8JSmuFmCKFFS33W6jbSjCPibSqC6H79zcnsVy6or: Error: Fetch failed after 3 retries. Last error: fetch failed
+ws error: read ECONNRESET
+ws error: read ECONNRESET
+[OnChain] RPC error fetching asset: The account at the provided address [11111111111111111111111111111111] is not of the expected type [AssetAccountData].
+
+Source: SDK
+
+Caused By: EnumDiscriminatorOutOfRangeError: Enum discriminator out of range. Expected a number between 0 and 6, got 115.
+
+
+[TC-12] ✅ PASS - Solana or IPFS unreachable during verification
+   Expected: System does NOT declare diploma valid (status: cannot be determined / UNAVAILABLE / NOT_FOUND)
+   Observed: Dead RPC reason=RPC, Blocked IPFS ok=false, Never valid=true
+   Evidence: DeadRpc: {"ok":false,"reason":"RPC","timings":{"rpcMs":6021,"ipfsMs":0}}, BlockedIpfs: {"ok":false,"reason":"RPC","timings":{"rpcMs":2172,"ipfsMs":0}}
+
+--- Running TC-13 ---
+ws error: read ECONNRESET
+ws error: read ECONNRESET
+
+[TC-13] ✅ PASS - Non-institution party tries to thaw (unfreeze) the asset
+   Expected: Transaction rejected; thaw authority is institution only
+   Observed: Rejected on-chain: Neither the asset or any plugins have approved this operation
+
+Source: Program >...
+   Evidence: Attacker: 7682auXfUaxh5TJsegqtxGTmuhSf4WUtZKLPkAuX7Ewr, Error: Neither the asset or any plugins have approved this operation
+
+Source: Program > mplCore [CoREENxT6t
+
+--- Running TC-14 ---
+
+[TC-14] ✅ PASS - Graduate claims asset with SIJAGA_CLAIM memo transaction from registered wallet
+   Expected: Status becomes CLAIMED; memo validated on-chain
+   Observed: Tx confirmed on-chain, DB Certificate status = CLAIMED
+   Evidence: Signature: 9DjNiZj6pFaVs2AjMnCGrQCgKonn8rzCRHDsEJiREuygPLfn3QJySCeQPZd1L9EEGTvDf1jeznZeJTuwiozk1Mw, Memo: {"type":"SIJAGA_CLAIM","certId":"cmw7nxjkj000aij9vdxvws4t4","mint":"BSjM8JSmuFmCKFFS33W6jbSjCPibSqC6H79zcnsVy6or"}
+ws error: read ECONNRESET
+
+=======================================================
+  14 BLACK-BOX TEST CASES SUMMARY MATRIX               
+=======================================================
+┌─────────┬─────────┬────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┬───────────┬────────┬──────────────────────────────────────────────────────┐
+│ (index) │ ID      │ Scenario                                                                                                               │ Class     │ Status │ Observed                                             │
+├─────────┼─────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┼───────────┼────────┼──────────────────────────────────────────────────────┤
+│ 0       │ 'TC-01' │ 'Institution issues diploma asset to graduate wallet'                                                                  │ 'Valid'   │ 'PASS' │ 'Owner=7ap6x8hHfu5tq8NYvijKajfuTZQ2DJM54TpF5H7...'   │
+│ 1       │ 'TC-02' │ 'Owner tries to transfer asset to another wallet'                                                                      │ 'Invalid' │ 'PASS' │ 'Rejected on-chain: Invalid Authority\n\nSource:...' │
+│ 2       │ 'TC-03' │ 'Non-owner tries to transfer asset'                                                                                    │ 'Invalid' │ 'PASS' │ 'Rejected on-chain: Invalid Authority\n\nSource:...' │
+│ 3       │ 'TC-04' │ 'Owner tries to burn asset'                                                                                            │ 'Invalid' │ 'PASS' │ 'Rejected on-chain: Invalid Authority\n\nSource:...' │
+│ 4       │ 'TC-05' │ 'Holder signs verifier challenge message (nonce, context, expiry)'                                                     │ 'Valid'   │ 'PASS' │ 'Signature verified valid, wallet matches owne...'   │
+│ 5       │ 'TC-06' │ 'Signature from another wallet, expired nonce, or replayed message (6a replay, 6b foreign, 6c expired, 6d tampered)'   │ 'Invalid' │ 'PASS' │ 'Replay: NONCE_ALREADY_USED, Foreign: INVALID_...'   │
+│ 6       │ 'TC-07' │ 'Asset not issued by institution or hash mismatch: (a) foreign updateAuthority, (b) hash mismatch via GET /api/verify' │ 'Invalid' │ 'PASS' │ '(a) mismatch=ISSUER (status 200), (b) mismatc...'   │
+│ 7       │ 'TC-08' │ 'Institution performs visual revocation'                                                                               │ 'Valid'   │ 'PASS' │ 'Name="[DIBATALKAN] Ijazah S1", URI=https://ga...'   │
+│ 8       │ 'TC-09' │ 'Re-issuance to a new wallet after identity verification (POST /api/admin/reissue)'                                    │ 'Valid'   │ 'PASS' │ 'HTTP status=200, DB Old(replacedById=cmw7nxjk...'   │
+│ 9       │ 'TC-10' │ 'Inspect public metadata (IPFS and on-chain)'                                                                          │ 'Valid'   │ 'PASS' │ 'PII check: Name=false, NIM=false, Email=false...'   │
+│ 10      │ 'TC-11' │ 'Delete personal data and salt in Tier 1, unlinking binding (POST /api/admin/delete-pii)'                              │ 'Valid'   │ 'PASS' │ 'HTTP status=200, dataSalt=null, Reconstructio...'   │
+│ 11      │ 'TC-12' │ 'Solana or IPFS unreachable during verification'                                                                       │ 'Invalid' │ 'PASS' │ 'Dead RPC reason=RPC, Blocked IPFS ok=false, N...'   │
+│ 12      │ 'TC-13' │ 'Non-institution party tries to thaw (unfreeze) the asset'                                                             │ 'Invalid' │ 'PASS' │ 'Rejected on-chain: Neither the asset or any p...'   │
+│ 13      │ 'TC-14' │ 'Graduate claims asset with SIJAGA_CLAIM memo transaction from registered wallet'                                      │ 'Valid'   │ 'PASS' │ 'Tx confirmed on-chain, DB Certificate status ...'   │
+└─────────┴─────────┴────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┴───────────┴────────┴──────────────────────────────────────────────────────┘
+Total Passed: 14 / 14 (100.0%)
+=======================================================
+
