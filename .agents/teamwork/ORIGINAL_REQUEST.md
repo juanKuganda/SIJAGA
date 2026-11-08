@@ -1,41 +1,80 @@
 # Original User Request
 
-## Approved Task Prompt — 2026-11-08T10:31:24Z
+## Initial Request — 2026-11-08T13:46:25Z
 
-Execute TRACE P2.6 as an end-to-end evaluation trace of certificate issuance and verification through the application HTTP endpoints (not benchmark scripts) for Bab IV thesis experiment validation. Document all evidence and hash comparisons in `BAB4_PROGRESS.md`.
+This is a single self-contained fix; keep it small and focused. Implementasi fitur UI baru "Bukti Kepemilikan" (Challenge) pada halaman sertifikat `app/ijazah/[id]/page.tsx` untuk verifikasi kepemilikan ijazah via tanda tangan dompet Solana pada branch `feat/bab4-experiments`.
 
-Working directory: /home/junnnnnnnn/Code/sijaga
-Integrity mode: demo
-The team must NOT: use benchmark scripts or test harnesses (like bench-mint.ts) instead of actual application HTTP endpoints; modify existing n=30 experiment data, re-run benchmarks, or begin Phase 3
+Integrity mode: development
 
 ## Requirements
 
-### R1. Environment and Server Setup
-Run and manage a local Next.js dev server instance during the trace. Use existing credentials or admin session from the local environment/seed for administrative actions; if an administrative action cannot be performed via public HTTP, execute and document the direct admin endpoint/handler as-is.
+### R1. Seksi UI "Buktikan Kepemilikan"
+Tambahkan satu seksi baru "Buktikan Kepemilikan" pada halaman `app/ijazah/[id]/page.tsx`, tepat di bawah seksi "Verifikasi Kriptografis" yang sudah ada.
+- Seksi ini HANYA tampil bila sertifikat ditemukan (tidak boleh muncul saat state "Ijazah Tidak Ditemukan").
+- Jangan ubah tampilan sertifikat yang sudah ada, dan jangan ubah teks/angka lain di halaman tersebut.
+- Bahasa UI: Bahasa Indonesia.
 
-### R2. Fictitious Tier 1 User Registration and Verification via HTTP
-Create one fictitious Tier 1 user through application HTTP endpoints (register → consent → register wallet → admin approval to VERIFIED status). Use clearly fictitious data (e.g., name "Trace Test", NIM fiktif). Record the user ID. Record the hash stored in the Tier 1 user row (sha256 of name|NIM|prodi|salt) exactly as-is.
+### R2. Alur Interaksi dan State Koneksi Dompet
+1. Sediakan tombol "Hubungkan Dompet & Tanda Tangani".
+2. Hubungkan dompet menggunakan pola yang SUDAH ADA di `app/claim/[nim]/page.tsx` (`getWalletProvider` — Phantom/Solflare). Jangan tambah library wallet baru. Bila wallet tidak terdeteksi, tampilkan peringatan yang sama seperti di halaman klaim (install Phantom + refresh).
+3. Tangani siklus status UI:
+   - `idle` -> `connecting` -> `challenge diminta` -> `menunggu tanda tangan` -> `memverifikasi` -> `sukses` / `gagal`.
+   - Sediakan tombol "Minta Challenge Baru" bila nonce kedaluwarsa (5 menit).
 
-### R3. Certificate Issuance via Application Endpoint
-Issue the certificate for the fictitious user using the application's actual issuance endpoint (as used by the admin `/terbitkan` page), not `bench-mint.ts`. Record the resulting mint address and transaction signature.
+### R3. Integrasi Kontrak API Challenge dan Verifikasi Kriptografis
+Gunakan kontrak endpoint `/api/verify/challenge` tanpa mengubah endpoint maupun file `lib/challenge.ts`:
+1. Permintaan Challenge:
+   - Request: `POST /api/verify/challenge` dengan body `{ walletAddress }`.
+   - Response: `200 { success: true, nonce, message, expiresAt }`.
+2. Penandatanganan Pesan:
+   - Minta dompet menandatangani string `message` secara byte-exact (UTF-8 encode string `message` dari response apa adanya, jangan dimodifikasi).
+3. Verifikasi Tanda Tangan:
+   - Request: `POST /api/verify/challenge` dengan body `{ action: "verify", walletAddress, nonce, signature, message, expectedOwner }`.
+   - `signature` HARUS ter-encode base58 (`bs58.encode`).
+   - `expectedOwner` diambil dari alamat pemilik aset dari data sertifikat yang sudah dimuat halaman itu (periksa nama field-nya di kode, jangan ditebak).
+   - Response: `200 { verified: true }` atau `400 { verified: false, error, message }`.
+4. Tampilan Hasil:
+   - Sukses: tampilkan status "Kepemilikan Terverifikasi" (warna hijau, dompet ini pemilik sah ijazah).
+   - Gagal: tampilkan kode error dari API apa adanya (`INVALID_SIGNATURE`, `OWNER_MISMATCH` = "Dompet ini bukan pemilik ijazah", `NONCE_EXPIRED`, `NONCE_ALREADY_USED`, `NONCE_NOT_FOUND`, `MESSAGE_MISMATCH`, `WALLET_MISMATCH`, `MALFORMED_INPUT`).
 
-### R4. On-chain Data Hash Assertion and Verification
-Read back the on-chain asset data hash (via `getAsset`/`inspectCertificate`) and compare it directly with the Tier 1 hash, asserting that both are identical. Record both hash values and the assertion result. Verify the asset through the actual application verification route (`GET /api/verify` or verification flow) and record the verification outcome.
+### R4. Batasan & Larangan (Guardrails)
+- Jangan sentuh data n=30 dan jangan jalankan benchmark.
+- Jangan ubah endpoint challenge maupun `lib/challenge.ts` (sudah terverifikasi).
+- Jangan ubah tampilan sertifikat yang sudah ada — hanya TAMBAH satu seksi.
+- JANGAN restart dev server yang sedang jalan.
+- JANGAN deploy ke production.
+- JANGAN sentuh file `experiments/` atau `BAB4_PROGRESS.md` / `CHECKPOINT.json`.
+- JANGAN tes manual untuk pengguna — pengguna yang akan mengetes sendiri di localhost.
 
-### R5. Trace Documentation and Version Control
-Record the complete trace in `BAB4_PROGRESS.md`: user ID, mint address, transaction signature, both hash values, assertion result, and verification result. Document any non-HTTP step explicitly. Commit and push the changes to branch `feat/bab4-experiments`, then STOP waiting without touching existing n=30 experiment data, re-running benchmarks, or starting Phase 3.
+### R5. Penyelesaian dan Delivery
+Jalankan `npm run build` dan `lint` untuk memastikan compile bersih tanpa error. Lakukan commit dan push ke branch `feat/bab4-experiments`, lalu BERHENTI menunggu.
 
 ## Acceptance Criteria
 
-### Execution & Verification
-- [ ] Local Next.js dev server instance is started and accessible for executing HTTP requests.
-- [ ] Fictitious Tier 1 user is registered, consented, wallet registered, and approved to VERIFIED status via application HTTP endpoints, with user ID recorded.
-- [ ] Tier 1 hash (sha256 of name|NIM|prodi|salt) is recorded exactly as stored.
-- [ ] Certificate is minted via the actual application issuance endpoint (admin `/terbitkan` route, not `bench-mint.ts`), with mint address and transaction signature recorded.
-- [ ] On-chain data hash fetched via `getAsset`/`inspectCertificate` is asserted equal to the Tier 1 hash, with both values and assertion result recorded.
-- [ ] Asset is verified via the application verification route (`GET /api/verify`), with verification result recorded.
+### Penempatan UI & Bahasa
+- [ ] Seksi "Buktikan Kepemilikan" muncul di `app/ijazah/[id]/page.tsx` tepat di bawah seksi "Verifikasi Kriptografis".
+- [ ] Seksi "Buktikan Kepemilikan" tidak muncul pada kondisi sertifikat tidak ditemukan ("Ijazah Tidak Ditemukan").
+- [ ] Tampilan sertifikat yang sudah ada serta teks/angka lain di halaman tetap utuh tanpa perubahan.
+- [ ] Seluruh teks dan label baru disajikan dalam Bahasa Indonesia.
 
-### Documentation & Deliverables
-- [ ] `BAB4_PROGRESS.md` contains the complete trace (user ID, mint address, tx signature, both hashes, assertion result, verification result, and any non-HTTP step explicitly noted).
-- [ ] Changes are committed and pushed to branch `feat/bab4-experiments`.
-- [ ] Existing n=30 dataset is untouched, no benchmarks are re-run, and Phase 3 is not started.
+### Integrasi Dompet & Alur Challenge
+- [ ] Koneksi dompet menggunakan fungsi `getWalletProvider` yang sudah ada (Phantom/Solflare) tanpa dependensi library wallet eksternal baru.
+- [ ] Peringatan untuk menginstal Phantom dan merefresh halaman muncul jika dompet tidak terdeteksi.
+- [ ] Challenge diminta melalui `POST /api/verify/challenge` dengan `{ walletAddress }`.
+- [ ] Pesan tantangan ditandatangani oleh dompet secara byte-exact UTF-8.
+- [ ] Request verifikasi dikirim melalui `POST /api/verify/challenge` dengan `{ action: "verify", walletAddress, nonce, signature, message, expectedOwner }`.
+- [ ] Nilai `signature` dikirim dalam format base58 (`bs58.encode`).
+- [ ] Nilai `expectedOwner` merujuk langsung ke nama field pemilik aset pada data sertifikat yang dimuat halaman.
+- [ ] Status transisi antarmuka tertangani dengan jelas: idle, connecting, challenge diminta, menunggu tanda tangan, memverifikasi, hingga selesai (sukses/gagal).
+- [ ] Tampilan sukses menampilkan "Kepemilikan Terverifikasi" berwarna hijau.
+- [ ] Tampilan gagal menampilkan kode error spesifik dari API (seperti `OWNER_MISMATCH` = "Dompet ini bukan pemilik ijazah", `NONCE_EXPIRED`, dsb).
+- [ ] Tombol "Minta Challenge Baru" tersedia dan dapat diklik untuk memperbarui challenge saat nonce kedaluwarsa.
+
+### Kepatuhan Guardrails
+- [ ] File `lib/challenge.ts`, route API challenge, data n=30, direktori `experiments/`, `BAB4_PROGRESS.md`, dan `CHECKPOINT.json` tidak mengalami perubahan.
+- [ ] Dev server tidak direstart dan tidak ada aksi deploy production.
+
+### Verifikasi Teknis & Delivery
+- [ ] Perintah `npm run build` berhasil dieksekusi tanpa error.
+- [ ] Perintah `npm run lint` berhasil dieksekusi tanpa error.
+- [ ] Seluruh perubahan di-commit dan di-push ke branch `feat/bab4-experiments`.

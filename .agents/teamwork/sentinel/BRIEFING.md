@@ -1,33 +1,34 @@
-# BRIEFING — 2026-11-08T10:32:00Z
+# BRIEFING — 2026-11-08T13:46:00Z
 
 ## Mission
-Coordinate and monitor execution of TRACE P2.6 via Project Orchestrator to ensure strict end-to-end validation via application HTTP endpoints and independent victory audit.
+Sentinel monitoring for UI "Bukti Kepemilikan" (Challenge) on certificate page `app/ijazah/[id]/page.tsx`.
 
 ## 🔒 My Identity
 - Archetype: sentinel
-- Working directory: /home/junnnnnnnn/Code/sijaga/.agents/teamwork/sentinel/
-- Orchestrator: 4e066bb9-5502-4a56-99b0-69a20ff48b56
-- Victory Auditor: 04c42977-1934-44a3-8064-5026eae256c5
+- Working directory: /home/junnnnnnnn/Code/sijaga/.agents/teamwork/sentinel
+- Orchestrator: 57f5f265-29a8-4a0b-8570-a0d4eb219254
+- Victory Auditor: to be spawned on victory claim
 
 ## 🔒 Key Constraints
 - No technical decisions — relay only
 - Victory Audit is MANDATORY before reporting completion
-- Must NOT use benchmark scripts or test harnesses (like bench-mint.ts) instead of actual application HTTP endpoints
-- Must NOT modify existing n=30 experiment data, re-run benchmarks, or begin Phase 3
+- Route: SWE Light (teamwork_swe)
+- Target: app/ijazah/[id]/page.tsx (tambah seksi "Buktikan Kepemilikan" di bawah "Verifikasi Kriptografis")
+- Guardrails: Jangan ubah lib/challenge.ts atau endpoint challenge, jangan ubah data n=30 atau jalankan bench, jangan restart dev server, jangan deploy, jangan sentuh experiments/ atau BAB4_PROGRESS.md / CHECKPOINT.json, commit + push ke feat/bab4-experiments
 
 ## User Context
-- **Last user request**: Approved task prompt for TRACE P2.6
+- **Last user request**: Approved task prompt received
 - **Pending clarifications**: none
-- **Delivered results**: Interview completed, task prompt approved
+- **Delivered results**: none
 
 ## Project Status
-- **Phase**: complete
+- **Phase**: in progress
+- **Route**: SWE Light (`teamwork_swe`)
 
 ## Victory Audit Status
-- **Triggered**: yes
-- **Verdict**: VICTORY CONFIRMED
+- **Triggered**: no
+- **Verdict**: pending
 - **Retry count**: 0
 
 ## Artifact Index
-- .agents/teamwork/sentinel/BRIEFING.md — Sentinel persistent briefing
-- .agents/teamwork/ORIGINAL_REQUEST.md — Authoritative record of approved task prompt
+- .agents/teamwork/ORIGINAL_REQUEST.md — Authoritative user request
