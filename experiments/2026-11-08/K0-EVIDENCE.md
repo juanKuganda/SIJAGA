@@ -124,3 +124,4 @@ Aset ijazah SIJAGA diterbitkan menggunakan Metaplex Core dengan plugin `Permanen
 | **TC-13** | Attacker thaw/unfreeze | Attacker (`7682...`) | `Neither asset/plugin approved` | **PASS** | Thaw authority restricted to Issuer |
 
 Seluruh bukti di atas membuktikan bahwa sifat **Soulbound (non-transferable, non-burnable, immutable freeze)** pada SIJAGA dijamin secara matematis dan terprogram di lapisan protokol Solana Metaplex Core.
+
