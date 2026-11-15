@@ -21,6 +21,7 @@ import {
   Layers,
   Copy,
   Check,
+  ArrowRight,
 } from "lucide-react";
 
 // Typing for third-party injected wallets (Phantom/Solflare/Backpack)
@@ -294,9 +295,10 @@ function VerifyOnChainContent() {
             </span>
             <Link
               href="/"
-              className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-zinc-700 hover:text-red-700 bg-zinc-100/80 hover:bg-red-50 border border-zinc-200 hover:border-red-200 transition-all shadow-xs"
             >
-              Beranda Publik
+              <span>Verifikasi lengkap (dengan data institusi)</span>
+              <ArrowRight className="w-3.5 h-3.5 text-zinc-400" />
             </Link>
           </div>
         </div>
@@ -368,7 +370,7 @@ function VerifyOnChainContent() {
                 setAssetInput(SAMPLE_ASSET_P26);
                 handleVerify(SAMPLE_ASSET_P26);
               }}
-              className="font-mono text-red-600 hover:text-red-700 underline underline-offset-2"
+              className="font-mono text-xs font-semibold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100/80 px-2 py-0.5 rounded-md border border-red-200/80 transition-colors"
             >
               FDQKnrLV... (Trace P2.6)
             </button>

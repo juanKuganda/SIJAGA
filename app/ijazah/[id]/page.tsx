@@ -517,6 +517,15 @@ export default function IjazahPreviewPage({
           </button>
           <div className="flex flex-wrap gap-3">
             {cert.nftAddress && (
+              <Link
+                href={`/verify-onchain?asset=${encodeURIComponent(cert.nftAddress)}`}
+                className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm px-4 py-2.5 rounded-xl shadow-sm shadow-red-600/20 transition-all"
+              >
+                <ShieldCheck className="w-4 h-4" />
+                <span>Verifikasi mandiri tanpa server &rarr;</span>
+              </Link>
+            )}
+            {cert.nftAddress && (
               <a
                 href={`https://explorer.solana.com/address/${cert.nftAddress}?cluster=devnet`}
                 target="_blank"

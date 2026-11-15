@@ -522,7 +522,7 @@ export default function HomePage() {
         {/* Hero Section */}
         <section
           id="verification"
-          className="pt-28 md:pt-36 pb-20 md:pb-24 px-6 md:px-8 lg:px-12 max-w-7xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-8 lg:gap-16 items-center"
+          className="pt-36 sm:pt-40 md:pt-48 pb-20 md:pb-24 px-6 md:px-8 lg:px-12 max-w-7xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-8 lg:gap-16 items-center"
         >
           <div className="flex flex-col gap-6 md:gap-8 max-w-2xl">
             <div className="hero-anim inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-50 border border-red-100 w-fit">
@@ -552,6 +552,12 @@ export default function HomePage() {
               SIJAGA adalah purwarupa sistem verifikasi ijazah Universitas Tadulako. Memungkinkan pengujian validitas dokumen secara instan dan transparan berbasis ekosistem Solana.
             </p>
 
+            {/* Keterangan Jalur Utama */}
+            <div className="hero-anim -mb-3 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-100/80 border border-zinc-200/60 w-fit text-xs font-medium text-zinc-600">
+              <Shield className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+              <span>Verifikasi lengkap — memeriksa nama/NIM via server institusi</span>
+            </div>
+
             <form
               onSubmit={handleVerify}
               className="hero-anim mt-2 w-full max-w-md relative group"
@@ -580,6 +586,20 @@ export default function HomePage() {
                 </Button>
               </div>
             </form>
+
+            {/* Tautan Verifikasi Mandiri On-Chain */}
+            <div className="hero-anim -mt-2 w-full max-w-md">
+              <Link
+                href="/verify-onchain"
+                className="group flex items-center justify-between w-full px-4 py-2.5 rounded-2xl bg-zinc-50/90 hover:bg-red-50/80 border border-zinc-200/80 hover:border-red-200 text-xs font-semibold text-zinc-700 hover:text-red-700 transition-all duration-200 shadow-xs"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                  <span>Verifikasi mandiri on-chain — tanpa server institusi</span>
+                </div>
+                <ArrowRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-red-600 group-hover:translate-x-0.5 transition-all shrink-0" />
+              </Link>
+            </div>
 
             {/* Inline Verification Result */}
             <div className="w-full max-w-md mt-2">
