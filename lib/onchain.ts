@@ -25,6 +25,10 @@ export type OnChainInspect =
       frozen: boolean;
       dataHash: string | null;
       updateAuthority: string;
+      prodi?: string | null;
+      tahunLulus?: string | null;
+      image?: string | null;
+      attributes?: Array<{ trait_type: string; value: string }>;
       timings?: {
         rpcMs: number;
         ipfsMs: number;
@@ -76,10 +80,11 @@ async function fetchMetadataJson(
   }
 }
 
-// ─── Helper: extract Data Hash from metadata attributes ──────────
+// ─── Helper: extract attribute from metadata ──────────────────────
 
-function extractDataHash(
-  metadata: Record<string, unknown>
+function extractAttribute(
+  metadata: Record<string, unknown>,
+  traitType: string
 ): string | null {
   const attributes = metadata.attributes;
   if (!Array.isArray(attributes)) return null;
@@ -90,14 +95,23 @@ function extractDataHash(
       attr !== null &&
       "trait_type" in attr &&
       "value" in attr &&
-      (attr as { trait_type: string }).trait_type === "Data Hash"
+      (attr as { trait_type: string }).trait_type.toLowerCase() ===
+        traitType.toLowerCase()
     ) {
-      const value = (attr as { value: string }).value;
-      return typeof value === "string" ? value : null;
+      const value = (attr as { value: unknown }).value;
+      return value !== undefined && value !== null ? String(value) : null;
     }
   }
 
   return null;
+}
+
+// ─── Helper: extract Data Hash from metadata attributes ──────────
+
+function extractDataHash(
+  metadata: Record<string, unknown>
+): string | null {
+  return extractAttribute(metadata, "Data Hash");
 }
 
 // ─── Helper: check PermanentFreezeDelegate plugin ────────────────
@@ -215,8 +229,16 @@ export async function inspectCertificate(
       return { ok: false, reason: "METADATA", timings };
     }
 
-    // 4. Extract Data Hash dari attributes
+    // 4. Extract Data Hash dan atribut dari metadata
     const dataHash = extractDataHash(metadata);
+    const prodi =
+      extractAttribute(metadata, "Program Studi") ||
+      extractAttribute(metadata, "Prodi");
+    const tahunLulus = extractAttribute(metadata, "Tahun Lulus");
+    const image = typeof metadata.image === "string" ? metadata.image : null;
+    const attributes = Array.isArray(metadata.attributes)
+      ? (metadata.attributes as Array<{ trait_type: string; value: string }>)
+      : undefined;
 
     return {
       ok: true,
@@ -226,6 +248,10 @@ export async function inspectCertificate(
       frozen,
       dataHash,
       updateAuthority,
+      prodi,
+      tahunLulus,
+      image,
+      attributes,
       timings,
     };
   } catch (error) {
