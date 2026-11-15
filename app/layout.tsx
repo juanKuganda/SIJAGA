@@ -80,8 +80,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id">
-      <body className={`${spaceGrotesk.className} antialiased`}>
+    <html lang="id" suppressHydrationWarning>
+      <body className={`${spaceGrotesk.className} antialiased`} suppressHydrationWarning>
         <LenisProvider>
           {children}
           <Toaster position="top-right" richColors />

@@ -29,7 +29,7 @@ interface PhantomProvider {
   connect: () => Promise<{ publicKey: { toString: () => string } }>;
   signMessage: (
     msg: Uint8Array,
-    encoding?: string
+    encoding?: "utf8" | "hex"
   ) => Promise<{ signature: Uint8Array } | Uint8Array>;
 }
 
@@ -38,7 +38,7 @@ interface SolflareProvider {
   connect: () => Promise<{ publicKey: { toString: () => string } }>;
   signMessage: (
     msg: Uint8Array,
-    encoding?: string
+    encoding?: "utf8" | "hex"
   ) => Promise<{ signature: Uint8Array } | Uint8Array>;
 }
 
@@ -218,7 +218,7 @@ function VerifyOnChainContent() {
 
       // Sign message via wallet
       const messageBytes = new TextEncoder().encode(msg);
-      const signRes = await provider.signMessage(messageBytes, "utf-8");
+      const signRes = await provider.signMessage(messageBytes, "utf8");
 
       let sigBytes: Uint8Array;
       if (signRes instanceof Uint8Array) {
