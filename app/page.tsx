@@ -522,9 +522,9 @@ export default function HomePage() {
       <main className="flex-grow relative z-10 flex flex-col w-full">
         {/* Hero Section */}
         <section
-          className="pt-28 md:pt-36 pb-20 md:pb-24 px-6 md:px-8 lg:px-12 max-w-7xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-8 lg:gap-16 items-center"
+          className="pt-28 md:pt-32 pb-12 md:pb-16 px-6 md:px-8 lg:px-12 max-w-7xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-8 lg:gap-16 items-center"
         >
-          <div className="flex flex-col gap-6 md:gap-8 max-w-2xl">
+          <div className="flex flex-col gap-5 md:gap-6 max-w-2xl">
             <div className="hero-anim inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-50 border border-red-100 w-fit">
               <Badge
                 variant="secondary"
@@ -538,7 +538,7 @@ export default function HomePage() {
               <ArrowRight className="w-3 h-3 text-red-600" />
             </div>
 
-            <h1 className="hero-anim text-[2.75rem] sm:text-5xl md:text-4xl lg:text-[4.25rem] xl:text-[5rem] font-black text-foreground leading-[1.05] tracking-tighter">
+            <h1 className="hero-anim text-[2.5rem] sm:text-5xl md:text-4xl lg:text-[3.75rem] xl:text-[4rem] font-black text-foreground leading-[1.05] tracking-tighter">
               Verifikasi Kredensial
               <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-red-400">
@@ -548,7 +548,7 @@ export default function HomePage() {
               Digital.
             </h1>
 
-            <p className="hero-anim text-xl text-muted-foreground leading-relaxed max-w-lg font-medium">
+            <p className="hero-anim text-lg text-muted-foreground leading-relaxed max-w-lg font-medium">
               SIJAGA adalah purwarupa sistem verifikasi ijazah Universitas Tadulako. Memungkinkan pengujian validitas dokumen secara instan dan transparan berbasis ekosistem Solana.
             </p>
 
@@ -565,7 +565,7 @@ export default function HomePage() {
           </div>
 
           {/* Right Side: Beside-like Floating Cards UI */}
-          <div className="relative h-[480px] md:h-[500px] lg:h-[600px] w-full hidden md:block perspective-1000">
+          <div className="relative h-[440px] md:h-[460px] lg:h-[520px] w-full hidden md:block perspective-1000">
             <div className="floating-card absolute top-2 right-0 md:right-2 lg:right-4 w-full max-w-[320px] md:max-w-[340px] lg:max-w-[420px] bg-white border border-zinc-200 rounded-3xl p-5 lg:p-6 shadow-xl transform rotate-1 hover:rotate-0 transition-transform duration-500 z-20 overflow-hidden">
               {/* Scan Line Element */}
               <div className="scan-line absolute left-0 w-full h-24 bg-gradient-to-b from-transparent via-red-500/10 to-red-500/30 border-b-2 border-red-500/60 pointer-events-none z-50 blur-[1px]"></div>
@@ -592,7 +592,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="floating-card absolute top-[150px] md:top-[160px] lg:top-[180px] right-2 md:right-6 lg:right-20 w-full max-w-[300px] md:max-w-[320px] lg:max-w-[380px] bg-white border border-zinc-200 rounded-3xl p-5 lg:p-6 shadow-2xl transform -rotate-2 hover:rotate-0 transition-transform duration-500 z-30">
+            <div className="floating-card absolute top-[150px] md:top-[160px] lg:top-[160px] right-2 md:right-6 lg:right-20 w-full max-w-[300px] md:max-w-[320px] lg:max-w-[380px] bg-white border border-zinc-200 rounded-3xl p-5 lg:p-6 shadow-2xl transform -rotate-2 hover:rotate-0 transition-transform duration-500 z-30">
               <div className="flex items-center gap-3 mb-2">
                 <Award className="w-5 h-5 text-foreground" />
                 <span className="font-bold text-foreground">Alumni Untad</span>
@@ -626,7 +626,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="floating-card absolute top-[290px] md:top-[310px] lg:top-[360px] right-0 md:right-3 lg:right-8 w-full max-w-[310px] md:max-w-[330px] lg:max-w-[400px] bg-neutral-900 text-white rounded-3xl p-5 lg:p-6 shadow-2xl transform rotate-1 hover:rotate-0 transition-transform duration-500 z-10">
+            <div className="floating-card absolute top-[290px] md:top-[310px] lg:top-[320px] right-0 md:right-3 lg:right-8 w-full max-w-[310px] md:max-w-[330px] lg:max-w-[400px] bg-neutral-900 text-white rounded-3xl p-5 lg:p-6 shadow-2xl transform rotate-1 hover:rotate-0 transition-transform duration-500 z-10">
               <div className="flex items-center gap-3 mb-4">
                 <Zap className="w-5 h-5 text-red-400" />
                 <span className="font-bold">Validasi Real-time</span>
