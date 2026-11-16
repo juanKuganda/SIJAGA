@@ -3,6 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import nacl from "tweetnacl";
 import bs58 from "bs58";
 import {
@@ -270,19 +271,26 @@ function VerifyOnChainContent() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50/50 text-foreground">
+    <div className="min-h-screen bg-zinc-50/50 text-foreground relative">
+      {/* Background Dot Pattern (sama seperti homepage) */}
+      <div className="absolute inset-0 z-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:24px_24px] opacity-60 pointer-events-none"></div>
       {/* Header Bar */}
       <header className="border-b border-zinc-200 bg-white/80 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-red-600 flex items-center justify-center text-white font-bold text-sm tracking-wider">
-              SJ
-            </div>
-            <div>
-              <span className="font-extrabold text-foreground text-sm tracking-tight block">
+            <Image
+              src="/apple-touch-icon.png"
+              alt="Logo Untad"
+              width={32}
+              height={32}
+              className="object-contain drop-shadow-sm"
+              priority
+            />
+            <div className="flex flex-col">
+              <span className="text-base font-black text-foreground tracking-tight leading-none">
                 SIJAGA
               </span>
-              <span className="text-[10px] text-muted-foreground block -mt-1 font-medium">
+              <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest mt-0.5">
                 Universitas Tadulako
               </span>
             </div>
@@ -305,7 +313,7 @@ function VerifyOnChainContent() {
       </header>
 
       {/* Main Container */}
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-10 relative z-10">
         {/* Title Section */}
         <div className="mb-8">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 mb-3">
@@ -798,6 +806,18 @@ function VerifyOnChainContent() {
           </div>
         )}
       </main>
+
+      {/* Footer */}
+      <footer className="relative z-10 border-t border-zinc-200 py-6">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center gap-2">
+          <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest">
+            © 2024–2026 SIJAGA Beta • Universitas Tadulako
+          </p>
+          <p className="text-xs font-semibold text-zinc-500">
+            Verifikasi Tingkat-1 Mandiri • Solana Devnet • IPFS
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }

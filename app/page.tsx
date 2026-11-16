@@ -405,15 +405,13 @@ export default function HomePage() {
       <header
         ref={headerRef}
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          isScrolled && !isMobileMenuOpen ? "py-3" : "py-6"
+          isScrolled && !isMobileMenuOpen
+            ? "bg-white border-b border-zinc-200 shadow-sm py-0"
+            : "bg-transparent py-6"
         }`}
       >
         <div
-          className={`mx-auto flex justify-between items-center transition-all duration-300 ${
-            isScrolled && !isMobileMenuOpen
-              ? "max-w-5xl bg-white rounded-full border border-zinc-200 shadow-md px-6 md:px-8 py-3"
-              : "max-w-7xl bg-transparent px-6 md:px-12 py-3"
-          }`}
+          className="mx-auto flex justify-between items-center transition-all duration-300 max-w-7xl px-6 md:px-12 py-3"
         >
           <Link href="/" className="flex items-center gap-3 z-50">
             <Image
@@ -586,16 +584,6 @@ export default function HomePage() {
               </div>
             </form>
 
-            {/* Tautan Verifikasi Mandiri On-Chain */}
-            <div className="hero-anim -mt-2 w-full max-w-md">
-              <Link
-                href="/verify-onchain"
-                className="group inline-flex items-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-700 transition-colors"
-              >
-                <span>Verifikasi mandiri on-chain — tanpa server institusi</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-              </Link>
-            </div>
 
             {/* Inline Verification Result */}
             <div className="w-full max-w-md mt-2">
@@ -788,6 +776,71 @@ export default function HomePage() {
               <p className="card-3-text text-sm text-zinc-300">
                 Memungkinkan verifikasi instan secara digital sebagai uji coba ekosistem transparan.
               </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Dua Cara Verifikasi */}
+        <section
+          id="cara-verifikasi"
+          className="w-full relative z-10 px-6 md:px-12 py-16 md:py-24"
+        >
+          <div className="max-w-7xl mx-auto">
+            <div className="max-w-2xl mb-10 md:mb-12">
+              <p className="text-xs font-bold uppercase tracking-widest text-red-600 mb-3">
+                Dua Cara Memverifikasi
+              </p>
+              <h2 className="text-3xl md:text-4xl font-black text-foreground tracking-tight leading-tight">
+                Pilih jalur yang sesuai kebutuhanmu.
+              </h2>
+              <p className="mt-3 text-base md:text-lg text-muted-foreground font-medium leading-relaxed">
+                Keduanya memeriksa ijazah yang sama — bedanya di mana datanya
+                diperiksa.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Verifikasi Lengkap */}
+              <div className="bg-white border border-zinc-200 rounded-3xl p-6 md:p-8 shadow-sm flex flex-col gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center">
+                  <Shield className="w-6 h-6 text-red-600" />
+                </div>
+                <h3 className="text-xl font-bold text-foreground tracking-tight">
+                  Verifikasi lengkap
+                </h3>
+                <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+                  Memeriksa nama, NIM, dan prodi melalui server institusi —
+                  hasilnya nominatif: ijazah ini milik siapa.
+                </p>
+                <a
+                  href="#verification"
+                  className="mt-auto inline-flex items-center justify-center gap-2 bg-foreground text-white font-bold text-sm px-5 py-3 rounded-full hover:bg-foreground/90 transition-colors w-fit"
+                >
+                  Verifikasi dengan NIM / dompet
+                  <ArrowRight className="w-4 h-4" />
+                </a>
+              </div>
+
+              {/* Verifikasi Mandiri On-Chain */}
+              <div className="bg-white border border-zinc-200 rounded-3xl p-6 md:p-8 shadow-sm flex flex-col gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center">
+                  <Lock className="w-6 h-6 text-emerald-600" />
+                </div>
+                <h3 className="text-xl font-bold text-foreground tracking-tight">
+                  Verifikasi mandiri on-chain
+                </h3>
+                <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+                  Memeriksa penerbit, pemilik, dan status beku langsung dari
+                  Solana & IPFS — tanpa server institusi.
+                </p>
+                <Link
+                  href="/verify-onchain"
+                  className="mt-auto inline-flex items-center justify-center gap-2 bg-red-600 text-white font-bold text-sm px-5 py-3 rounded-full hover:bg-red-700 transition-colors w-fit shadow-sm shadow-red-600/20"
+                >
+                  Verifikasi tanpa server
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
             </div>
           </div>
         </section>
