@@ -640,69 +640,73 @@ export default function HomePage() {
         {/* Dua Cara Verifikasi */}
         <section
           id="cara-verifikasi"
-          className="w-full relative z-10 bg-neutral-950 px-6 md:px-12 py-20 md:py-28"
+          className="w-full relative z-10 px-6 md:px-12 py-20 md:py-28"
         >
           <div className="max-w-7xl mx-auto">
             <div className="max-w-3xl mb-12 md:mb-16">
-              <p className="text-xs font-bold uppercase tracking-widest text-red-500 mb-4">
+              <p className="text-xs font-bold uppercase tracking-widest text-red-600 mb-4">
                 Dua Cara Memverifikasi
               </p>
-              <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-[1.05]">
+              <h2 className="text-4xl md:text-6xl font-black text-foreground tracking-tighter leading-[1.05]">
                 Pilih jalur yang
                 <br />
-                <span className="text-red-500">sesuai kebutuhanmu.</span>
+                <span className="text-red-600">sesuai kebutuhanmu.</span>
               </h2>
-              <p className="mt-4 text-base md:text-lg text-zinc-400 font-medium leading-relaxed">
+              <p className="mt-4 text-base md:text-lg text-muted-foreground font-medium leading-relaxed">
                 Keduanya memeriksa ijazah yang sama — bedanya di mana datanya
                 diperiksa.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Verifikasi Lengkap */}
-              <div className="bg-white border border-zinc-200 rounded-3xl p-6 md:p-8 shadow-sm flex flex-col gap-4 relative overflow-hidden">
-                <span className="absolute top-4 right-6 text-7xl font-black text-zinc-200 select-none pointer-events-none">
-                  01
-                </span>
-                <div className="w-12 h-12 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center">
-                  <Shield className="w-6 h-6 text-red-600" />
-                </div>
-                <h3 className="text-xl font-bold text-foreground tracking-tight">
-                  Verifikasi lengkap
-                </h3>
-                <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-                  Memeriksa nama, NIM, dan prodi melalui server institusi —
-                  hasilnya nominatif: ijazah ini milik siapa.
-                </p>
-                <form
-                  onSubmit={handleVerify}
-                  className="mt-2 w-full relative group"
-                >
-                  <div className="absolute inset-0 bg-red-600/5 rounded-full blur-xl group-hover:bg-red-600/10 transition-colors"></div>
-                  <div className="relative flex items-center bg-white border-2 border-zinc-200 rounded-full p-1.5 shadow-sm focus-within:border-red-500 focus-within:ring-4 focus-within:ring-red-500/10 transition-all">
-                    <Search className="size-7 text-zinc-400 ml-4 flex-shrink-0" />
-                    <input
-                      className="w-full flex-1 min-w-0 bg-transparent border-0 outline-none focus:outline-none focus:ring-0 shadow-none h-12 text-base font-medium placeholder:text-zinc-400 pl-3 pr-4 text-ellipsis"
-                      placeholder="Masukkan NIM atau Dompet Digital..."
-                      type="text"
-                      value={wallet}
-                      onChange={(e) => setWallet(e.target.value)}
-                      required
-                    />
-                    <Button
-                      disabled={loading}
-                      type="submit"
-                      className={`h-12 px-8 rounded-full font-bold text-white shrink-0 transition-all ${
-                        loading
-                          ? "bg-red-600 animate-pulse opacity-90 cursor-wait"
-                          : "bg-foreground hover:bg-foreground/90 shadow-md"
-                      }`}
-                    >
-                      {loading ? "Memeriksa..." : "Verifikasi"}
-                    </Button>
+            <div className="flex flex-col gap-6">
+              {/* Baris 1: Verifikasi Lengkap */}
+              <div className="bg-white border border-zinc-200 rounded-3xl p-6 md:p-8 shadow-sm relative overflow-hidden">
+                <div className="flex flex-col lg:flex-row lg:items-center gap-6 lg:gap-10">
+                  <div className="flex items-center gap-5 shrink-0 lg:w-[36%]">
+                    <span className="text-6xl md:text-7xl font-black text-zinc-200 leading-none select-none">
+                      01
+                    </span>
+                    <div>
+                      <h3 className="text-2xl font-bold text-foreground tracking-tight">
+                        Verifikasi lengkap
+                      </h3>
+                      <p className="mt-2 text-sm md:text-base text-muted-foreground leading-relaxed">
+                        Memeriksa nama, NIM, dan prodi melalui server institusi
+                        — hasilnya nominatif: ijazah ini milik siapa.
+                      </p>
+                    </div>
                   </div>
-                </form>
-
+                  <div className="flex-1 w-full">
+                  <form
+                    onSubmit={handleVerify}
+                    className="w-full relative group"
+                  >
+                    <div className="absolute inset-0 bg-red-600/5 rounded-full blur-xl group-hover:bg-red-600/10 transition-colors"></div>
+                    <div className="relative flex items-center bg-white border-2 border-zinc-200 rounded-full p-1.5 shadow-sm focus-within:border-red-500 focus-within:ring-4 focus-within:ring-red-500/10 transition-all">
+                      <Search className="size-7 text-zinc-400 ml-4 flex-shrink-0" />
+                      <input
+                        className="w-full flex-1 min-w-0 bg-transparent border-0 outline-none focus:outline-none focus:ring-0 shadow-none h-12 text-base font-medium placeholder:text-zinc-400 pl-3 pr-4 text-ellipsis"
+                        placeholder="Masukkan NIM atau Dompet Digital..."
+                        type="text"
+                        value={wallet}
+                        onChange={(e) => setWallet(e.target.value)}
+                        required
+                      />
+                      <Button
+                        disabled={loading}
+                        type="submit"
+                        className={`h-12 px-8 rounded-full font-bold text-white shrink-0 transition-all ${
+                          loading
+                            ? "bg-red-600 animate-pulse opacity-90 cursor-wait"
+                            : "bg-foreground hover:bg-foreground/90 shadow-md"
+                        }`}
+                      >
+                        {loading ? "Memeriksa..." : "Verifikasi"}
+                      </Button>
+                    </div>
+                  </form>
+                  </div>
+                </div>
                 {/* Inline Verification Result */}
                 <div className="w-full mt-2">
                   {error && (
@@ -824,28 +828,33 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Verifikasi Mandiri On-Chain */}
-              <div className="bg-red-600 rounded-3xl p-6 md:p-8 shadow-sm flex flex-col gap-4 relative overflow-hidden">
-                <span className="absolute top-4 right-6 text-7xl font-black text-white/10 select-none pointer-events-none">
-                  02
-                </span>
-                <div className="w-12 h-12 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center">
-                  <Lock className="w-6 h-6 text-white" />
+              {/* Baris 2: Verifikasi Mandiri On-Chain */}
+              <div className="bg-red-600 rounded-3xl p-6 md:p-8 shadow-sm relative overflow-hidden">
+                <div className="flex flex-col lg:flex-row lg:items-center gap-6 lg:gap-10">
+                  <div className="flex items-center gap-5 shrink-0 lg:w-[36%]">
+                    <span className="text-6xl md:text-7xl font-black text-white/20 leading-none select-none">
+                      02
+                    </span>
+                    <div>
+                      <h3 className="text-2xl font-bold text-white tracking-tight">
+                        Verifikasi mandiri on-chain
+                      </h3>
+                      <p className="mt-2 text-sm md:text-base text-white/80 leading-relaxed">
+                        Memeriksa penerbit, pemilik, dan status beku langsung
+                        dari Solana & IPFS — tanpa server institusi.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex-1 w-full flex lg:justify-end">
+                    <Link
+                      href="/verify-onchain"
+                      className="inline-flex items-center justify-center gap-2 bg-white text-red-600 font-bold text-base px-7 py-3.5 rounded-full hover:bg-zinc-100 transition-colors shadow-sm"
+                    >
+                      Verifikasi tanpa server
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  </div>
                 </div>
-                <h3 className="text-xl font-bold text-white tracking-tight">
-                  Verifikasi mandiri on-chain
-                </h3>
-                <p className="text-sm md:text-base text-white/80 leading-relaxed">
-                  Memeriksa penerbit, pemilik, dan status beku langsung dari
-                  Solana & IPFS — tanpa server institusi.
-                </p>
-                <Link
-                  href="/verify-onchain"
-                  className="mt-auto inline-flex items-center justify-center gap-2 bg-white text-red-600 font-bold text-sm px-5 py-3 rounded-full hover:bg-zinc-100 transition-colors w-fit shadow-sm"
-                >
-                  Verifikasi tanpa server
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
               </div>
             </div>
           </div>
