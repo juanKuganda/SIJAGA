@@ -12,6 +12,7 @@ import {
   SearchX,
   ExternalLink,
   ArrowRight,
+  ArrowDown,
   Lock,
   Zap,
   Award,
@@ -366,6 +367,7 @@ export default function HomePage() {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
     };
+    handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -435,7 +437,7 @@ export default function HomePage() {
           <nav className="hidden md:flex items-center gap-8">
             <a
               className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
-              href="#verification"
+              href="#cara-verifikasi"
             >
               Verifikasi
             </a>
@@ -462,7 +464,7 @@ export default function HomePage() {
                 Masuk
               </Button>
             </Link>
-            <a href="#verification">
+            <a href="#cara-verifikasi">
               <Button className="font-bold bg-foreground text-white hover:bg-foreground/90 rounded-full px-6 shadow-md">
                 Coba Sekarang
               </Button>
@@ -489,7 +491,7 @@ export default function HomePage() {
         >
           <nav className="flex flex-col gap-8 text-center">
             {[
-              { label: "Verifikasi", href: "#verification" },
+              { label: "Verifikasi", href: "#cara-verifikasi" },
               { label: "Fitur", href: "#features" },
               { label: "FAQ", href: "#faq" },
               { label: "Masuk", href: "/login" },
@@ -504,7 +506,7 @@ export default function HomePage() {
               </a>
             ))}
             <a
-              href="#verification"
+              href="#cara-verifikasi"
               onClick={() => setIsMobileMenuOpen(false)}
               className="mobile-nav-item mt-4"
             >
@@ -519,7 +521,6 @@ export default function HomePage() {
       <main className="flex-grow relative z-10 flex flex-col w-full">
         {/* Hero Section */}
         <section
-          id="verification"
           className="pt-28 md:pt-36 pb-20 md:pb-24 px-6 md:px-8 lg:px-12 max-w-7xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-8 lg:gap-16 items-center"
         >
           <div className="flex flex-col gap-6 md:gap-8 max-w-2xl">
@@ -550,159 +551,15 @@ export default function HomePage() {
               SIJAGA adalah purwarupa sistem verifikasi ijazah Universitas Tadulako. Memungkinkan pengujian validitas dokumen secara instan dan transparan berbasis ekosistem Solana.
             </p>
 
-            {/* Keterangan Jalur Utama */}
-            <p className="hero-anim -mb-3 text-xs font-medium text-zinc-500">
-              Verifikasi lengkap — memeriksa nama/NIM via server institusi
-            </p>
-
-            <form
-              onSubmit={handleVerify}
-              className="hero-anim mt-2 w-full max-w-md relative group"
-            >
-              <div className="absolute inset-0 bg-red-600/5 rounded-full blur-xl group-hover:bg-red-600/10 transition-colors"></div>
-              <div className="relative flex items-center bg-white border-2 border-zinc-200 rounded-full p-1.5 shadow-sm focus-within:border-red-500 focus-within:ring-4 focus-within:ring-red-500/10 transition-all">
-                <Search className="size-7 text-zinc-400 ml-4 flex-shrink-0" />
-                <input
-                  className="w-full flex-1 min-w-0 bg-transparent border-0 outline-none focus:outline-none focus:ring-0 shadow-none h-12 text-base font-medium placeholder:text-zinc-400 pl-3 pr-4 text-ellipsis"
-                  placeholder="Masukkan NIM atau Dompet Digital..."
-                  type="text"
-                  value={wallet}
-                  onChange={(e) => setWallet(e.target.value)}
-                  required
-                />
-                <Button
-                  disabled={loading}
-                  type="submit"
-                  className={`h-12 px-8 rounded-full font-bold text-white shrink-0 transition-all ${
-                    loading 
-                      ? "bg-red-600 animate-pulse opacity-90 cursor-wait" 
-                      : "bg-foreground hover:bg-foreground/90 shadow-md"
-                  }`}
-                >
-                  {loading ? "Memeriksa..." : "Verifikasi"}
-                </Button>
-              </div>
-            </form>
-
-
-            {/* Inline Verification Result */}
-            <div className="w-full max-w-md mt-2">
-              {error && (
-                <div className="verification-result bg-red-50 border border-red-100 rounded-2xl p-4 flex gap-3 shadow-sm">
-                  <XCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="text-sm font-bold text-red-900">
-                      Verifikasi Gagal
-                    </h4>
-                    <p className="text-sm text-red-700 mt-1">{error}</p>
-                  </div>
-                </div>
-              )}
-              {result && (
-                <div
-                  className={`verification-result border rounded-2xl p-5 shadow-sm bg-white ${result.revoked ? "border-red-200" : result.verified ? "border-emerald-200" : "border-zinc-200"}`}
-                >
-                  {result.revoked ? (
-                    <div className="flex gap-4">
-                      <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
-                        <XCircle className="w-5 h-5 text-red-600" />
-                      </div>
-                      <div>
-                        <h4 className="text-base font-bold text-foreground">
-                          Ijazah Dibatalkan
-                        </h4>
-                        {result.data && (
-                          <p className="text-sm font-medium text-muted-foreground mt-1">
-                            {result.data.nama} — {result.data.nim}
-                          </p>
-                        )}
-                        <p className="text-sm text-red-600 mt-2 bg-red-50 p-2 rounded-md inline-block">
-                          Alasan: {result.revokeReason}
-                        </p>
-                      </div>
-                    </div>
-                  ) : result.verifiedOnChain ? (
-                    <div className="flex gap-4">
-                      <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-                        <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                      </div>
-                      <div className="w-full">
-                        <h4 className="text-base font-bold text-foreground">
-                          {result.verifiedNominative ? "Tervalidasi Penuh (Asli)" : "Terverifikasi Kriptografis"}
-                        </h4>
-                        {!result.verifiedNominative && (
-                          <p className="text-xs text-amber-600 font-medium mt-1">Data identitas telah dihapus dari sistem sesuai kebijakan privasi.</p>
-                        )}
-                        {result.data && (
-                          <div className="mt-3 bg-zinc-50 rounded-xl p-3 grid grid-cols-2 gap-y-3 gap-x-4 border border-zinc-100">
-                            <div>
-                              <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-0.5">
-                                Mahasiswa
-                              </p>
-                              <p className="text-sm font-semibold text-foreground">
-                                {result.data.nama}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-0.5">
-                                NIM
-                              </p>
-                              <p className="text-sm font-semibold text-foreground">
-                                {result.data.nim}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-0.5">
-                                Prodi
-                              </p>
-                              <p className="text-sm font-semibold text-foreground">
-                                {result.data.prodi}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-0.5">
-                                Status
-                              </p>
-                              <p className="text-sm font-semibold text-emerald-600">
-                                {result.data.status}
-                              </p>
-                            </div>
-                          </div>
-                        )}
-                        <VerificationChecklist result={result} />
-                        {result.explorerUrl && (
-                          <a
-                            href={result.explorerUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-3 text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 w-fit"
-                          >
-                            Lihat di Solana Explorer{" "}
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex gap-4">
-                      <div className="w-10 h-10 rounded-full bg-zinc-100 flex items-center justify-center shrink-0">
-                        <SearchX className="w-5 h-5 text-zinc-500" />
-                      </div>
-                      <div className="w-full">
-                        <h4 className="text-base font-bold text-foreground">
-                          {result.onChain?.status === "UNAVAILABLE" 
-                            ? "Keberadaan on-chain tidak dapat dikonfirmasi — tidak dinyatakan sah" 
-                            : "Data Tidak Ditemukan"}
-                        </h4>
-                        <p className="text-sm font-medium text-muted-foreground mt-1">
-                          {result.message}
-                        </p>
-                        <VerificationChecklist result={result} />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
+            {/* CTA ke Section Verifikasi */}
+            <div className="hero-anim mt-2">
+              <a
+                href="#cara-verifikasi"
+                className="inline-flex items-center gap-2 bg-foreground text-white font-bold text-base px-7 py-3.5 rounded-full hover:bg-foreground/90 transition-colors shadow-md"
+              >
+                Verifikasi ijazah
+                <ArrowDown className="w-4 h-4" />
+              </a>
             </div>
           </div>
 
@@ -783,17 +640,19 @@ export default function HomePage() {
         {/* Dua Cara Verifikasi */}
         <section
           id="cara-verifikasi"
-          className="w-full relative z-10 px-6 md:px-12 py-16 md:py-24"
+          className="w-full relative z-10 bg-neutral-950 px-6 md:px-12 py-20 md:py-28"
         >
           <div className="max-w-7xl mx-auto">
-            <div className="max-w-2xl mb-10 md:mb-12">
-              <p className="text-xs font-bold uppercase tracking-widest text-red-600 mb-3">
+            <div className="max-w-3xl mb-12 md:mb-16">
+              <p className="text-xs font-bold uppercase tracking-widest text-red-500 mb-4">
                 Dua Cara Memverifikasi
               </p>
-              <h2 className="text-3xl md:text-4xl font-black text-foreground tracking-tight leading-tight">
-                Pilih jalur yang sesuai kebutuhanmu.
+              <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-[1.05]">
+                Pilih jalur yang
+                <br />
+                <span className="text-red-500">sesuai kebutuhanmu.</span>
               </h2>
-              <p className="mt-3 text-base md:text-lg text-muted-foreground font-medium leading-relaxed">
+              <p className="mt-4 text-base md:text-lg text-zinc-400 font-medium leading-relaxed">
                 Keduanya memeriksa ijazah yang sama — bedanya di mana datanya
                 diperiksa.
               </p>
@@ -801,7 +660,10 @@ export default function HomePage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Verifikasi Lengkap */}
-              <div className="bg-white border border-zinc-200 rounded-3xl p-6 md:p-8 shadow-sm flex flex-col gap-4">
+              <div className="bg-white border border-zinc-200 rounded-3xl p-6 md:p-8 shadow-sm flex flex-col gap-4 relative overflow-hidden">
+                <span className="absolute top-4 right-6 text-7xl font-black text-zinc-200 select-none pointer-events-none">
+                  01
+                </span>
                 <div className="w-12 h-12 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center">
                   <Shield className="w-6 h-6 text-red-600" />
                 </div>
@@ -812,30 +674,174 @@ export default function HomePage() {
                   Memeriksa nama, NIM, dan prodi melalui server institusi —
                   hasilnya nominatif: ijazah ini milik siapa.
                 </p>
-                <a
-                  href="#verification"
-                  className="mt-auto inline-flex items-center justify-center gap-2 bg-foreground text-white font-bold text-sm px-5 py-3 rounded-full hover:bg-foreground/90 transition-colors w-fit"
+                <form
+                  onSubmit={handleVerify}
+                  className="mt-2 w-full relative group"
                 >
-                  Verifikasi dengan NIM / dompet
-                  <ArrowRight className="w-4 h-4" />
-                </a>
+                  <div className="absolute inset-0 bg-red-600/5 rounded-full blur-xl group-hover:bg-red-600/10 transition-colors"></div>
+                  <div className="relative flex items-center bg-white border-2 border-zinc-200 rounded-full p-1.5 shadow-sm focus-within:border-red-500 focus-within:ring-4 focus-within:ring-red-500/10 transition-all">
+                    <Search className="size-7 text-zinc-400 ml-4 flex-shrink-0" />
+                    <input
+                      className="w-full flex-1 min-w-0 bg-transparent border-0 outline-none focus:outline-none focus:ring-0 shadow-none h-12 text-base font-medium placeholder:text-zinc-400 pl-3 pr-4 text-ellipsis"
+                      placeholder="Masukkan NIM atau Dompet Digital..."
+                      type="text"
+                      value={wallet}
+                      onChange={(e) => setWallet(e.target.value)}
+                      required
+                    />
+                    <Button
+                      disabled={loading}
+                      type="submit"
+                      className={`h-12 px-8 rounded-full font-bold text-white shrink-0 transition-all ${
+                        loading
+                          ? "bg-red-600 animate-pulse opacity-90 cursor-wait"
+                          : "bg-foreground hover:bg-foreground/90 shadow-md"
+                      }`}
+                    >
+                      {loading ? "Memeriksa..." : "Verifikasi"}
+                    </Button>
+                  </div>
+                </form>
+
+                {/* Inline Verification Result */}
+                <div className="w-full mt-2">
+                  {error && (
+                    <div className="verification-result bg-red-50 border border-red-100 rounded-2xl p-4 flex gap-3 shadow-sm">
+                      <XCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="text-sm font-bold text-red-900">
+                          Verifikasi Gagal
+                        </h4>
+                        <p className="text-sm text-red-700 mt-1">{error}</p>
+                      </div>
+                    </div>
+                  )}
+                  {result && (
+                    <div
+                      className={`verification-result border rounded-2xl p-5 shadow-sm bg-zinc-50 ${result.revoked ? "border-red-200" : result.verified ? "border-emerald-200" : "border-zinc-200"}`}
+                    >
+                      {result.revoked ? (
+                        <div className="flex gap-4">
+                          <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                            <XCircle className="w-5 h-5 text-red-600" />
+                          </div>
+                          <div>
+                            <h4 className="text-base font-bold text-foreground">
+                              Ijazah Dibatalkan
+                            </h4>
+                            {result.data && (
+                              <p className="text-sm font-medium text-muted-foreground mt-1">
+                                {result.data.nama} — {result.data.nim}
+                              </p>
+                            )}
+                            <p className="text-sm text-red-600 mt-2 bg-red-50 p-2 rounded-md inline-block">
+                              Alasan: {result.revokeReason}
+                            </p>
+                          </div>
+                        </div>
+                      ) : result.verifiedOnChain ? (
+                        <div className="flex gap-4">
+                          <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                            <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                          </div>
+                          <div className="w-full">
+                            <h4 className="text-base font-bold text-foreground">
+                              {result.verifiedNominative ? "Tervalidasi Penuh (Asli)" : "Terverifikasi Kriptografis"}
+                            </h4>
+                            {!result.verifiedNominative && (
+                              <p className="text-xs text-amber-600 font-medium mt-1">Data identitas telah dihapus dari sistem sesuai kebijakan privasi.</p>
+                            )}
+                            {result.data && (
+                              <div className="mt-3 bg-white rounded-xl p-3 grid grid-cols-2 gap-y-3 gap-x-4 border border-zinc-100">
+                                <div>
+                                  <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-0.5">
+                                    Mahasiswa
+                                  </p>
+                                  <p className="text-sm font-semibold text-foreground">
+                                    {result.data.nama}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-0.5">
+                                    NIM
+                                  </p>
+                                  <p className="text-sm font-semibold text-foreground">
+                                    {result.data.nim}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-0.5">
+                                    Prodi
+                                  </p>
+                                  <p className="text-sm font-semibold text-foreground">
+                                    {result.data.prodi}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-0.5">
+                                    Status
+                                  </p>
+                                  <p className="text-sm font-semibold text-emerald-600">
+                                    {result.data.status}
+                                  </p>
+                                </div>
+                              </div>
+                            )}
+                            <VerificationChecklist result={result} />
+                            {result.explorerUrl && (
+                              <a
+                                href={result.explorerUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="mt-3 text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 w-fit"
+                              >
+                                Lihat di Solana Explorer{" "}
+                                <ExternalLink className="w-3 h-3" />
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex gap-4">
+                          <div className="w-10 h-10 rounded-full bg-zinc-100 flex items-center justify-center shrink-0">
+                            <SearchX className="w-5 h-5 text-zinc-500" />
+                          </div>
+                          <div className="w-full">
+                            <h4 className="text-base font-bold text-foreground">
+                              {result.onChain?.status === "UNAVAILABLE"
+                                ? "Keberadaan on-chain tidak dapat dikonfirmasi — tidak dinyatakan sah"
+                                : "Data Tidak Ditemukan"}
+                            </h4>
+                            <p className="text-sm font-medium text-muted-foreground mt-1">
+                              {result.message}
+                            </p>
+                            <VerificationChecklist result={result} />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Verifikasi Mandiri On-Chain */}
-              <div className="bg-white border border-zinc-200 rounded-3xl p-6 md:p-8 shadow-sm flex flex-col gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center">
-                  <Lock className="w-6 h-6 text-emerald-600" />
+              <div className="bg-red-600 rounded-3xl p-6 md:p-8 shadow-sm flex flex-col gap-4 relative overflow-hidden">
+                <span className="absolute top-4 right-6 text-7xl font-black text-white/10 select-none pointer-events-none">
+                  02
+                </span>
+                <div className="w-12 h-12 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center">
+                  <Lock className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-foreground tracking-tight">
+                <h3 className="text-xl font-bold text-white tracking-tight">
                   Verifikasi mandiri on-chain
                 </h3>
-                <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+                <p className="text-sm md:text-base text-white/80 leading-relaxed">
                   Memeriksa penerbit, pemilik, dan status beku langsung dari
                   Solana & IPFS — tanpa server institusi.
                 </p>
                 <Link
                   href="/verify-onchain"
-                  className="mt-auto inline-flex items-center justify-center gap-2 bg-red-600 text-white font-bold text-sm px-5 py-3 rounded-full hover:bg-red-700 transition-colors w-fit shadow-sm shadow-red-600/20"
+                  className="mt-auto inline-flex items-center justify-center gap-2 bg-white text-red-600 font-bold text-sm px-5 py-3 rounded-full hover:bg-zinc-100 transition-colors w-fit shadow-sm"
                 >
                   Verifikasi tanpa server
                   <ArrowRight className="w-4 h-4" />
@@ -1117,7 +1123,7 @@ export default function HomePage() {
             <p className="text-lg text-zinc-400 font-medium max-w-sm mb-8">
               Purwarupa Sistem Jaminan Autentikasi Gelar Akademik Universitas Tadulako berbasis teknologi Web3.
             </p>
-            <a href="#verification">
+            <a href="#cara-verifikasi">
               <Button className="h-14 px-8 rounded-none border-2 border-white text-base font-bold bg-white text-black hover:bg-red-600 hover:text-white hover:border-red-600 transition-colors uppercase tracking-widest">
                 Coba Sekarang
               </Button>
@@ -1130,7 +1136,7 @@ export default function HomePage() {
                 Platform
               </h4>
               <a
-                href="#verification"
+                href="#cara-verifikasi"
                 className="text-lg font-bold text-white hover:text-red-500 hover:translate-x-1 transition-transform"
               >
                 Verifikasi

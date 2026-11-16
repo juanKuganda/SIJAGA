@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
 import nacl from "tweetnacl";
 import bs58 from "bs58";
 import {
@@ -807,15 +808,86 @@ function VerifyOnChainContent() {
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="relative z-10 border-t border-zinc-200 py-6">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center gap-2">
-          <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest">
+      {/* Footer (sama seperti landing page) */}
+      <footer className="bg-neutral-900 text-white pt-24 pb-8 overflow-hidden relative">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 w-full mb-16 grid grid-cols-1 md:grid-cols-2 gap-16 relative z-10">
+          <div>
+            <h3 className="text-4xl font-black tracking-tighter uppercase mb-6 text-white leading-tight">
+              Ekosistem
+              <br />
+              Transparan.
+            </h3>
+            <p className="text-lg text-zinc-400 font-medium max-w-sm mb-8">
+              Purwarupa Sistem Jaminan Autentikasi Gelar Akademik Universitas Tadulako berbasis teknologi Web3.
+            </p>
+            <Link href="/#cara-verifikasi">
+              <Button className="h-14 px-8 rounded-none border-2 border-white text-base font-bold bg-white text-black hover:bg-red-600 hover:text-white hover:border-red-600 transition-colors uppercase tracking-widest">
+                Coba Sekarang
+              </Button>
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-2 gap-8">
+            <div className="flex flex-col gap-4">
+              <h4 className="text-sm font-black text-zinc-500 uppercase tracking-widest border-b border-zinc-800 pb-2 mb-2">
+                Platform
+              </h4>
+              <Link
+                href="/#cara-verifikasi"
+                className="text-lg font-bold text-white hover:text-red-500 hover:translate-x-1 transition-transform"
+              >
+                Verifikasi
+              </Link>
+              <Link
+                href="/#features"
+                className="text-lg font-bold text-white hover:text-red-500 hover:translate-x-1 transition-transform"
+              >
+                Fitur
+              </Link>
+              <Link
+                href="/#faq"
+                className="text-lg font-bold text-white hover:text-red-500 hover:translate-x-1 transition-transform"
+              >
+                FAQ
+              </Link>
+            </div>
+            <div className="flex flex-col gap-4">
+              <h4 className="text-sm font-black text-zinc-500 uppercase tracking-widest border-b border-zinc-800 pb-2 mb-2">
+                Legal
+              </h4>
+              <a
+                href="#"
+                className="text-lg font-bold text-white hover:text-red-500 hover:translate-x-1 transition-transform"
+              >
+                Kebijakan Privasi
+              </a>
+              <a
+                href="#"
+                className="text-lg font-bold text-white hover:text-red-500 hover:translate-x-1 transition-transform"
+              >
+                Syarat & Ketentuan
+              </a>
+            </div>
+          </div>
+        </div>
+
+        {/* Giant Typography */}
+        <div className="w-full border-t border-zinc-700 pt-12 pb-4 flex justify-center items-center overflow-hidden">
+          <span className="text-[20vw] font-black text-white uppercase tracking-tighter leading-none select-none hover:text-red-600 transition-colors duration-500 cursor-default">
+            SIJAGA
+          </span>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-6 md:px-12 w-full flex flex-col md:flex-row justify-between items-center gap-4 relative z-10 pt-8 border-t border-zinc-700">
+          <p className="text-sm font-bold text-zinc-600 uppercase tracking-widest">
             © 2024–2026 SIJAGA Beta • Universitas Tadulako
           </p>
-          <p className="text-xs font-semibold text-zinc-500">
-            Verifikasi Tingkat-1 Mandiri • Solana Devnet • IPFS
-          </p>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+            <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
+              Status Sistem Berjalan
+            </span>
+          </div>
         </div>
       </footer>
     </div>
