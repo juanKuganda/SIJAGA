@@ -19,7 +19,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https://*.pinata.cloud https://gateway.pinata.cloud https://explorer.solana.com",
               "font-src 'self' data:",
-              "connect-src 'self' https://*.solana.com wss://*.solana.com https://api.pinata.cloud https://*.googleapis.com https://*.neon.tech https://cdn.jsdelivr.net https://*.dialect.to",
+              "connect-src 'self' https://*.solana.com wss://*.solana.com https://api.pinata.cloud https://*.googleapis.com https://*.neon.tech https://cdn.jsdelivr.net https://*.dialect.to https://*.dial.to",
               "worker-src 'self' blob:",
               "frame-ancestors 'none'",
               "base-uri 'self'",

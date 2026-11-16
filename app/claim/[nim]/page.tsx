@@ -162,7 +162,16 @@ export default function ClaimPage({
   const [noWallet, setNoWallet] = useState(false);
   const isMounted = useSyncExternalStore(() => () => {}, () => true, () => false);
 
-  const actionUrl = `${process.env.NEXT_PUBLIC_APP_URL || ""}/api/actions/claim?nim=${resolvedParams.nim}`;
+  // URL absolut wajib: pustaka Blinks memanggil new URL(actionUrl) tanpa base,
+  // jadi URL relatif (/api/...) melempar "Invalid URL" dan halaman crash.
+  // NEXT_PUBLIC_APP_URL tidak di-set di deployment Vercel, jadi fallback ke
+  // origin halaman saat ini (hanya sesudah mount, agar SSR tidak menyentuh window).
+  const baseUrl =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    (isMounted ? window.location.origin : "");
+  const actionUrl = baseUrl
+    ? `${baseUrl}/api/actions/claim?nim=${resolvedParams.nim}`
+    : "";
 
   useEffect(() => {
     // Cek wallet availability asynchronously to avoid synchronous effect setState
