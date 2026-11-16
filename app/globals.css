@@ -162,6 +162,10 @@ body {
   animation: fadeInUp 0.6s ease-out forwards;
 }
 
+.mode-panel {
+  animation: fadeInUp 0.35s ease-out;
+}
+
 .animate-fade-in {
   animation: fadeIn 0.4s ease-out forwards;
 }
