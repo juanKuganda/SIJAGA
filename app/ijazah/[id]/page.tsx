@@ -154,6 +154,19 @@ function isUserRejection(err: unknown): boolean {
   );
 }
 
+// Pesan mentah tidak pernah ditampilkan ke user: `message` ramah dari API
+// dipakai bila ada; `error` yang sudah berupa kalimat Bahasa Indonesia
+// diteruskan; kode mesin diganti pesan ramah.
+function pesanRamah(
+  data: { error?: unknown; message?: unknown },
+  fallback: string,
+): string {
+  if (typeof data.message === "string" && data.message) return data.message;
+  const teks = typeof data.error === "string" ? data.error : "";
+  if (!teks || /^[A-Z][A-Z0-9_]+$/.test(teks)) return fallback;
+  return teks;
+}
+
 interface CertificateData {
   nama: string;
   nim: string;
@@ -377,10 +390,13 @@ export default function IjazahPreviewPage({
         setChallengeStatus("gagal");
         const isRejected = isUserRejection(signErr);
         setErrorCode(isRejected ? "USER_REJECTED" : "SIGNATURE_REJECTED");
+        if (!isRejected) {
+          console.error("Gagal menandatangani pesan tantangan:", signErr);
+        }
         setErrorMessage(
           isRejected
             ? "Penandatanganan pesan dibatalkan oleh pengguna di dompet."
-            : (signErr as Error)?.message || "Gagal menandatangani pesan tantangan."
+            : "Gagal menandatangani pesan tantangan. Silakan coba lagi."
         );
         return;
       }
@@ -422,8 +438,14 @@ export default function IjazahPreviewPage({
         setErrorMessage(null);
       } else {
         setChallengeStatus("gagal");
+        console.error("Verifikasi tantangan gagal:", verifyJson.error);
         setErrorCode(verifyJson.error || "VERIFICATION_FAILED");
-        setErrorMessage(verifyJson.message || verifyJson.error || "Verifikasi tanda tangan gagal.");
+        setErrorMessage(
+          pesanRamah(
+            verifyJson,
+            "Verifikasi tanda tangan gagal. Silakan minta tantangan baru dan coba lagi.",
+          ),
+        );
       }
     } catch (err: unknown) {
       setChallengeStatus("gagal");
@@ -431,9 +453,11 @@ export default function IjazahPreviewPage({
         setErrorCode("USER_REJECTED");
         setErrorMessage("Koneksi atau penandatanganan dibatalkan oleh pengguna di dompet.");
       } else {
-        const errorObj = err as Error;
+        console.error("Error verifikasi kepemilikan:", err);
         setErrorCode("CLIENT_ERROR");
-        setErrorMessage(errorObj?.message || "Terjadi kesalahan saat memproses verifikasi.");
+        setErrorMessage(
+          "Terjadi kesalahan saat memproses verifikasi. Silakan coba lagi.",
+        );
       }
     }
   };
@@ -443,7 +467,8 @@ export default function IjazahPreviewPage({
       .then((r) => r.json())
       .then((data) => {
         if (data.error) {
-          setError(data.error);
+          console.error("Gagal memuat data ijazah:", data.error);
+          setError(pesanRamah(data, "Gagal memuat data ijazah"));
         } else {
           setCert(data.certificate);
         }
@@ -889,7 +914,7 @@ export default function IjazahPreviewPage({
               </div>
             )}
 
-            {/* Gagal: Kode Error dari API apa adanya */}
+            {/* Gagal: hanya pesan ramah yang ditampilkan; kode mentah hanya di console */}
             {challengeStatus === "gagal" && (
               <div className="mb-6 p-5 bg-red-50 border border-red-200 rounded-2xl space-y-3">
                 <div className="flex items-start gap-3">
@@ -901,11 +926,6 @@ export default function IjazahPreviewPage({
                           ? "Dompet ini bukan pemilik ijazah"
                           : "Verifikasi Gagal"}
                       </h4>
-                      {errorCode && (
-                        <span className="font-mono text-xs font-bold px-2 py-0.5 bg-red-200 text-red-900 rounded">
-                          {errorCode}
-                        </span>
-                      )}
                     </div>
 
                     <p className="text-xs text-red-800 leading-relaxed font-medium">
@@ -929,14 +949,6 @@ export default function IjazahPreviewPage({
                         ? "Penandatanganan pesan dibatalkan oleh pengguna di dompet."
                         : errorMessage || "Terjadi kesalahan saat memverifikasi tanda tangan kriptografis."}
                     </p>
-
-                    {errorMessage &&
-                      errorCode !== "OWNER_MISMATCH" &&
-                      errorMessage !== "Dompet ini bukan pemilik ijazah" && (
-                        <p className="text-[11px] text-red-700 font-mono bg-red-100/60 p-2 rounded break-all">
-                          Pesan Server: {errorMessage}
-                        </p>
-                      )}
 
                     {connectedWallet && (
                       <div className="text-xs text-red-900">

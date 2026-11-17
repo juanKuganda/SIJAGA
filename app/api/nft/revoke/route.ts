@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     const payload = await getAuthUser();
     if (!payload || payload.role !== "ADMIN") {
       return NextResponse.json(
-        { error: "Unauthorized - hanya admin yang bisa revoke" },
+        { error: "Hanya admin yang bisa mencabut ijazah. Silakan login kembali sebagai admin." },
         { status: 401 }
       );
     }
@@ -56,14 +56,14 @@ export async function POST(request: NextRequest) {
 
     if (user.certificate.status === "REVOKED") {
       return NextResponse.json(
-        { error: "Sertifikat sudah direvoke sebelumnya" },
+        { error: "Sertifikat sudah dicabut sebelumnya." },
         { status: 400 }
       );
     }
 
     if (user.certificate.status === "NOT_ISSUED" || user.certificate.status === "ISSUING") {
       return NextResponse.json(
-        { error: user.certificate.status === "ISSUING" ? "Sertifikat masih dalam proses penerbitan" : "Sertifikat belum diterbitkan" },
+        { error: user.certificate.status === "ISSUING" ? "Sertifikat masih dalam proses penerbitan. Tunggu hingga penerbitan selesai sebelum mencabut." : "Sertifikat belum diterbitkan, jadi tidak ada yang bisa dicabut." },
         { status: 400 }
       );
     }
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user.prodi) {
-      return NextResponse.json({ error: "Data program studi tidak lengkap" }, { status: 400 });
+      return NextResponse.json({ error: "Data program studi tidak lengkap. Lengkapi data mahasiswa terlebih dahulu." }, { status: 400 });
     }
 
     // 1. Generate Revoked PNG Image & Upload (TANPA PII)
@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
       if (!revokeResult.success) {
         // FAIL-CLOSED: DB tidak berubah, admin harus retry
         return NextResponse.json(
-          { error: `Gagal revoke on-chain: ${revokeResult.error}. DB tidak diubah — silakan coba lagi.` },
+          { error: `Gagal mencabut aset di blockchain: ${revokeResult.error}. Data di sistem tidak berubah — silakan coba lagi.` },
           { status: 502 }
         );
       }
@@ -175,7 +175,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("NFT revoke error:", error);
     return NextResponse.json(
-      { error: "Terjadi kesalahan server" },
+      { error: "Terjadi kesalahan server. Silakan coba lagi beberapa saat lagi." },
       { status: 500 }
     );
   }

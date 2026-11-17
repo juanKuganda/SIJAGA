@@ -654,7 +654,7 @@ export default function HomePage() {
               </h2>
             </div>
 
-            <div className="flex flex-col md:flex-row rounded-3xl overflow-hidden border border-zinc-200">
+            <div className="flex flex-col md:flex-row md:items-start rounded-3xl overflow-hidden border border-zinc-200">
               {/* Belah kiri: Verifikasi Lengkap */}
               <div
                 className={`bg-white transition-all duration-500 ${
@@ -998,8 +998,10 @@ export default function HomePage() {
                 <div className="mt-auto">
                   <a
                     href="https://www.metaplex.com/docs/smart-contracts/core"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 text-sm font-bold hover:text-red-400 transition-colors"
-                  target="_blank" >
+                  >
                     Baca dokumentasi <ArrowRight className="w-4 h-4" />
                   </a>
                 </div>

@@ -208,5 +208,5 @@ export async function GET(request: NextRequest) {
 
 // Verify tidak butuh POST — tapi wajib ada untuk CORS compliance
 export async function POST() {
-  return actionError("Endpoint ini hanya mendukung GET", 405);
+  return actionError("Endpoint ini hanya mendukung metode GET.", 405);
 }

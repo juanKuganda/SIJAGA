@@ -18,13 +18,13 @@ export async function POST(request: NextRequest) {
   const nim = searchParams.get("nim");
   const origin = appUrl(request);
 
-  if (!nim) return actionError("NIM tidak ditemukan");
+  if (!nim) return actionError("NIM tidak ditemukan di tautan. Buka kembali tautan klaim dari sumber resmi.");
 
   // Blink client mengirim: { signature }
   const body = await request.json();
   const { signature } = body;
 
-  if (!signature) return actionError("Transaction signature tidak ditemukan");
+  if (!signature) return actionError("Tanda tangan transaksi tidak ditemukan. Ulangi proses klaim dari awal.");
 
   // Fee payer check: log if not admin
   const adminAddress = getAdminWalletAddress();
@@ -39,8 +39,8 @@ export async function POST(request: NextRequest) {
     include: { certificate: true, wallet: true },
   });
 
-  if (!user) return actionError("User tidak ditemukan", 404);
-  if (!user.certificate?.nftAddress) return actionError("NFT belum diterbitkan", 400);
+  if (!user) return actionError("Data mahasiswa tidak ditemukan. Periksa kembali NIM Anda, atau hubungi admin kampus.", 404);
+  if (!user.certificate?.nftAddress) return actionError("Ijazah belum diterbitkan. Hubungi admin kampus untuk menanyakan status penerbitan.", 400);
 
   // Idempoten: jika sudah CLAIMED, langsung return sukses
   if (user.certificate?.status === "CLAIMED") {
@@ -48,8 +48,8 @@ export async function POST(request: NextRequest) {
   }
 
   // Status guard
-  if (user.certificate?.status === "REVOKED") return actionError("Ijazah telah dicabut", 400);
-  if (user.certificate?.status === "ISSUING") return actionError("Ijazah masih dalam proses penerbitan", 400);
+  if (user.certificate?.status === "REVOKED") return actionError("Ijazah ini telah dicabut oleh institusi dan tidak dapat diklaim.", 400);
+  if (user.certificate?.status === "ISSUING") return actionError("Ijazah masih dalam proses penerbitan. Tunggu hingga selesai, lalu ulangi klaim.", 400);
 
   try {
     const txInfo = await connection.getTransaction(signature, {
@@ -59,12 +59,12 @@ export async function POST(request: NextRequest) {
 
     // 1. Transaksi tidak ditemukan di blockchain
     if (!txInfo) {
-      return actionError("Transaksi tidak ditemukan di blockchain", 404);
+      return actionError("Transaksi tidak ditemukan di blockchain. Tunggu beberapa detik lalu ulangi proses klaim.", 404);
     }
 
     // 2. Transaksi gagal di blockchain (meta.err harus null)
     if (txInfo.meta?.err) {
-      return actionError("Transaksi gagal di blockchain", 400);
+      return actionError("Transaksi gagal di blockchain. Ulangi proses klaim dari awal.", 400);
     }
 
     // 3. Validasi signer:
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
 
       if (!studentIsSigner) {
         return actionError(
-          "Signer transaksi bukan wallet terdaftar mahasiswa",
+          "Transaksi ini tidak ditandatangani oleh wallet mahasiswa yang terdaftar. Pastikan memakai dompet yang terdaftar di SIJAGA.",
           403
         );
       }
@@ -169,18 +169,18 @@ export async function POST(request: NextRequest) {
     }
 
     if (!memoFound) {
-      return actionError("Transaksi tidak mengandung instruction Memo", 400);
+      return actionError("Transaksi tidak berisi bukti klaim yang valid. Ulangi proses klaim dari awal.", 400);
     }
 
     if (!memoPayloadValid) {
       return actionError(
-        "Payload memo tidak valid: harus berisi type SIJAGA_CLAIM dan mint yang sesuai",
+        "Bukti klaim dalam transaksi tidak valid. Ulangi proses klaim dari awal.",
         400
       );
     }
   } catch (error) {
     console.error("Callback Verify Error:", error);
-    return actionError("Gagal memverifikasi transaksi", 500);
+    return actionError("Gagal memverifikasi transaksi di blockchain. Periksa koneksi lalu ulangi proses klaim.", 500);
   }
 
   // ═══════════════════════════════════════════════════════════

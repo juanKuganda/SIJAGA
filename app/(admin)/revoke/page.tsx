@@ -68,6 +68,30 @@ interface Backup {
   certStatus: string | null;
 }
 
+// Pesan mentah tidak pernah ditampilkan ke user: `message` ramah dari API
+// dipakai bila ada; `error` yang sudah berupa kalimat Bahasa Indonesia
+// diteruskan; kode mesin (mis. CONSENT_REQUIRED) diganti pesan ramah.
+// Dua kalimat API yang menyisipkan detail on-chain mentah
+// ("Gagal mencabut/mengembalikan aset di blockchain: <mentah>. Data di
+// sistem...") dipotong sisipan mentahnya, kalimat ramahnya dipertahankan.
+function pesanRamah(
+  data: { error?: unknown; message?: unknown },
+  fallback: string,
+): string {
+  if (typeof data.message === "string" && data.message) return data.message;
+  const teks = typeof data.error === "string" ? data.error : "";
+  if (!teks || /^[A-Z][A-Z0-9_]+$/.test(teks)) return fallback;
+  return teks
+    .replace(
+      /^(Gagal mencabut aset di blockchain): .*?\. Data di sistem/,
+      "$1. Data di sistem",
+    )
+    .replace(
+      /^(Gagal mengembalikan aset di blockchain): .*?\. Data di sistem/,
+      "$1. Data di sistem",
+    );
+}
+
 export default function RevokePage() {
   const [mahasiswa, setMahasiswa] = useState<Mahasiswa[]>([]);
   const [backups, setBackups] = useState<Backup[]>([]);
@@ -92,7 +116,8 @@ export default function RevokePage() {
       const response = await fetch("/api/admin/mahasiswa");
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.error || `HTTP ${response.status}`);
+        console.error("Gagal memuat daftar mahasiswa:", errData, response.status);
+        throw new Error("Gagal memuat daftar mahasiswa");
       }
       const data = await response.json();
       if (data.mahasiswa) {
@@ -119,7 +144,8 @@ export default function RevokePage() {
       const response = await fetch("/api/admin/backup/list");
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.error || `HTTP ${response.status}`);
+        console.error("Gagal memuat daftar backup:", errData, response.status);
+        throw new Error("Gagal memuat daftar backup");
       }
       const data = await response.json();
       if (data.backups) {
@@ -167,8 +193,12 @@ export default function RevokePage() {
         fetchMahasiswa();
         fetchBackups();
       } else {
+        console.error("Gagal merevoke sertifikat:", data);
         toast.error("Gagal merevoke sertifikat", {
-          description: data.error,
+          description: pesanRamah(
+            data,
+            "Gagal merevoke sertifikat. Data di sistem tidak berubah — silakan coba lagi.",
+          ),
         });
       }
     } catch (error) {
@@ -199,8 +229,12 @@ export default function RevokePage() {
         fetchMahasiswa();
         fetchBackups();
       } else {
+        console.error("Gagal restore sertifikat:", data);
         toast.error("Gagal restore", {
-          description: data.error,
+          description: pesanRamah(
+            data,
+            "Gagal me-restore sertifikat. Silakan coba lagi.",
+          ),
         });
       }
     } catch (error) {

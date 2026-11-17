@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Users, Clock, CheckCircle2, FileText, Award, XCircle, Activity, History, Target } from "lucide-react";
+import { Users, Clock, CheckCircle2, FileText, Award, XCircle, Activity, History, Target, ShieldCheck } from "lucide-react";
 import { DashboardCharts } from "@/components/DashboardCharts";
 
 interface Stats {
@@ -214,7 +214,7 @@ export default function DashboardPage() {
               <Activity className="w-6 h-6 text-blue-600" />
               Aksi Cepat
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <Link href="/mahasiswa" className="block bg-white border border-zinc-100 rounded-2xl p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_10px_40px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 group">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300 shadow-sm shrink-0">
@@ -253,6 +253,20 @@ export default function DashboardPage() {
                       Revoke & Backup
                     </h3>
                     <p className="text-xs text-muted-foreground font-medium mt-0.5">Cabut validitas ijazah.</p>
+                  </div>
+                </div>
+              </Link>
+
+              <Link href="/verify-onchain" className="block bg-white border border-zinc-100 rounded-2xl p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_10px_40px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 group">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center group-hover:bg-red-600 group-hover:text-white transition-colors duration-300 shadow-sm shrink-0">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold group-hover:text-red-600 transition-colors">
+                      Verifikasi Mandiri
+                    </h3>
+                    <p className="text-xs text-muted-foreground font-medium mt-0.5">Periksa ijazah langsung dari blockchain.</p>
                   </div>
                 </div>
               </Link>

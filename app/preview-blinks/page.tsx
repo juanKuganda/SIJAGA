@@ -71,7 +71,7 @@ export default function PreviewBlinksPage() {
               <button 
                 onClick={() => {
                   const origin = window.location.origin;
-                  window.open(`https://dial.to/?action=solana-action:${origin}/api/actions/claim?nim=${nimInput}`, '_blank');
+                  window.open(`https://dial.to/?action=solana-action:${origin}/api/actions/claim?nim=${nimInput}`, '_blank', 'noopener,noreferrer');
                 }}
                 className="bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap text-sm"
               >

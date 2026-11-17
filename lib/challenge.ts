@@ -106,7 +106,7 @@ export async function verifyVerificationChallenge(params: {
     return {
       success: false,
       error: "MALFORMED_INPUT",
-      message: "Parameter verifikasi tidak lengkap",
+      message: "Data verifikasi tidak lengkap. Minta tantangan baru lalu ulangi prosesnya.",
     };
   }
 
@@ -119,7 +119,7 @@ export async function verifyVerificationChallenge(params: {
     return {
       success: false,
       error: "NONCE_NOT_FOUND",
-      message: "Nonce tidak ditemukan atau tidak valid",
+      message: "Tantangan tidak ditemukan atau sudah tidak berlaku. Minta tantangan baru dan coba lagi.",
     };
   }
 
@@ -128,7 +128,7 @@ export async function verifyVerificationChallenge(params: {
     return {
       success: false,
       error: "NONCE_ALREADY_USED",
-      message: "Tantangan verifikasi telah digunakan (replay attack detected)",
+      message: "Tantangan ini sudah pernah dipakai dan tidak bisa dipakai lagi. Minta tantangan baru.",
     };
   }
 
@@ -138,7 +138,7 @@ export async function verifyVerificationChallenge(params: {
     return {
       success: false,
       error: "NONCE_EXPIRED",
-      message: "Tantangan verifikasi telah kadaluwarsa",
+      message: "Tantangan sudah kedaluwarsa (batas waktu 5 menit). Minta tantangan baru dan tanda tangani segera.",
     };
   }
 
@@ -147,7 +147,7 @@ export async function verifyVerificationChallenge(params: {
     return {
       success: false,
       error: "WALLET_MISMATCH",
-      message: "Wallet address tidak cocok dengan yang meminta tantangan",
+      message: "Alamat dompet tidak cocok dengan dompet yang meminta tantangan. Gunakan dompet yang sama seperti saat meminta tantangan.",
     };
   }
 
@@ -156,7 +156,7 @@ export async function verifyVerificationChallenge(params: {
     return {
       success: false,
       error: "OWNER_MISMATCH",
-      message: "Signer bukan pemilik sah atas aset ijazah",
+      message: "Dompet ini bukan pemilik ijazah. Gunakan dompet pemilik ijazah untuk menandatangani.",
     };
   }
 
@@ -165,7 +165,7 @@ export async function verifyVerificationChallenge(params: {
     return {
       success: false,
       error: "MESSAGE_MISMATCH",
-      message: "Isi pesan tantangan telah dimodifikasi (tampered message)",
+      message: "Isi pesan tantangan berubah sehingga tidak lagi sesuai. Minta tantangan baru dan jangan ubah isi pesannya.",
     };
   }
 
@@ -179,7 +179,7 @@ export async function verifyVerificationChallenge(params: {
       return {
         success: false,
         error: "MALFORMED_INPUT",
-        message: "Panjang public key tidak valid (harus 32 bytes)",
+        message: "Alamat dompet tidak valid. Pastikan memakai alamat dompet Solana yang benar.",
       };
     }
 
@@ -187,7 +187,7 @@ export async function verifyVerificationChallenge(params: {
       return {
         success: false,
         error: "MALFORMED_INPUT",
-        message: "Panjang signature tidak valid (harus 64 bytes)",
+        message: "Tanda tangan dari dompet tidak valid. Coba tanda tangani ulang dengan dompet yang sama.",
       };
     }
 
@@ -197,14 +197,15 @@ export async function verifyVerificationChallenge(params: {
       return {
         success: false,
         error: "INVALID_SIGNATURE",
-        message: "Tanda tangan kriptografis tidak valid untuk pesan ini",
+        message: "Tanda tangan tidak cocok dengan pesan tantangan ini. Coba tanda tangani ulang dengan dompet pemilik ijazah.",
       };
     }
-  } catch (err) {
+  } catch {
     return {
       success: false,
       error: "INVALID_SIGNATURE",
-      message: `Gagal memverifikasi signature: ${err instanceof Error ? err.message : String(err)}`,
+      // Pesan mentah tidak diteruskan ke user; detail lengkap sudah dicatat pemanggil (console.error di route).
+        message: "Tanda tangan tidak dapat diverifikasi. Pastikan memakai dompet Solana yang benar dan coba tanda tangani ulang.",
     };
   }
 

@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
 
     if (!userWithWallet) {
       return NextResponse.json(
-        { error: isSolanaAddress ? "Wallet tidak ditemukan" : "NIM tidak ditemukan" },
+        { error: isSolanaAddress ? "Alamat wallet ini belum terdaftar di SIJAGA. Periksa kembali alamat wallet, atau hubungi admin kampus." : "NIM ini tidak ditemukan di SIJAGA. Periksa kembali NIM yang dimasukkan, atau hubungi admin kampus." },
         { status: 404 }
       );
     }
@@ -116,8 +116,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         verified: false,
         message: certificate?.status === "ISSUING"
-          ? "Ijazah sedang dalam proses penerbitan"
-          : "Tidak ditemukan ijazah untuk query ini",
+          ? "Ijazah sedang dalam proses penerbitan. Silakan coba lagi beberapa saat lagi."
+          : "Tidak ditemukan ijazah untuk NIM atau wallet ini. Periksa kembali input Anda, atau hubungi admin kampus.",
       });
     }
 
@@ -139,7 +139,7 @@ export async function GET(request: NextRequest) {
       if (!userWithWallet.prodi) {
         return NextResponse.json({
           verified: false,
-          message: "Data Program Studi tidak lengkap, gagal melakukan komputasi hash.",
+          message: "Data program studi tidak lengkap sehingga ijazah tidak dapat diverifikasi. Hubungi admin kampus untuk melengkapi data.",
         });
       }
       
@@ -173,7 +173,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         verified: false,
         revoked: true,
-        message: "Ijazah ini telah DIREVOKE / DICABUT",
+        message: "Ijazah ini telah dicabut oleh Universitas Tadulako.",
         revokeReason: certificate.revokeReason || "Tidak ada alasan yang diberikan",
         revokedAt: certificate.revokedAt,
         data: {
@@ -201,7 +201,7 @@ export async function GET(request: NextRequest) {
       // Seharusnya tidak terjadi jika status MINTED/CLAIMED, tapi fail-closed
       return NextResponse.json({
         verified: false,
-        message: "NFT address tidak ditemukan di database",
+        message: "Data ijazah tidak lengkap di sistem sehingga tidak dapat diverifikasi. Hubungi admin kampus.",
         hashVerified,
       });
     }
@@ -212,6 +212,8 @@ export async function GET(request: NextRequest) {
     if (!inspection.ok) {
       return NextResponse.json({
         verified: false,
+        message:
+          "Status blockchain tidak dapat dikonfirmasi saat ini karena jaringan Solana tidak merespons. Silakan coba lagi beberapa saat lagi.",
         hashVerified,
         data: {
           nama: formatNama(),
@@ -333,7 +335,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Verify error:", error);
     return NextResponse.json(
-      { error: "Terjadi kesalahan server" },
+      { error: "Terjadi kesalahan server. Silakan coba lagi beberapa saat lagi." },
       { status: 500 }
     );
   }

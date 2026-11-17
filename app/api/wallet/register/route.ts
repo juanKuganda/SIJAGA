@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     const payload = await getAuthUser();
     if (!payload || payload.role !== "MAHASISWA") {
       return NextResponse.json(
-        { error: "Unauthorized" },
+        { error: "Anda harus login sebagai mahasiswa. Silakan login kembali." },
         { status: 401 }
       );
     }
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     // Validasi format wallet address
     if (!isValidSolanaAddress(walletAddress)) {
       return NextResponse.json(
-        { error: "Format alamat wallet tidak valid" },
+        { error: "Format alamat wallet tidak valid. Salin alamat dari dompet Solana Anda dan coba lagi." },
         { status: 400 }
       );
     }
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
       // Jika wallet sudah VERIFIED, tolak
       if (existingWallet.status === "VERIFIED") {
         return NextResponse.json(
-          { error: "Wallet Anda sudah terverifikasi dan tidak dapat diubah lagi." },
+          { error: "Wallet Anda sudah terverifikasi dan tidak dapat diubah lagi. Hubungi admin kampus jika Anda perlu mengganti wallet." },
           { status: 400 }
         );
       }
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
 
     if (existingAddress) {
       return NextResponse.json(
-        { error: "Alamat wallet sudah digunakan" },
+        { error: "Alamat wallet ini sudah digunakan akun lain. Gunakan alamat wallet lain, atau hubungi admin kampus." },
         { status: 400 }
       );
     }
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Wallet register error:", error);
     return NextResponse.json(
-      { error: "Terjadi kesalahan server" },
+      { error: "Terjadi kesalahan server. Silakan coba lagi beberapa saat lagi." },
       { status: 500 }
     );
   }

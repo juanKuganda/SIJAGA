@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { inspectCertificate } from "@/lib/onchain";
+import { getAdminWalletAddress } from "@/lib/metaplex";
 
 /**
  * Endpoint Verifikasi Tingkat-1 Mandiri (On-Chain + IPFS)
@@ -11,6 +12,14 @@ import { inspectCertificate } from "@/lib/onchain";
  * - Memberi label jujur:
  *     Tingkat 1: "DAPAT DIPERIKSA"
  *     Tingkat 2: "TIDAK DAPAT DIPASTIKAN" (bukan "tidak valid")
+ *
+ * Tiga klaim draf yang diperiksa di sini (tanpa Tier 1):
+ * - Penerbit adalah alamat resmi institusi: updateAuthority on-chain
+ *   dibandingkan dengan alamat wallet admin (fail-closed bila alamat
+ *   admin tidak terkonfigurasi — vonis TIDAK PERNAH bersih).
+ * - Metadata terkini tidak menyatakan dicabut: penanda "[DIBATALKAN]"
+ *   pada nama/metadata atau atribut Status = "Dibatalkan" → vonis "DICABUT".
+ * - (Tanda tangan tantangan valid diperiksa endpoint challenge terpisah.)
  */
 
 function isValidSolanaAddress(address: string): boolean {
@@ -51,11 +60,16 @@ export async function POST(request: NextRequest) {
 
     return handleInspection(asset.trim());
   } catch (error) {
+    // Detail mentah TIDAK dikembalikan ke klien (bisa memuat isi body /
+    // detail konfigurasi); simpan di log server untuk debugging.
+    console.error(
+      "[Tingkat-1] Invalid JSON body:",
+      error instanceof Error ? error.message : String(error)
+    );
     return NextResponse.json(
       {
         success: false,
         error: "Invalid JSON body",
-        detail: error instanceof Error ? error.message : String(error),
       },
       { status: 400 }
     );
@@ -83,6 +97,10 @@ async function handleInspection(asset: string) {
     if (result.reason === "NOT_FOUND") {
       statusCode = 404;
       errorMessage = "Aset tidak ditemukan di blockchain Solana";
+    } else if (result.reason === "NOT_ASSET") {
+      statusCode = 400;
+      errorMessage =
+        "Alamat ini bukan aset NFT (kemungkinan alamat dompet, bukan alamat mint). Masukkan alamat mint aset Solana.";
     } else if (result.reason === "METADATA") {
       statusCode = 502;
       errorMessage = "Aset ditemukan, namun metadata IPFS tidak dapat diakses";
@@ -103,15 +121,56 @@ async function handleInspection(asset: string) {
     );
   }
 
+  // ─── Cek penerbit: updateAuthority harus = alamat wallet admin ───
+  // Fail-closed: bila alamat admin tidak terkonfigurasi (getAdminWalletAddress
+  // melempar), cek dinyatakan TIDAK DAPAT DIPASTIKAN dan vonis TIDAK BOLEH
+  // bersih — jangan pernah lolos diam-diam. Berbeda dengan
+  // app/api/verify/route.ts yang gagalkan cek tanpa log dan tanpa membedakan
+  // "tidak terkonfigurasi" dari "tidak sesuai": di sini keduanya dibedakan
+  // lewat status cek dan dicatat di log server.
+  let adminAddress = "";
+  let adminConfigError = false;
+  try {
+    adminAddress = getAdminWalletAddress();
+  } catch (error) {
+    adminConfigError = true;
+    console.error(
+      "[Tingkat-1] Alamat wallet admin tidak terkonfigurasi — cek penerbit gagal tertutup:",
+      error instanceof Error ? error.message : String(error)
+    );
+  }
+  const issuerMatch =
+    !adminConfigError &&
+    adminAddress !== "" &&
+    result.updateAuthority === adminAddress;
+
+  // ─── Vonis ──────────────────────────────────────────────────────
+  // Prioritas: DICABUT dulu — pencabutan adalah status terminal aset itu
+  // sendiri; cek penerbit atas aset yang sudah dicabut tidak relevan lagi,
+  // dan aset dicabut TIDAK BOLEH terbaca sebagai sekadar "penerbit salah".
+  // Lalu penerbit tidak sesuai / tidak dapat dipastikan → TIDAK DAPAT
+  // DIPERIKSA (ditentukan positif salah, atau tidak dapat ditentukan —
+  // keduanya bukan vonis bersih). "TIDAK DAPAT DIPASTIKAN" TIDAK dipakai
+  // untuk vonis di sini: frasa itu sudah bermakna khusus tingkat-2
+  // ("tidak dapat dipastikan tanpa Tier 1"), sedangkan di sini kegagalan
+  // ditentukan dari data tingkat-1 sendiri.
+  let verdict = "DAPAT DIPERIKSA";
+  if (result.revoked) {
+    verdict = "DICABUT";
+  } else if (!issuerMatch) {
+    verdict = "TIDAK DAPAT DIPERIKSA";
+  }
+
   return NextResponse.json({
     success: true,
     level: "TINGKAT 1",
-    verdict: "DAPAT DIPERIKSA",
+    verdict,
     asset,
     owner: result.owner,
     name: result.name,
     uri: result.uri,
     frozen: result.frozen,
+    revoked: result.revoked,
     updateAuthority: result.updateAuthority,
     dataHash: result.dataHash,
     prodi: result.prodi || null,
@@ -125,8 +184,22 @@ async function handleInspection(asset: string) {
         detail: "Aset terdaftar aktif di blockchain Solana (Metaplex Core)",
       },
       issuerAuthority: {
-        status: "DAPAT DIPERIKSA",
-        detail: result.updateAuthority,
+        status: adminConfigError
+          ? "TIDAK DAPAT DIPASTIKAN"
+          : issuerMatch
+            ? "DAPAT DIPERIKSA"
+            : "TIDAK SESUAI",
+        detail: adminConfigError
+          ? "Alamat wallet admin tidak terkonfigurasi di server — pemeriksaan penerbit tidak dapat dilakukan"
+          : issuerMatch
+            ? `Penerbit cocok dengan alamat resmi institusi: ${result.updateAuthority}`
+            : `Penerbit aset (${result.updateAuthority}) bukan alamat resmi institusi`,
+      },
+      statusPencabutan: {
+        status: result.revoked ? "DICABUT" : "DAPAT DIPERIKSA",
+        detail: result.revoked
+          ? "Metadata terkini menyatakan aset ini dicabut ([DIBATALKAN])"
+          : "Metadata terkini tidak menyatakan aset dicabut",
       },
       tokenFrozen: {
         status: result.frozen ? "DAPAT DIPERIKSA" : "TIDAK BEKU",

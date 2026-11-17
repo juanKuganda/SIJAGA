@@ -35,6 +35,19 @@ interface Mahasiswa {
   } | null;
 }
 
+// Pesan mentah tidak pernah ditampilkan ke user: `message` ramah dari API
+// dipakai bila ada; `error` yang sudah berupa kalimat Bahasa Indonesia
+// diteruskan; kode mesin (mis. CONSENT_REQUIRED) diganti pesan ramah.
+function pesanRamah(
+  data: { error?: unknown; message?: unknown },
+  fallback: string,
+): string {
+  if (typeof data.message === "string" && data.message) return data.message;
+  const teks = typeof data.error === "string" ? data.error : "";
+  if (!teks || /^[A-Z][A-Z0-9_]+$/.test(teks)) return fallback;
+  return teks;
+}
+
 export default function TerbitkanPage() {
   const [mahasiswa, setMahasiswa] = useState<Mahasiswa[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,7 +64,8 @@ export default function TerbitkanPage() {
       const response = await fetch("/api/admin/mahasiswa");
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.error || `HTTP ${response.status}`);
+        console.error("Gagal memuat daftar mahasiswa:", errData, response.status);
+        throw new Error("Gagal memuat daftar mahasiswa");
       }
       const data = await response.json();
       if (data.mahasiswa) {
@@ -105,8 +119,12 @@ export default function TerbitkanPage() {
         setConfirmModal(null);
         fetchMahasiswa();
       } else {
+        console.error("Gagal menerbitkan ijazah:", data);
         toast.error("Gagal menerbitkan ijazah", {
-          description: data.error,
+          description: pesanRamah(
+            data,
+            "Gagal menerbitkan ijazah. Silakan coba lagi.",
+          ),
         });
       }
     } catch (error) {

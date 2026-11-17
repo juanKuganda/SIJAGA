@@ -51,6 +51,19 @@ function getWalletProvider(): PhantomProvider | SolflareProvider | null {
   return null;
 }
 
+// Pesan mentah tidak pernah ditampilkan ke user: `message` ramah dari API
+// dipakai bila ada; `error` yang sudah berupa kalimat Bahasa Indonesia
+// diteruskan; kode mesin (mis. CONSENT_REQUIRED) diganti pesan ramah.
+function pesanRamah(
+  data: { error?: unknown; message?: unknown },
+  fallback: string,
+): string {
+  if (typeof data.message === "string" && data.message) return data.message;
+  const teks = typeof data.error === "string" ? data.error : "";
+  if (!teks || /^[A-Z][A-Z0-9_]+$/.test(teks)) return fallback;
+  return teks;
+}
+
 export default function WalletPage() {
   const [wallet, setWallet] = useState<Wallet | null>(null);
     const [loading, setLoading] = useState(true);
@@ -253,14 +266,30 @@ export default function WalletPage() {
                     const data = await res.json();
               
                     if (!res.ok) {
-                      setError(data.error || "Gagal mendaftarkan wallet");
+                      console.error("Gagal mendaftarkan wallet:", data);
+                      setError(
+                        pesanRamah(
+                          data,
+                          "Gagal mendaftarkan wallet. Silakan coba lagi.",
+                        ),
+                      );
                       return;
                     }
               
                     setSuccess("Wallet berhasil dihubungkan! Menunggu verifikasi admin.");
                     setWallet(data.wallet);
                   } catch (err: unknown) {
-                    setError(err instanceof Error ? err.message : "Terjadi kesalahan saat menghubungkan wallet.");
+                    console.error("Gagal menghubungkan wallet:", err);
+                    // Pesan mentah dompet tidak ditampilkan; hanya dipakai
+                    // untuk membedakan pembatalan oleh user dari error lain.
+                    const dibatalkan =
+                      err instanceof Error &&
+                      /reject|denied|dismiss|cancel/i.test(err.message);
+                    setError(
+                      dibatalkan
+                        ? "Koneksi wallet dibatalkan di dompet. Silakan coba lagi jika Anda ingin menghubungkan wallet."
+                        : "Gagal menghubungkan wallet. Silakan coba lagi.",
+                    );
                   } finally {
                     setSubmitting(false);
                   }

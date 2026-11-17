@@ -9,7 +9,7 @@ export async function GET(_request: NextRequest) {
   try {
     const payload = await getAuthUser();
     if (!payload) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Sesi Anda telah berakhir. Silakan login kembali." }, { status: 401 });
     }
 
     const user = await prisma.user.findUnique({
@@ -27,7 +27,7 @@ export async function GET(_request: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json({ error: "User tidak ditemukan" }, { status: 404 });
+      return NextResponse.json({ error: "Akun Anda tidak ditemukan. Silakan login kembali." }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -38,7 +38,7 @@ export async function GET(_request: NextRequest) {
     });
   } catch (error) {
     console.error("Consent GET error:", error);
-    return NextResponse.json({ error: "Terjadi kesalahan server" }, { status: 500 });
+    return NextResponse.json({ error: "Terjadi kesalahan server. Silakan coba lagi beberapa saat lagi." }, { status: 500 });
   }
 }
 
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
   try {
     const payload = await getAuthUser();
     if (!payload) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Sesi Anda telah berakhir. Silakan login kembali." }, { status: 401 });
     }
 
     const ipAddress = request.headers.get("x-forwarded-for") || "unknown";
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, message: "Persetujuan berhasil diberikan" });
   } catch (error) {
     console.error("Consent POST error:", error);
-    return NextResponse.json({ error: "Terjadi kesalahan server" }, { status: 500 });
+    return NextResponse.json({ error: "Terjadi kesalahan server. Silakan coba lagi beberapa saat lagi." }, { status: 500 });
   }
 }
 
@@ -88,7 +88,7 @@ export async function DELETE(request: NextRequest) {
   try {
     const payload = await getAuthUser();
     if (!payload) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Sesi Anda telah berakhir. Silakan login kembali." }, { status: 401 });
     }
 
     // Cek apakah user dan ijazah sudah di-mint
@@ -99,7 +99,7 @@ export async function DELETE(request: NextRequest) {
     const cert = user?.certificate;
 
     if (!user) {
-      return NextResponse.json({ error: "User tidak ditemukan" }, { status: 404 });
+      return NextResponse.json({ error: "Akun Anda tidak ditemukan. Silakan login kembali." }, { status: 404 });
     }
 
     const updateData: import("@prisma/client").Prisma.UserUpdateInput = {
@@ -172,6 +172,6 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ success: true, message: "Persetujuan berhasil ditarik kembali" });
   } catch (error) {
     console.error("Consent DELETE error:", error);
-    return NextResponse.json({ error: "Terjadi kesalahan server" }, { status: 500 });
+    return NextResponse.json({ error: "Terjadi kesalahan server. Silakan coba lagi beberapa saat lagi." }, { status: 500 });
   }
 }

@@ -243,9 +243,13 @@ export async function mintSoulboundNFT(data: {
         errorMessage =
           "Saldo SOL wallet admin tidak cukup. Tambahkan SOL devnet via https://faucet.solana.com";
       } else if (error.message.includes("private key") || error.message.includes("ADMIN_WALLET")) {
-        errorMessage = error.message;
+        // Pesan mentah tidak diteruskan ke user (bisa memuat detail konfigurasi server).
+        errorMessage =
+          "Konfigurasi wallet admin bermasalah di server. Periksa ADMIN_WALLET_PRIVATE_KEY, lalu coba lagi.";
       } else {
-        errorMessage = error.message;
+        // Pesan mentah SDK (Umi/RPC) tidak diteruskan ke user; detail lengkap sudah di console.error di atas.
+        errorMessage =
+          "Gagal mencetak NFT di blockchain. Periksa koneksi ke Solana RPC, lalu coba lagi. Status ijazah tetap ISSUING sehingga aman untuk diulang.";
       }
     }
 
@@ -291,7 +295,7 @@ export async function revokeSoulboundNFT(data: {
       console.error("[Metaplex] NFT is immutable — cannot revoke on-chain.");
       return {
         success: false,
-        error: "NFT immutable (updateAuthority: None). Tidak bisa revoke on-chain. Hubungi developer.",
+        error: "Aset ini tidak bisa dicabut karena sudah tidak dapat diubah (immutable). Hubungi developer untuk penanganan manual.",
       };
     }
 
@@ -313,7 +317,9 @@ export async function revokeSoulboundNFT(data: {
     };
   } catch (error) {
     console.error("[Metaplex] Error revoking NFT:", error);
-    const errorMsg = error instanceof Error ? error.message : "Gagal revoke NFT";
+    // Pesan mentah SDK tidak diteruskan ke user; detail lengkap sudah di console.error di atas.
+    const errorMsg =
+      "Gagal mencabut aset di blockchain. Periksa koneksi ke Solana RPC, lalu coba lagi; data di sistem tidak berubah.";
 
     // Fail-closed: semua error = gagal
     return {
@@ -353,7 +359,7 @@ export async function restoreSoulboundNFT(data: {
       console.error("[Metaplex] NFT is immutable — cannot restore on-chain.");
       return {
         success: false,
-        error: "NFT immutable (updateAuthority: None). Tidak bisa restore on-chain.",
+        error: "Aset ini tidak bisa dipulihkan karena sudah tidak dapat diubah (immutable). Hubungi developer untuk penanganan manual.",
       };
     }
 
@@ -375,7 +381,9 @@ export async function restoreSoulboundNFT(data: {
     };
   } catch (error) {
     console.error("[Metaplex] Error restoring NFT:", error);
-    const errorMsg = error instanceof Error ? error.message : "Gagal restore NFT";
+    // Pesan mentah SDK tidak diteruskan ke user; detail lengkap sudah di console.error di atas.
+    const errorMsg =
+      "Gagal memulihkan aset di blockchain. Periksa koneksi ke Solana RPC, lalu coba lagi; data di sistem tidak berubah.";
 
     return {
       success: false,

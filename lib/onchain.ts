@@ -25,6 +25,8 @@ export type OnChainInspect =
       frozen: boolean;
       dataHash: string | null;
       updateAuthority: string;
+      /** true bila metadata terkini menyatakan aset dicabut ([DIBATALKAN]). */
+      revoked: boolean;
       prodi?: string | null;
       tahunLulus?: string | null;
       image?: string | null;
@@ -36,7 +38,7 @@ export type OnChainInspect =
     }
   | {
       ok: false;
-      reason: "NOT_FOUND" | "RPC" | "METADATA" | "NO_HASH";
+      reason: "NOT_FOUND" | "NOT_ASSET" | "RPC" | "METADATA" | "NO_HASH";
       timings?: {
         rpcMs?: number;
         ipfsMs?: number;
@@ -114,6 +116,33 @@ function extractDataHash(
   return extractAttribute(metadata, "Data Hash");
 }
 
+// ─── Helper: detect revoked asset ────────────────────────────────
+
+/**
+ * Apakah aset sudah dicabut menurut metadata terkini.
+ *
+ * Sinyal (salah satu cukup — revoke menulis ketiganya lewat jalur yang
+ * berbeda, jadi cek semuanya agar tidak ada jalur yang lolos diam-diam):
+ * - nama on-chain mengandung "[DIBATALKAN]" (ditulis revokeSoulboundNFT)
+ * - nama di metadata JSON mengandung "[DIBATALKAN]"
+ * - atribut metadata Status = "Dibatalkan"
+ *
+ * Perbandingan case-insensitive: penanda ini konvensi penulisan manusia,
+ * bukan konstanta protokol.
+ */
+export function isRevoked(
+  assetName: string,
+  metadata: Record<string, unknown>
+): boolean {
+  const marker = "[dibatalkan]";
+  if (assetName.toLowerCase().includes(marker)) return true;
+  const metadataName =
+    typeof metadata.name === "string" ? metadata.name : "";
+  if (metadataName.toLowerCase().includes(marker)) return true;
+  const status = extractAttribute(metadata, "Status");
+  return status !== null && status.trim().toLowerCase() === "dibatalkan";
+}
+
 // ─── Helper: check PermanentFreezeDelegate plugin ────────────────
 
 function isFrozen(
@@ -185,13 +214,33 @@ export async function inspectCertificate(
       const msg =
         fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
 
-      // Asset tidak ditemukan di blockchain
+      // Akun tidak ada di blockchain sama sekali
       if (
+        (fetchErr instanceof Error &&
+          fetchErr.name === "AccountNotFoundError") ||
         msg.includes("AccountNotFoundError") ||
         msg.includes("Account does not exist") ||
         msg.includes("could not find account")
       ) {
         return { ok: false, reason: "NOT_FOUND", timings };
+      }
+
+      // Akun ADA di chain, tapi bukan aset Metaplex Core
+      // (mis. alamat dompet / akun program lain): RPC berhasil
+      // mengembalikan akun, namun deserialisasi sebagai
+      // AssetAccountData gagal. UMI hanya melempar
+      // UnexpectedAccountError dari deserializeAccount — setelah
+      // RPC mengembalikan data akun — jadi ini BUKAN kegagalan
+      // RPC/rate limit. Bukti: probe fetchAsset ke alamat dompet
+      // mengembalikan "UnexpectedAccountError: The account at the
+      // provided address [...] is not of the expected type
+      // [AssetAccountData]. Caused By: DeserializingEmptyBufferError".
+      if (
+        (fetchErr instanceof Error &&
+          fetchErr.name === "UnexpectedAccountError") ||
+        msg.includes("is not of the expected type")
+      ) {
+        return { ok: false, reason: "NOT_ASSET", timings };
       }
 
       // RPC error (timeout, rate limit, dll)
@@ -231,6 +280,7 @@ export async function inspectCertificate(
 
     // 4. Extract Data Hash dan atribut dari metadata
     const dataHash = extractDataHash(metadata);
+    const revoked = isRevoked(name, metadata);
     const prodi =
       extractAttribute(metadata, "Program Studi") ||
       extractAttribute(metadata, "Prodi");
@@ -248,6 +298,7 @@ export async function inspectCertificate(
       frozen,
       dataHash,
       updateAuthority,
+      revoked,
       prodi,
       tahunLulus,
       image,

@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     const payload = await getAuthUser(request);
     if (!payload || payload.role !== "ADMIN") {
       return NextResponse.json(
-        { error: "Unauthorized - hanya admin yang bisa melakukan penerbitan ulang" },
+        { error: "Hanya admin yang bisa melakukan penerbitan ulang. Silakan login kembali sebagai admin." },
         { status: 401 }
       );
     }
@@ -30,23 +30,23 @@ export async function POST(request: NextRequest) {
     const { userId, newWalletAddress, reason } = body;
 
     if (!userId || typeof userId !== "string") {
-      return NextResponse.json({ error: "userId wajib diisi" }, { status: 400 });
+      return NextResponse.json({ error: "ID mahasiswa wajib diisi." }, { status: 400 });
     }
 
     if (!newWalletAddress || typeof newWalletAddress !== "string") {
-      return NextResponse.json({ error: "newWalletAddress wajib diisi" }, { status: 400 });
+      return NextResponse.json({ error: "Alamat wallet baru wajib diisi." }, { status: 400 });
     }
 
     if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(newWalletAddress)) {
       return NextResponse.json(
-        { error: "Format newWalletAddress Solana tidak valid" },
+        { error: "Format alamat wallet baru tidak valid. Periksa kembali alamat wallet Solana yang dimasukkan." },
         { status: 400 }
       );
     }
 
     if (!reason || !reason.trim()) {
       return NextResponse.json(
-        { error: "Alasan penerbitan ulang (reason) wajib diisi" },
+        { error: "Alasan penerbitan ulang wajib diisi." },
         { status: 400 }
       );
     }
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json({ error: "User tidak ditemukan" }, { status: 404 });
+      return NextResponse.json({ error: "Mahasiswa tidak ditemukan. Periksa kembali data mahasiswa yang dipilih." }, { status: 404 });
     }
 
     if (user.role !== "MAHASISWA") {
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
 
     if (!user.prodi) {
       return NextResponse.json(
-        { error: "Data Program Studi mahasiswa tidak lengkap" },
+        { error: "Data Program Studi mahasiswa tidak lengkap. Lengkapi data mahasiswa terlebih dahulu." },
         { status: 400 }
       );
     }
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
         {
           error: "CONSENT_REQUIRED",
           message:
-            "Mahasiswa belum memberikan persetujuan publikasi data (consent tidak aktif).",
+            "Mahasiswa belum memberikan persetujuan publikasi data (consent tidak aktif). Minta mahasiswa memberikan persetujuan terlebih dahulu.",
         },
         { status: 403 }
       );
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     // Mahasiswa wajib memiliki sertifikat aktif (MINTED atau CLAIMED)
     if (!user.certificate || !user.certificate.nftAddress) {
       return NextResponse.json(
-        { error: "Mahasiswa belum memiliki ijazah terbit untuk diterbitkan ulang" },
+        { error: "Mahasiswa belum memiliki ijazah terbit untuk diterbitkan ulang. Terbitkan ijazah terlebih dahulu." },
         { status: 400 }
       );
     }
@@ -102,7 +102,8 @@ export async function POST(request: NextRequest) {
     if (currentCert.status !== "MINTED" && currentCert.status !== "CLAIMED") {
       return NextResponse.json(
         {
-          error: `Ijazah saat ini berstatus ${currentCert.status}. Hanya ijazah MINTED atau CLAIMED yang dapat diterbitkan ulang.`,
+          // Status enum mentah tidak ditampilkan ke admin; dipetakan ke Bahasa Indonesia.
+          error: `Ijazah saat ini berstatus ${currentCert.status === "NOT_ISSUED" ? "belum diterbitkan" : currentCert.status === "ISSUING" ? "sedang dalam proses penerbitan" : "sudah dicabut"}. Hanya ijazah yang sudah diterbitkan atau sudah diklaim yang dapat diterbitkan ulang.`,
         },
         { status: 400 }
       );
@@ -118,7 +119,7 @@ export async function POST(request: NextRequest) {
     const oldNftAddress = currentCert.nftAddress;
     if (!oldNftAddress) {
       return NextResponse.json(
-        { error: "Alamat NFT sertifikat lama tidak ditemukan" },
+        { error: "Data ijazah lama tidak ditemukan di sistem. Hubungi developer." },
         { status: 400 }
       );
     }
@@ -207,7 +208,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json(
         {
-          error: `Gagal mencabut ijazah lama di blockchain: ${revokeResult.error}. Aset baru (${newMintAddress}) dicatat sebagai orphaned asset di audit log untuk pembersihan.`,
+          error: `Gagal mencabut ijazah lama di blockchain: ${revokeResult.error}. Aset baru (${newMintAddress}) sudah tercetak dan dicatat di audit log untuk dibersihkan secara manual.`,
           orphanedAsset: newMintAddress,
           oldNftAddress,
         },
@@ -338,7 +339,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Reissue endpoint error:", error);
     return NextResponse.json(
-      { error: "Terjadi kesalahan server saat memproses penerbitan ulang" },
+      { error: "Terjadi kesalahan server saat memproses penerbitan ulang. Silakan coba lagi beberapa saat lagi." },
       { status: 500 }
     );
   }

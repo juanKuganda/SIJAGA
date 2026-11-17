@@ -129,7 +129,7 @@ export default async function DetailIjazahPage({
                             <a
                               href={`https://explorer.solana.com/address/${user.certificate.nftAddress}?cluster=devnet`}
                               target="_blank"
-                              rel="noreferrer"
+                              rel="noopener noreferrer"
                               className="text-xs font-mono text-red-600 hover:text-red-500 transition-colors truncate max-w-[150px] sm:max-w-xs"
                             >
                               {user.certificate.nftAddress}
@@ -142,7 +142,7 @@ export default async function DetailIjazahPage({
                             <a
                               href={`https://explorer.solana.com/tx/${user.certificate.txSignature}?cluster=devnet`}
                               target="_blank"
-                              rel="noreferrer"
+                              rel="noopener noreferrer"
                               className="text-xs font-mono text-red-600 hover:text-red-500 transition-colors truncate max-w-[150px] sm:max-w-xs"
                             >
                               {user.certificate.txSignature.slice(0, 16)}...

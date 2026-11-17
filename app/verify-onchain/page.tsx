@@ -75,6 +75,7 @@ interface InspectionResult {
   name: string;
   uri: string;
   frozen: boolean;
+  revoked: boolean;
   updateAuthority: string;
   dataHash: string | null;
   prodi: string | null;
@@ -88,6 +89,7 @@ interface InspectionResult {
   checks: {
     tokenExists: { status: string; detail: string };
     issuerAuthority: { status: string; detail: string };
+    statusPencabutan: { status: string; detail: string };
     tokenFrozen: { status: string; detail: string };
     dataHashOnChain: { status: string; detail: string };
     nominatifMatch: { status: string; detail: string };
@@ -97,6 +99,39 @@ interface InspectionResult {
 }
 
 const SAMPLE_ASSET_P26 = "FDQKnrLVQdZqP4efoNarLb87gmZj529kebFPz8SVMQCc";
+
+// Pemetaan error mentah -> pesan ramah untuk UI. Mentahnya tetap ke console.error.
+function toFriendlyVerifyError(err: unknown): string {
+  console.error("[verify-onchain] gagal memverifikasi aset:", err);
+  return "Koneksi ke server verifikasi gagal. Periksa koneksi internetmu lalu coba lagi.";
+}
+
+function toFriendlyChallengeError(err: unknown): string {
+  console.error("[verify-onchain] challenge gagal:", err);
+  const message = err instanceof Error ? err.message : "";
+  if (/user rejected|rejected the request|ditolak/i.test(message)) {
+    return "Penandatanganan dibatalkan di dompet. Coba lagi bila ingin melanjutkan.";
+  }
+  if (message === "Format signature dari dompet tidak didukung") {
+    return message; // sudah ramah
+  }
+  return "Gagal menyelesaikan penandatanganan. Pastikan dompetmu terbuka dan terhubung, lalu coba lagi.";
+}
+
+// Warna hasil cek matriks mengikuti status endpoint, bukan hardcode hijau:
+// bersih -> hijau, gagal/terminal (dicabut, penerbit tak sesuai, tak beku,
+// hash tak ditemukan) -> merah, belum dapat dipastikan -> amber.
+function checkStatusClass(status: string): string {
+  if (status === "DAPAT DIPERIKSA") return "text-emerald-600";
+  if (
+    status === "DICABUT" ||
+    status === "TIDAK SESUAI" ||
+    status === "TIDAK BEKU" ||
+    status === "TIDAK DITEMUKAN"
+  )
+    return "text-red-600";
+  return "text-amber-600";
+}
 
 function VerifyOnChainContent() {
   const searchParams = useSearchParams();
@@ -154,9 +189,7 @@ function VerifyOnChainContent() {
         setResult(data);
       }
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Terjadi gangguan saat verifikasi"
-      );
+      setError(toFriendlyVerifyError(err));
     } finally {
       setIsLoading(false);
     }
@@ -246,15 +279,22 @@ function VerifyOnChainContent() {
 
       if (!isSignatureValid) {
         setChallengeStatus("gagal");
-        setChallengeError("INVALID_SIGNATURE: Tanda tangan kriptografis tidak valid.");
+        console.error("[verify-onchain] challenge gagal: INVALID_SIGNATURE");
+        setChallengeError(
+          "Tanda tangan kriptografis tidak valid. Coba tanda tangani ulang."
+        );
         return;
       }
 
       // Verify ownership against on-chain owner
       if (walletPubkey !== result.owner) {
         setChallengeStatus("gagal");
+        console.error("[verify-onchain] challenge gagal: OWNER_MISMATCH", {
+          walletPubkey,
+          owner: result.owner,
+        });
         setChallengeError(
-          `OWNER_MISMATCH: Tanda tangan valid, namun dompet (${walletPubkey}) BUKAN pemilik aset ini (${result.owner}).`
+          "Tanda tangan valid, tetapi dompet yang terhubung bukan pemilik aset ini. Hubungkan dompet pemilik aset, lalu coba lagi."
         );
         return;
       }
@@ -262,13 +302,92 @@ function VerifyOnChainContent() {
       setChallengeStatus("sukses");
     } catch (err) {
       setChallengeStatus("gagal");
-      setChallengeError(
-        err instanceof Error
-          ? err.message
-          : "Gagal menyelesaikan penandatanganan tantangan"
-      );
+      setChallengeError(toFriendlyChallengeError(err));
     }
   };
+
+  // ─── Tampilan mengikuti vonis endpoint (dinamis, bukan hardcode) ───
+  // verdict "DICABUT" diprioritaskan endpoint di atas issuer-mismatch,
+  // jadi samakan prioritasnya di sini: revoked dulu, baru issuer.
+  const isRevoked = result?.verdict === "DICABUT" || result?.revoked === true;
+  const isUnverifiable = !isRevoked && result?.verdict === "TIDAK DAPAT DIPERIKSA";
+  const verdictKind = isRevoked ? "revoked" : isUnverifiable ? "unverifiable" : "verified";
+  const verdictBanner =
+    verdictKind === "revoked"
+      ? {
+          container: "bg-gradient-to-r from-red-700 to-red-900",
+          Icon: XCircle,
+          badge: "bg-white text-red-800",
+          label: "text-red-100",
+          note: result?.checks.statusPencabutan.detail,
+        }
+      : verdictKind === "unverifiable"
+        ? {
+            container: "bg-gradient-to-r from-amber-600 to-amber-800",
+            Icon: AlertTriangle,
+            badge: "bg-white text-amber-800",
+            label: "text-amber-100",
+            note: result?.checks.issuerAuthority.detail,
+          }
+        : {
+            container: "bg-gradient-to-r from-emerald-600 to-teal-700",
+            Icon: CheckCircle2,
+            badge: "bg-white text-emerald-800",
+            label: "text-emerald-100",
+            note: undefined as string | undefined,
+          };
+  // Judul fallback mengikuti vonis: jangan pernah sebut "Terverifikasi"
+  // untuk aset dicabut atau penerbit yang tak cocok/tak dapat dipastikan.
+  const bannerTitle =
+    result?.name ||
+    (verdictKind === "revoked"
+      ? "Ijazah Dicabut"
+      : verdictKind === "unverifiable"
+        ? "Ijazah Tidak Dapat Diperiksa"
+        : "Ijazah Akademik Terverifikasi");
+
+  // Matriks TC-15: status semua baris + detail baris on-chain dibaca dari
+  // result.checks. Kondisi baris Tier-1 (hash nominatif, ikatan dompet)
+  // tetap statis karena endpoint memang tak punya data lebih dari itu.
+  const matrixRows = result
+    ? [
+        {
+          label: "Keberadaan Token di Devnet",
+          condition: result.checks.tokenExists.detail,
+          check: result.checks.tokenExists,
+        },
+        {
+          label: "Otoritas Penerbit Institusi",
+          condition: result.checks.issuerAuthority.detail,
+          check: result.checks.issuerAuthority,
+        },
+        {
+          label: "Status Pembekuan Token (Soulbound)",
+          condition: result.checks.tokenFrozen.detail,
+          check: result.checks.tokenFrozen,
+        },
+        {
+          label: "Status Pencabutan",
+          condition: result.checks.statusPencabutan.detail,
+          check: result.checks.statusPencabutan,
+        },
+        {
+          label: "Pencatatan Hash Metadata IPFS",
+          condition: "Metadata JSON dapat diakses publik dari IPFS Gateway",
+          check: result.checks.dataHashOnChain,
+        },
+        {
+          label: "Pencocokan Hash ke Data Nominatif",
+          condition: "Membutuhkan salt rahasia yang tersimpan di Tier 1",
+          check: result.checks.nominatifMatch,
+        },
+        {
+          label: "Ikatan Dompet dengan Nama/NIM Mahasiswa",
+          condition: "Membutuhkan basis data internal akademik universitas",
+          check: result.checks.identityBinding,
+        },
+      ]
+    : [];
 
   return (
     <div className="min-h-screen bg-zinc-50/50 text-foreground relative flex flex-col">
@@ -276,7 +395,7 @@ function VerifyOnChainContent() {
       <div className="absolute inset-0 z-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:24px_24px] opacity-60 pointer-events-none"></div>
       {/* Header Bar */}
       <header className="border-b border-zinc-200 bg-white/80 backdrop-blur-md sticky top-0 z-40">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 min-h-16 py-2 flex flex-wrap items-center gap-x-4 gap-y-2">
           <Link href="/" className="flex items-center gap-2.5">
             <Image
               src="/apple-touch-icon.png"
@@ -296,7 +415,33 @@ function VerifyOnChainContent() {
             </div>
           </Link>
 
-          <div className="flex items-center gap-3">
+          {/* Navigasi utama: baris bawah di <lg; sebaris kanan logo di lg+,
+              badge + pill pindah ke baris bawah (kanan) di lg+ */}
+          <nav
+            aria-label="Navigasi utama"
+            className="order-3 flex w-full items-center gap-5 border-t border-zinc-100 pt-2 pb-1 lg:order-2 lg:ml-auto lg:w-auto lg:border-0 lg:p-0"
+          >
+            <Link
+              href="/"
+              className="text-xs font-bold text-zinc-600 hover:text-red-700 transition-colors"
+            >
+              Beranda
+            </Link>
+            <Link
+              href="/profil"
+              className="text-xs font-bold text-zinc-600 hover:text-red-700 transition-colors"
+            >
+              Profil Mahasiswa
+            </Link>
+            <Link
+              href="/dashboard"
+              className="text-xs font-bold text-zinc-600 hover:text-red-700 transition-colors"
+            >
+              Dashboard Admin
+            </Link>
+          </nav>
+
+          <div className="order-2 ml-auto flex items-center gap-3 lg:order-3 lg:w-full lg:justify-end">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
               <Cpu className="w-3.5 h-3.5 text-emerald-600" />
               Tingkat 1 Mandiri
@@ -424,30 +569,33 @@ function VerifyOnChainContent() {
         {/* Results Bento */}
         {result && (
           <div className="space-y-6">
-            {/* Verdict Header Banner */}
-            <div className="bg-gradient-to-r from-emerald-600 to-teal-700 rounded-2xl p-6 text-white shadow-md">
+            {/* Verdict Header Banner — warna & ikon mengikuti vonis endpoint */}
+            <div className={`${verdictBanner.container} rounded-2xl p-6 text-white shadow-md`}>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center shrink-0">
-                    <CheckCircle2 className="w-7 h-7 text-white" />
+                    <verdictBanner.Icon className="w-7 h-7 text-white" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 rounded text-[11px] font-extrabold uppercase tracking-wide bg-white text-emerald-800">
+                      <span className={`px-2 py-0.5 rounded text-[11px] font-extrabold uppercase tracking-wide ${verdictBanner.badge}`}>
                         {result.level}
                       </span>
-                      <span className="text-xs font-semibold text-emerald-100">
+                      <span className={`text-xs font-semibold ${verdictBanner.label}`}>
                         Vonis: {result.verdict}
                       </span>
                     </div>
-                    <h2 className="text-xl font-bold mt-1">
-                      {result.name || "Ijazah Akademik Terverifikasi"}
-                    </h2>
+                    <h2 className="text-xl font-bold mt-1">{bannerTitle}</h2>
+                    {verdictBanner.note && (
+                      <p className={`mt-1 text-xs leading-relaxed max-w-xl ${verdictBanner.label}`}>
+                        {verdictBanner.note}
+                      </p>
+                    )}
                   </div>
                 </div>
 
                 <div className="text-right sm:text-right shrink-0">
-                  <span className="text-xs text-emerald-100 block">Status Token</span>
+                  <span className={`text-xs ${verdictBanner.label} block`}>Status Token</span>
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/20 text-white mt-0.5">
                     <Lock className="w-3.5 h-3.5" />
                     {result.frozen ? "SOULBOUND (BEKU)" : "AKTIF"}
@@ -577,7 +725,7 @@ function VerifyOnChainContent() {
                       <a
                         href={result.uri}
                         target="_blank"
-                        rel="noreferrer"
+                        rel="noopener noreferrer"
                         className="text-red-600 hover:text-red-700 inline-flex items-center gap-1 font-sans font-semibold shrink-0"
                       >
                         Buka <ExternalLink className="w-3 h-3" />
@@ -610,7 +758,9 @@ function VerifyOnChainContent() {
                   <div className="p-3 rounded-xl bg-zinc-100/70 border border-zinc-200/60 text-[11px] text-zinc-600">
                     <span className="font-bold text-zinc-800">Catatan Validasi Kriptografi:</span>{" "}
                     Hash on-chain di atas bersifat permanen dan tidak dapat diubah (*immutable*).
-                    Jika data akademik diubah satu bit saja, hash tidak akan pernah cocok.
+                    Hash ini adalah sidik jari metadata publik di atas — halaman ini tidak
+                    menghitung-ulang kecocokannya dengan data akademik, karena hitung-ulang
+                    itu membutuhkan salt institusi (Tier 1).
                   </div>
                 </dl>
               </div>
@@ -633,75 +783,33 @@ function VerifyOnChainContent() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-100">
-                    <tr>
-                      <td className="py-2.5 font-medium text-foreground">
-                        Keberadaan Token di Devnet
-                      </td>
-                      <td className="py-2.5 text-muted-foreground">
-                        Terverifikasi via Solana RPC publik (Metaplex Core)
-                      </td>
-                      <td className="py-2.5 text-right font-bold text-emerald-600">
-                        DAPAT DIPERIKSA
-                      </td>
-                    </tr>
-                    <tr>
-                      <td className="py-2.5 font-medium text-foreground">
-                        Otoritas Penerbit Institusi
-                      </td>
-                      <td className="py-2.5 text-muted-foreground">
-                        Cocok dengan alamat publik admin Untad
-                      </td>
-                      <td className="py-2.5 text-right font-bold text-emerald-600">
-                        DAPAT DIPERIKSA
-                      </td>
-                    </tr>
-                    <tr>
-                      <td className="py-2.5 font-medium text-foreground">
-                        Status Pembekuan Token (Soulbound)
-                      </td>
-                      <td className="py-2.5 text-muted-foreground">
-                        Plugin PermanentFreezeDelegate aktif (frozen: true)
-                      </td>
-                      <td className="py-2.5 text-right font-bold text-emerald-600">
-                        DAPAT DIPERIKSA
-                      </td>
-                    </tr>
-                    <tr>
-                      <td className="py-2.5 font-medium text-foreground">
-                        Pencatatan Hash Metadata IPFS
-                      </td>
-                      <td className="py-2.5 text-muted-foreground">
-                        Metadata JSON dapat diakses publik dari IPFS Gateway
-                      </td>
-                      <td className="py-2.5 text-right font-bold text-emerald-600">
-                        DAPAT DIPERIKSA
-                      </td>
-                    </tr>
-                    <tr>
-                      <td className="py-2.5 font-medium text-foreground">
-                        Pencocokan Hash ke Data Nominatif
-                      </td>
-                      <td className="py-2.5 text-muted-foreground">
-                        Membutuhkan salt rahasia yang tersimpan di Tier 1
-                      </td>
-                      <td className="py-2.5 text-right font-bold text-amber-600">
-                        TIDAK DAPAT DIPASTIKAN
-                      </td>
-                    </tr>
-                    <tr>
-                      <td className="py-2.5 font-medium text-foreground">
-                        Ikatan Dompet dengan Nama/NIM Mahasiswa
-                      </td>
-                      <td className="py-2.5 text-muted-foreground">
-                        Membutuhkan basis data internal akademik universitas
-                      </td>
-                      <td className="py-2.5 text-right font-bold text-amber-600">
-                        TIDAK DAPAT DIPASTIKAN
-                      </td>
-                    </tr>
+                    {matrixRows.map((row) => (
+                      <tr key={row.label}>
+                        <td className="py-2.5 font-medium text-foreground">
+                          {row.label}
+                        </td>
+                        <td className="py-2.5 text-muted-foreground break-all">
+                          {row.condition}
+                        </td>
+                        <td
+                          className={`py-2.5 text-right font-bold ${checkStatusClass(row.check.status)}`}
+                        >
+                          {row.check.status}
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
+            </div>
+
+            {/* Pemisah: challenge adalah pemeriksaan terpisah, bukan bagian vonis endpoint */}
+            <div className="flex items-center gap-3 pt-2" aria-hidden="true">
+              <span className="h-px flex-1 bg-zinc-200" />
+              <span className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">
+                Pemeriksaan terpisah — di sisi client
+              </span>
+              <span className="h-px flex-1 bg-zinc-200" />
             </div>
 
             {/* Seksi Buktikan Kepemilikan (Stateless Challenge) */}
@@ -715,7 +823,8 @@ function VerifyOnChainContent() {
                   <p className="text-xs text-muted-foreground mt-1 max-w-2xl leading-relaxed">
                     Uji tanda tangan kriptografis Ed25519 untuk membuktikan bahwa Anda menguasai
                     kunci privat dompet pemilik aset ini. Challenge dijalankan 100% mandiri di browser
-                    tanpa meminta nonce ke server institusi.
+                    tanpa meminta nonce ke server institusi. Hasilnya terpisah dari vonis tingkat-1
+                    di atas dan tidak mengubahnya.
                   </p>
                 </div>
 
@@ -834,7 +943,7 @@ function VerifyOnChainContent() {
         <div className="mt-10">
           <div className="flex items-baseline justify-between gap-4 mb-4">
             <h2 className="text-lg font-black text-foreground tracking-tight">
-              Yang diperiksa tingkat-1
+              Yang diperiksa di halaman ini
             </h2>
             <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest shrink-0">
               6 pemeriksaan
@@ -858,21 +967,26 @@ function VerifyOnChainContent() {
             </div>
             <div className="bg-white border border-zinc-200 rounded-2xl p-4 shadow-sm">
               <CheckCircle2 className="w-5 h-5 text-red-600 mb-2" />
-              <p className="text-sm font-bold text-foreground">Tanda tangan</p>
-              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">Tanda tangan atas pesan tantangan valid (Ed25519).</p>
+              <p className="text-sm font-bold text-foreground">Tanda tangan (challenge terpisah)</p>
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">Diperiksa terpisah di sisi client: tanda tangan atas pesan tantangan valid (Ed25519). Bukan bagian vonis endpoint tingkat-1.</p>
             </div>
             <div className="bg-white border border-zinc-200 rounded-2xl p-4 shadow-sm">
               <Database className="w-5 h-5 text-red-600 mb-2" />
               <p className="text-sm font-bold text-foreground">Hash metadata</p>
-              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">Hash cocok dengan catatan Tier 1 institusi.</p>
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">Hash tersedia di metadata publik dan dapat diperiksa, tetapi kecocokannya dengan catatan Tier 1 tidak dapat dipastikan di tingkat-1 (butuh salt institusi).</p>
             </div>
             <div className="bg-white border border-zinc-200 rounded-2xl p-4 shadow-sm">
               <Layers className="w-5 h-5 text-red-600 mb-2" />
               <p className="text-sm font-bold text-foreground">Status pencabutan</p>
-              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">Metadata terkini tidak menyatakan dicabut.</p>
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                {result?.revoked
+                  ? "Aset ini dicabut: penanda [DIBATALKAN] ditemukan pada nama on-chain, nama metadata, atau atribut Status = \u201cDibatalkan\u201d — metadata terkini menyatakan pencabutan."
+                  : "Endpoint memeriksa metadata terkini: tidak ada pernyataan pencabutan."}
+              </p>
             </div>
           </div>
           <p className="mt-4 text-xs text-muted-foreground leading-relaxed">
+            Tanda tangan diperiksa terpisah di sisi client (challenge), bukan oleh endpoint tingkat-1.
             Tingkat 2 (nominatif — ijazah ini milik siapa) tidak dapat dipastikan di sini, karena membutuhkan data Tier 1 institusi.
           </p>
         </div>

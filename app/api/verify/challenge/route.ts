@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
 
     if (!checkRateLimit(ip)) {
       return NextResponse.json(
-        { error: "Too many requests. Silakan coba lagi sebentar." },
+        { error: "Terlalu banyak permintaan. Tunggu sebentar lalu coba lagi." },
         { status: 429 }
       );
     }
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             error:
-              "Parameter verifikasi wajib diisi: walletAddress, nonce, signature, message",
+              "Data verifikasi tidak lengkap. Minta tantangan baru lalu ulangi proses verifikasi.",
           },
           { status: 400 }
         );
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
 
     if (!walletAddress || typeof walletAddress !== "string") {
       return NextResponse.json(
-        { error: "walletAddress wajib diisi" },
+        { error: "Alamat wallet wajib diisi. Masukkan alamat wallet Solana Anda." },
         { status: 400 }
       );
     }
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     // Validasi format alamat Solana base58 (32 - 44 karakter)
     if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(walletAddress)) {
       return NextResponse.json(
-        { error: "Format walletAddress Solana tidak valid" },
+        { error: "Format alamat wallet Solana tidak valid. Periksa kembali alamat wallet yang dimasukkan." },
         { status: 400 }
       );
     }
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Challenge endpoint error:", error);
     return NextResponse.json(
-      { error: "Terjadi kesalahan server saat memproses tantangan" },
+      { error: "Terjadi kesalahan server saat memproses tantangan. Silakan coba lagi beberapa saat lagi." },
       { status: 500 }
     );
   }

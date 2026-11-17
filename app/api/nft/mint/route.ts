@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     const payload = await getAuthUser();
     if (!payload || payload.role !== "ADMIN") {
       return NextResponse.json(
-        { error: "Unauthorized" },
+        { error: "Anda harus login sebagai admin. Silakan login kembali." },
         { status: 401 }
       );
     }
@@ -52,13 +52,13 @@ export async function POST(request: NextRequest) {
     if (!user.dataConsent) {
       return NextResponse.json({
         error: "CONSENT_REQUIRED",
-        message: "Mahasiswa belum memberikan persetujuan publikasi data. Minting tidak dapat dilakukan."
+        message: "Mahasiswa belum memberikan persetujuan publikasi data. Minta mahasiswa memberikan persetujuan terlebih dahulu, baru minting dapat dilakukan."
       }, { status: 403 });
     }
 
     if (!user.wallet || user.wallet.status !== "VERIFIED") {
       return NextResponse.json(
-        { error: "Wallet belum terverifikasi" },
+        { error: "Wallet mahasiswa belum terverifikasi. Verifikasi wallet mahasiswa terlebih dahulu sebelum minting." },
         { status: 400 }
       );
     }
@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
         } else if (inspection.reason !== "NOT_FOUND") {
           // RPC down / metadata fail — jangan mint ulang, bisa double-mint
           return NextResponse.json(
-            { error: `Tidak bisa verifikasi status NFT sebelumnya (${inspection.reason}). Coba lagi nanti.` },
+            { error: "Status NFT sebelumnya tidak dapat diverifikasi karena jaringan blockchain tidak merespons. Jangan mencetak ulang — coba lagi beberapa saat lagi." },
             { status: 502 }
           );
         }
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
         const statusMsg: Record<string, string> = {
           MINTED: "Ijazah sudah diterbitkan dan menunggu klaim",
           CLAIMED: "Ijazah sudah diklaim oleh mahasiswa",
-          REVOKED: "Ijazah sudah direvoke. Gunakan fitur Recovery untuk mengembalikan",
+          REVOKED: "Ijazah sudah dicabut. Gunakan fitur Recovery untuk mengembalikannya",
         };
         return NextResponse.json(
           { error: statusMsg[status] || "Ijazah sudah diterbitkan" },
@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
    
 
     if (!user.prodi) {
-      return NextResponse.json({ error: "Data Program Studi tidak lengkap" }, { status: 400 });
+      return NextResponse.json({ error: "Data Program Studi mahasiswa tidak lengkap. Lengkapi data mahasiswa terlebih dahulu." }, { status: 400 });
     }
 
     const { hash: dataHash, salt: dataSalt } = generateDataHash(
@@ -206,7 +206,7 @@ export async function POST(request: NextRequest) {
       });
 
       return NextResponse.json(
-        { error: mintResult.error || "Gagal mint NFT. Status ISSUING — silakan retry." },
+        { error: mintResult.error || "Gagal mencetak NFT. Status ijazah tetap ISSUING — silakan coba lagi." },
         { status: 500 }
       );
     }
@@ -245,7 +245,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("NFT mint error:", error);
     return NextResponse.json(
-      { error: "Terjadi kesalahan server" },
+      { error: "Terjadi kesalahan server. Silakan coba lagi beberapa saat lagi." },
       { status: 500 }
     );
   }

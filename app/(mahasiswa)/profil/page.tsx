@@ -351,6 +351,28 @@ export default function ProfilPage() {
               </div>
             </div>
           )}
+
+          {/* Verifikasi Mandiri — selalu tersedia, apa pun status sertifikat */}
+          <div className="mt-6 p-6 bg-red-50/50 border border-red-100/50 rounded-2xl flex flex-col md:flex-row items-center gap-6 justify-between">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-red-900 mb-1">Verifikasi Mandiri</h3>
+                <p className="text-sm font-medium text-red-800/80 max-w-lg leading-relaxed">
+                  Periksa keaslian ijazah langsung dari blockchain — tanpa lewat server kampus.
+                </p>
+              </div>
+            </div>
+            <Link
+              href={certificate?.nftAddress ? `/verify-onchain?asset=${encodeURIComponent(certificate.nftAddress)}` : "/verify-onchain"}
+              className="shrink-0 inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm px-4 py-2.5 rounded-xl shadow-sm shadow-red-600/20 transition-all"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              <span>Verifikasi mandiri tanpa server &rarr;</span>
+            </Link>
+          </div>
         </div>
       </div>
     </div>

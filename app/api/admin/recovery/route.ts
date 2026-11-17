@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
   try {
     const payload = await getAuthUser();
     if (!payload || payload.role !== "ADMIN") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Anda harus login sebagai admin. Silakan login kembali." }, { status: 401 });
     }
 
     const body = await request.json();
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
 
     if (!backup) {
       return NextResponse.json(
-        { error: "Backup tidak ditemukan" },
+        { error: "Backup tidak ditemukan. Periksa kembali backup yang dipilih." },
         { status: 404 }
       );
     }
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
       backupData = JSON.parse(backup.backupData);
     } catch {
       return NextResponse.json(
-        { error: "Data backup rusak atau tidak valid" },
+        { error: "Data backup rusak atau tidak valid. Backup ini tidak dapat dipakai untuk recovery." },
         { status: 400 }
       );
     }
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
 
     if (!certData) {
       return NextResponse.json(
-        { error: "Data sertifikat tidak ditemukan dalam backup" },
+        { error: "Data sertifikat tidak ditemukan dalam backup. Backup ini tidak dapat dipakai untuk recovery." },
         { status: 400 }
       );
     }
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { error: "User tidak ditemukan" },
+        { error: "Data mahasiswa pemilik backup tidak ditemukan. Periksa kembali data mahasiswa." },
         { status: 404 }
       );
     }
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
     let recoveryDataSalt: string | null = null;
 
     if (!user.prodi) {
-      return NextResponse.json({ error: "Data program studi tidak lengkap" }, { status: 400 });
+      return NextResponse.json({ error: "Data program studi tidak lengkap. Lengkapi data mahasiswa terlebih dahulu." }, { status: 400 });
     }
 
     if (certData.nftAddress) {
@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
         if (!restoreResult.success) {
           // FAIL-CLOSED: Gagal on-chain = jangan update DB ke MINTED
           return NextResponse.json(
-            { error: `Gagal restore on-chain: ${restoreResult.error}. DB tidak diubah — silakan coba lagi.` },
+            { error: `Gagal mengembalikan aset di blockchain: ${restoreResult.error}. Data di sistem tidak berubah — silakan coba lagi.` },
             { status: 502 }
           );
         }
@@ -152,7 +152,8 @@ export async function POST(request: NextRequest) {
         console.error("Gagal re-generate metadata saat restore:", genError);
         // FAIL-CLOSED: Jika IPFS/metadata generation gagal, jangan restore
         return NextResponse.json(
-          { error: `Gagal generate metadata untuk restore: ${genError instanceof Error ? genError.message : "Unknown error"}` },
+          // Pesan mentah error tidak diteruskan ke user; detail lengkap sudah di console.error di atas.
+          { error: "Gagal menyiapkan data ijazah untuk recovery (unggahan ke IPFS gagal). Silakan coba lagi beberapa saat lagi." },
           { status: 500 }
         );
       }
@@ -226,7 +227,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Recovery error:", error);
     return NextResponse.json(
-      { error: "Terjadi kesalahan server" },
+      { error: "Terjadi kesalahan server. Silakan coba lagi beberapa saat lagi." },
       { status: 500 }
     );
   }

@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     const payload = await getAuthUser();
     if (!payload || payload.role !== "ADMIN") {
       return NextResponse.json(
-        { error: "Unauthorized" },
+        { error: "Anda harus login sebagai admin. Silakan login kembali." },
         { status: 401 }
       );
     }
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
 
     if (!userId) {
       return NextResponse.json(
-        { error: "User ID diperlukan" },
+        { error: "ID mahasiswa wajib diisi." },
         { status: 400 }
       );
     }
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Reset wallet error:", error);
     return NextResponse.json(
-      { error: "Terjadi kesalahan server saat me-reset wallet" },
+      { error: "Terjadi kesalahan server saat me-reset wallet. Silakan coba lagi beberapa saat lagi." },
       { status: 500 }
     );
   }

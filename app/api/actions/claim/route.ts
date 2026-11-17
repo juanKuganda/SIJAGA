@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
   const origin = appUrl(request);
 
   if (!nim) {
-    return actionError("Parameter NIM tidak ditemukan");
+    return actionError("NIM tidak ditemukan di tautan. Buka kembali tautan klaim dari sumber resmi.");
   }
 
   // Cari data mahasiswa berdasarkan NIM
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
       description: `NIM ${nim} tidak terdaftar dalam sistem SIJAGA.`,
       label: "Tidak Tersedia",
       disabled: true,
-      error: { message: "NIM tidak ditemukan dalam sistem." },
+      error: { message: "NIM tidak ditemukan dalam sistem. Periksa kembali NIM Anda, atau hubungi admin kampus." },
     });
   }
 
@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
         : `Ijazah untuk NIM ${nim} belum diterbitkan oleh admin.`,
       label: "Belum Tersedia",
       disabled: true,
-      error: { message: "Hubungi admin kampus untuk informasi lebih lanjut." },
+      error: { message: "Ijazah Anda belum diterbitkan. Hubungi admin kampus untuk menanyakan status penerbitan." },
     });
   }
 
@@ -119,20 +119,20 @@ export async function POST(request: NextRequest) {
   const nim = searchParams.get("nim");
   const origin = appUrl(request);
 
-  if (!nim) return actionError("Parameter NIM tidak ditemukan");
+  if (!nim) return actionError("NIM tidak ditemukan di tautan. Buka kembali tautan klaim dari sumber resmi.");
 
   // Parse body: { account } dikirim oleh blink client
   const body = await request.json();
   const userWallet = body.account;
 
-  if (!userWallet) return actionError("Wallet address tidak ditemukan");
+  if (!userWallet) return actionError("Alamat wallet tidak ditemukan. Pastikan dompet Solana Anda terhubung.");
 
   // Validasi wallet format
   let walletPublicKey: PublicKey;
   try {
     walletPublicKey = new PublicKey(userWallet);
   } catch {
-    return actionError("Format wallet address tidak valid");
+    return actionError("Format alamat wallet tidak valid. Periksa kembali alamat dompet Anda.");
   }
 
   // Ambil data mahasiswa
@@ -141,12 +141,12 @@ export async function POST(request: NextRequest) {
     include: { certificate: true, wallet: true },
   });
 
-  if (!user) return actionError("NIM tidak ditemukan", 404);
-  if (!user.certificate?.nftAddress) return actionError("NFT belum diterbitkan", 400);
+  if (!user) return actionError("NIM tidak ditemukan dalam sistem. Periksa kembali NIM Anda, atau hubungi admin kampus.", 404);
+  if (!user.certificate?.nftAddress) return actionError("Ijazah belum diterbitkan. Hubungi admin kampus untuk menanyakan status penerbitan.", 400);
   
   // NOTE: If already claimed, action shouldn't be executed again, but if it is, return disabled.
-  if (user.certificate?.status === "CLAIMED") return actionError("Ijazah sudah diklaim", 400);
-  if (user.certificate?.status === "REVOKED") return actionError("Ijazah telah dicabut", 400);
+  if (user.certificate?.status === "CLAIMED") return actionError("Ijazah ini sudah diklaim sebelumnya.", 400);
+  if (user.certificate?.status === "REVOKED") return actionError("Ijazah ini telah dicabut oleh institusi dan tidak dapat diklaim.", 400);
 
   // Validasi: wallet yang klaim harus cocok dengan wallet terdaftar
   if (user.wallet?.walletAddress !== userWallet) {
