@@ -71,20 +71,20 @@ interface InspectionResult {
   level: string;
   verdict: string;
   asset: string;
-  owner: string;
-  name: string;
-  uri: string;
-  frozen: boolean;
-  revoked: boolean;
-  updateAuthority: string;
-  dataHash: string | null;
-  prodi: string | null;
-  tahunLulus: string | null;
-  image: string | null;
-  attributes: Array<{ trait_type: string; value: string }>;
+  owner?: string | null;
+  name?: string | null;
+  uri?: string | null;
+  frozen?: boolean | null;
+  revoked?: boolean | null;
+  updateAuthority?: string | null;
+  dataHash?: string | null;
+  prodi?: string | null;
+  tahunLulus?: string | null;
+  image?: string | null;
+  attributes?: Array<{ trait_type: string; value: string }>;
   timings?: {
-    rpcMs: number;
-    ipfsMs: number;
+    rpcMs?: number;
+    ipfsMs?: number;
   };
   checks: {
     tokenExists: { status: string; detail: string };
@@ -181,10 +181,13 @@ function VerifyOnChainContent() {
       const res = await fetch(
         `/api/verify/tingkat-1?asset=${encodeURIComponent(assetToInspect)}`
       );
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
 
-      if (!res.ok || !data.success) {
-        setError(data.error || "Gagal memverifikasi aset on-chain");
+      if (data && data.verdict === "TIDAK DAPAT DIPASTIKAN") {
+        setResult(data);
+        setError(null);
+      } else if (!res.ok || !data?.success) {
+        setError(data?.error || "Gagal memverifikasi aset on-chain");
       } else {
         setResult(data);
       }
@@ -209,7 +212,13 @@ function VerifyOnChainContent() {
 
   // Stateless Challenge Handler
   const handleStatelessChallenge = async () => {
-    if (!result) return;
+    if (!result || !result.owner) {
+      setChallengeStatus("gagal");
+      setChallengeError(
+        "Alamat pemilik aset tidak dapat diperoleh karena gangguan koneksi ke RPC Solana."
+      );
+      return;
+    }
 
     setChallengeStatus("connecting");
     setChallengeError(null);
@@ -311,7 +320,14 @@ function VerifyOnChainContent() {
   // jadi samakan prioritasnya di sini: revoked dulu, baru issuer.
   const isRevoked = result?.verdict === "DICABUT" || result?.revoked === true;
   const isUnverifiable = !isRevoked && result?.verdict === "TIDAK DAPAT DIPERIKSA";
-  const verdictKind = isRevoked ? "revoked" : isUnverifiable ? "unverifiable" : "verified";
+  const isUndetermined = !isRevoked && !isUnverifiable && result?.verdict === "TIDAK DAPAT DIPASTIKAN";
+  const verdictKind = isRevoked
+    ? "revoked"
+    : isUnverifiable
+      ? "unverifiable"
+      : isUndetermined
+        ? "undetermined"
+        : "verified";
   const verdictBanner =
     verdictKind === "revoked"
       ? {
@@ -329,13 +345,23 @@ function VerifyOnChainContent() {
             label: "text-amber-100",
             note: result?.checks.issuerAuthority.detail,
           }
-        : {
-            container: "bg-gradient-to-r from-emerald-600 to-teal-700",
-            Icon: CheckCircle2,
-            badge: "bg-white text-emerald-800",
-            label: "text-emerald-100",
-            note: undefined as string | undefined,
-          };
+        : verdictKind === "undetermined"
+          ? {
+              container: "bg-gradient-to-r from-amber-600 to-orange-700",
+              Icon: AlertTriangle,
+              badge: "bg-white text-amber-900",
+              label: "text-amber-100",
+              note:
+                result?.checks.tokenExists.detail ||
+                "Koneksi ke infrastruktur desentralisasi terganggu. Status keabsahan aset tidak dapat dipastikan saat ini.",
+            }
+          : {
+              container: "bg-gradient-to-r from-emerald-600 to-teal-700",
+              Icon: CheckCircle2,
+              badge: "bg-white text-emerald-800",
+              label: "text-emerald-100",
+              note: undefined as string | undefined,
+            };
   // Judul fallback mengikuti vonis: jangan pernah sebut "Terverifikasi"
   // untuk aset dicabut atau penerbit yang tak cocok/tak dapat dipastikan.
   const bannerTitle =
@@ -344,7 +370,9 @@ function VerifyOnChainContent() {
       ? "Ijazah Dicabut"
       : verdictKind === "unverifiable"
         ? "Ijazah Tidak Dapat Diperiksa"
-        : "Ijazah Akademik Terverifikasi");
+        : verdictKind === "undetermined"
+          ? "Status Ijazah Tidak Dapat Dipastikan"
+          : "Ijazah Akademik Terverifikasi");
 
   // Matriks TC-15: status semua baris + detail baris on-chain dibaca dari
   // result.checks. Kondisi baris Tier-1 (hash nominatif, ikatan dompet)
@@ -598,7 +626,11 @@ function VerifyOnChainContent() {
                   <span className={`text-xs ${verdictBanner.label} block`}>Status Token</span>
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/20 text-white mt-0.5">
                     <Lock className="w-3.5 h-3.5" />
-                    {result.frozen ? "SOULBOUND (BEKU)" : "AKTIF"}
+                    {result.frozen === true
+                      ? "SOULBOUND (BEKU)"
+                      : result.frozen === false
+                        ? "AKTIF"
+                        : "TIDAK DIKETAHUI"}
                   </span>
                 </div>
               </div>
@@ -651,25 +683,27 @@ function VerifyOnChainContent() {
                   <div>
                     <dt className="text-muted-foreground font-medium">Pemilik Aset (Owner Wallet):</dt>
                     <dd className="font-mono text-foreground font-semibold mt-0.5 break-all flex items-center justify-between gap-2 bg-zinc-50 p-2 rounded-lg border border-zinc-100">
-                      <span>{result.owner}</span>
-                      <button
-                        onClick={() => copyToClipboard(result.owner, "owner")}
-                        className="p-1 hover:bg-zinc-200 rounded text-zinc-600"
-                        title="Salin Alamat"
-                      >
-                        {copiedKey === "owner" ? (
-                          <Check className="w-3.5 h-3.5 text-emerald-600" />
-                        ) : (
-                          <Copy className="w-3.5 h-3.5" />
-                        )}
-                      </button>
+                      <span>{result.owner || "Tidak dapat diambil (koneksi terganggu)"}</span>
+                      {result.owner && (
+                        <button
+                          onClick={() => copyToClipboard(result.owner!, "owner")}
+                          className="p-1 hover:bg-zinc-200 rounded text-zinc-600"
+                          title="Salin Alamat"
+                        >
+                          {copiedKey === "owner" ? (
+                            <Check className="w-3.5 h-3.5 text-emerald-600" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                      )}
                     </dd>
                   </div>
 
                   <div>
                     <dt className="text-muted-foreground font-medium">Otoritas Penerbit (Update Authority):</dt>
                     <dd className="font-mono text-foreground font-semibold mt-0.5 break-all bg-zinc-50 p-2 rounded-lg border border-zinc-100">
-                      {result.updateAuthority}
+                      {result.updateAuthority || "Tidak dapat diambil (koneksi terganggu)"}
                     </dd>
                   </div>
 
@@ -721,15 +755,17 @@ function VerifyOnChainContent() {
                   <div>
                     <dt className="text-muted-foreground font-medium">URI Metadata Terdesentralisasi:</dt>
                     <dd className="font-mono text-xs mt-0.5 break-all flex items-center justify-between gap-2 bg-zinc-50 p-2 rounded-lg border border-zinc-100">
-                      <span className="truncate">{result.uri}</span>
-                      <a
-                        href={result.uri}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-red-600 hover:text-red-700 inline-flex items-center gap-1 font-sans font-semibold shrink-0"
-                      >
-                        Buka <ExternalLink className="w-3 h-3" />
-                      </a>
+                      <span className="truncate">{result.uri || "Tidak dapat diakses"}</span>
+                      {result.uri && (
+                        <a
+                          href={result.uri}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-red-600 hover:text-red-700 inline-flex items-center gap-1 font-sans font-semibold shrink-0"
+                        >
+                          Buka <ExternalLink className="w-3 h-3" />
+                        </a>
+                      )}
                     </dd>
                   </div>
 
@@ -871,19 +907,37 @@ function VerifyOnChainContent() {
                 pembukuan bersama di server institusi.
               </div>
 
+              {(isUndetermined || !result.owner) && (
+                <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs mb-6 flex items-start gap-2.5">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold">Tantangan Kepemilikan Dinonaktifkan Sementara</p>
+                    <p className="mt-0.5 text-amber-800 leading-relaxed">
+                      Alamat pemilik aset tidak dapat dipastikan karena gangguan koneksi ke RPC Solana. Pembuktian kepemilikan membutuhkan alamat pemilik yang valid.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row items-center gap-3">
                 <button
                   type="button"
                   onClick={handleStatelessChallenge}
                   disabled={
+                    isUndetermined ||
+                    !result.owner ||
                     challengeStatus === "connecting" ||
                     challengeStatus === "signing" ||
                     challengeStatus === "verifying"
                   }
                   className="w-full sm:w-auto px-6 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold text-xs transition-all disabled:opacity-60 flex items-center justify-center gap-2 shadow-sm shadow-red-600/20"
                 >
-                  {challengeStatus === "sukses" ? (
+                  {isUndetermined || !result.owner ? (
+                    <>
+                      <KeyRound className="w-4 h-4" /> Alamat Pemilik Tidak Tersedia
+                    </>
+                  ) : challengeStatus === "sukses" ? (
                     <>
                       <CheckCircle2 className="w-4 h-4" /> Uji Tanda Tangan Ulang
                     </>

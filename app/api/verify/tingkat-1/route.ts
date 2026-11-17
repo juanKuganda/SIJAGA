@@ -91,33 +91,107 @@ async function handleInspection(asset: string) {
   const result = await inspectCertificate(asset);
 
   if (!result.ok) {
-    let statusCode = 502;
-    let errorMessage = "Gagal memverifikasi aset di blockchain";
-
     if (result.reason === "NOT_FOUND") {
-      statusCode = 404;
-      errorMessage = "Aset tidak ditemukan di blockchain Solana";
-    } else if (result.reason === "NOT_ASSET") {
-      statusCode = 400;
-      errorMessage =
-        "Alamat ini bukan aset NFT (kemungkinan alamat dompet, bukan alamat mint). Masukkan alamat mint aset Solana.";
-    } else if (result.reason === "METADATA") {
-      statusCode = 502;
-      errorMessage = "Aset ditemukan, namun metadata IPFS tidak dapat diakses";
-    } else if (result.reason === "RPC") {
-      statusCode = 503;
-      errorMessage = "Koneksi ke Solana RPC mengalami kegagalan / rate limit";
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Aset tidak ditemukan di blockchain Solana",
+          reason: result.reason,
+          asset,
+          timings: result.timings,
+        },
+        { status: 404 }
+      );
+    }
+
+    if (result.reason === "NOT_ASSET") {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Alamat ini bukan aset NFT (kemungkinan alamat dompet, bukan alamat mint). Masukkan alamat mint aset Solana.",
+          reason: result.reason,
+          asset,
+          timings: result.timings,
+        },
+        { status: 400 }
+      );
+    }
+
+    if (result.reason === "RPC" || result.reason === "METADATA") {
+      const isRpc = result.reason === "RPC";
+      const statusCode = isRpc ? 503 : 502;
+      const errorMsg = isRpc
+        ? "Koneksi ke Solana RPC mengalami kegagalan / tidak dapat dijangkau"
+        : "Aset ditemukan di blockchain, namun metadata IPFS tidak dapat diakses";
+
+      return NextResponse.json(
+        {
+          success: false,
+          level: "TINGKAT 1",
+          verdict: "TIDAK DAPAT DIPASTIKAN",
+          asset,
+          reason: result.reason,
+          error: errorMsg,
+          timings: result.timings,
+          checks: {
+            tokenExists: {
+              status: isRpc ? "TIDAK DAPAT DIPASTIKAN" : "DAPAT DIPERIKSA",
+              detail: isRpc
+                ? "Koneksi ke node Solana RPC terganggu / tidak dapat dijangkau"
+                : "Aset terdaftar di blockchain Solana (Metaplex Core)",
+            },
+            issuerAuthority: {
+              status: "TIDAK DAPAT DIPASTIKAN",
+              detail: isRpc
+                ? "Pemeriksaan otoritas penerbit memerlukan pembacaan token on-chain"
+                : "Metadata IPFS tidak dapat diakses untuk memeriksa identitas institusi penerbit",
+            },
+            statusPencabutan: {
+              status: "TIDAK DAPAT DIPASTIKAN",
+              detail: isRpc
+                ? "Pemeriksaan status pencabutan memerlukan koneksi ke blockchain Solana"
+                : "Gateway IPFS tidak dapat dijangkau untuk membaca metadata pembatalan",
+            },
+            tokenFrozen: {
+              status: "TIDAK DAPAT DIPASTIKAN",
+              detail: isRpc
+                ? "Pemeriksaan status pembekuan token memerlukan pembacaan on-chain"
+                : "Pemeriksaan pembekuan token memerlukan validasi metadata terpadu",
+            },
+            dataHashOnChain: {
+              status: "TIDAK DAPAT DIPASTIKAN",
+              detail: isRpc
+                ? "Pembacaan data hash memerlukan pembacaan token on-chain"
+                : "Gateway IPFS tidak dapat dijangkau untuk membaca atribut Data Hash",
+            },
+            nominatifMatch: {
+              status: "TIDAK DAPAT DIPASTIKAN",
+              detail:
+                "Hitung-ulang dataHash membutuhkan salt institusi yang hanya tersimpan di database Tier 1",
+            },
+            identityBinding: {
+              status: "TIDAK DAPAT DIPASTIKAN",
+              detail:
+                "Pencocokan ikatan dompet dengan identitas nama/NIM mahasiswa memerlukan database Tier 1",
+            },
+          },
+          warning:
+            "Koneksi ke infrastruktur desentralisasi (Solana RPC / IPFS Gateway) terganggu sehingga keabsahan aset TIDAK DAPAT DIPASTIKAN. Ini BUKAN vonis 'tidak valid' atau 'dicabut'.",
+        },
+        { status: statusCode }
+      );
     }
 
     return NextResponse.json(
       {
         success: false,
-        error: errorMessage,
+        error: "Gagal memverifikasi aset di blockchain",
         reason: result.reason,
         asset,
         timings: result.timings,
       },
-      { status: statusCode }
+      { status: 502 }
     );
   }
 

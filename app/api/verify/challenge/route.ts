@@ -3,6 +3,7 @@ import {
   createVerificationChallenge,
   verifyVerificationChallenge,
 } from "@/lib/challenge";
+import { prisma } from "@/lib/prisma";
 
 // In-memory rate limiter per IP: max 20 requests per minute
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -41,7 +42,14 @@ export async function POST(request: NextRequest) {
 
     // Mode A: Verifikasi tanda tangan tantangan
     if (body.action === "verify" || body.signature) {
-      const { walletAddress, nonce, signature, message, expectedOwner } = body;
+      const {
+        walletAddress,
+        nonce,
+        signature,
+        message,
+        expectedOwner,
+        certificateId,
+      } = body;
 
       if (!walletAddress || !nonce || !signature || !message) {
         return NextResponse.json(
@@ -53,12 +61,38 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      let targetCertId: string | undefined =
+        typeof certificateId === "string" ? certificateId : undefined;
+
+      // Fallback query jika certificateId tidak dikirimkan tapi expectedOwner ada
+      if (!targetCertId && expectedOwner && typeof expectedOwner === "string") {
+        const ownerUser = await prisma.user.findFirst({
+          where: { wallet: { walletAddress: expectedOwner } },
+          include: { certificate: true },
+        });
+        if (ownerUser?.certificate?.status === "REVOKED") {
+          return NextResponse.json(
+            {
+              verified: false,
+              error: "CERT_REVOKED",
+              message:
+                "Ijazah ini telah dicabut oleh Universitas Tadulako. Kepemilikan tidak dapat diverifikasi untuk ijazah yang telah dicabut.",
+            },
+            { status: 400 }
+          );
+        }
+        if (ownerUser?.certificate?.id) {
+          targetCertId = ownerUser.certificate.id;
+        }
+      }
+
       const result = await verifyVerificationChallenge({
         walletAddress,
         nonce,
         signature,
         message,
         expectedOwner,
+        certificateId: targetCertId,
       });
 
       if (!result.success) {
@@ -81,7 +115,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Mode B: Minta tantangan baru (Challenge Issue)
-    const { walletAddress } = body;
+    const { walletAddress, certificateId } = body;
 
     if (!walletAddress || typeof walletAddress !== "string") {
       return NextResponse.json(
@@ -96,6 +130,26 @@ export async function POST(request: NextRequest) {
         { error: "Format alamat wallet Solana tidak valid. Periksa kembali alamat wallet yang dimasukkan." },
         { status: 400 }
       );
+    }
+
+    // Jika certificateId diberikan, tolak penerbitan tantangan bila ijazah telah dicabut
+    if (certificateId && typeof certificateId === "string") {
+      const cert = await prisma.certificate.findUnique({
+        where: { id: certificateId },
+        select: { status: true, revokeReason: true },
+      });
+      if (cert && cert.status === "REVOKED") {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "CERT_REVOKED",
+            message:
+              "Ijazah ini telah dicabut oleh Universitas Tadulako. Tantangan verifikasi tidak dapat diterbitkan untuk ijazah yang telah dicabut.",
+            revokeReason: cert.revokeReason || null,
+          },
+          { status: 400 }
+        );
+      }
     }
 
     const challenge = await createVerificationChallenge(walletAddress);

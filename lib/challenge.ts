@@ -80,7 +80,8 @@ export type ChallengeVerificationResult =
         | "WALLET_MISMATCH"
         | "OWNER_MISMATCH"
         | "INVALID_SIGNATURE"
-        | "MALFORMED_INPUT";
+        | "MALFORMED_INPUT"
+        | "CERT_REVOKED";
       message: string;
     };
 
@@ -92,6 +93,7 @@ export type ChallengeVerificationResult =
  * 3. Pesan persis sama byte-for-byte (anti-tamper)
  * 4. Tanda tangan valid ditandatangani oleh private key milik walletAddress (Ed25519 via tweetnacl)
  * 5. Signer sama dengan pemilik aset (owner) jika expectedOwner disediakan
+ * 6. Status ijazah tidak REVOKED jika certificateId disediakan
  */
 export async function verifyVerificationChallenge(params: {
   walletAddress: string;
@@ -99,8 +101,9 @@ export async function verifyVerificationChallenge(params: {
   signature: string; // base58 string
   message: string;
   expectedOwner?: string; // Optional: jika ingin langsung mencocokkan dengan on-chain owner
+  certificateId?: string; // Optional: jika disediakan, tolak ijazah yang berstatus REVOKED
 }): Promise<ChallengeVerificationResult> {
-  const { walletAddress, nonce, signature, message, expectedOwner } = params;
+  const { walletAddress, nonce, signature, message, expectedOwner, certificateId } = params;
 
   if (!walletAddress || !nonce || !signature || !message) {
     return {
@@ -108,6 +111,22 @@ export async function verifyVerificationChallenge(params: {
       error: "MALFORMED_INPUT",
       message: "Data verifikasi tidak lengkap. Minta tantangan baru lalu ulangi prosesnya.",
     };
+  }
+
+  // 0. Cek status pencabutan ijazah jika certificateId diberikan
+  if (certificateId) {
+    const cert = await prisma.certificate.findUnique({
+      where: { id: certificateId },
+      select: { status: true },
+    });
+    if (cert && cert.status === "REVOKED") {
+      return {
+        success: false,
+        error: "CERT_REVOKED",
+        message:
+          "Ijazah ini telah dicabut oleh Universitas Tadulako. Kepemilikan tidak dapat diverifikasi untuk ijazah yang telah dicabut.",
+      };
+    }
   }
 
   // 1. Cari record nonce di DB

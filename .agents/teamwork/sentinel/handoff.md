@@ -1,24 +1,40 @@
-# Sentinel Handoff Report — TRACE P2.6
+# HANDOFF REPORT — PROJECT SENTINEL
 
-## Observation
-Execution of TRACE P2.6 was requested as an end-to-end evaluation trace of certificate issuance and verification through actual Next.js application HTTP endpoints on Solana Devnet, adhering strictly to constraints: no benchmark script substitutions, no modification to existing n=30 datasets, and no early initiation of Phase 3.
-The Project Orchestrator structured and drove the execution through an Explorer-Worker-Reviewer-Challenger-Auditor loop. Upon the orchestrator's claim of completion, an independent Victory Auditor was spawned to execute a 3-phase audit (timeline analysis, cheating/mock detection, and independent verification).
+**Timestamp**: 2026-11-17T17:00:30Z  
+**Branch**: `feat/bab4-experiments` (HEAD `f7bae08`, baseline `27cffac`)  
+**Verdict**: **VICTORY CONFIRMED**  
 
-## Logic Chain
-1. **Interview & Routing**: Task interview concluded with caller's approved task prompt. Routed to General path (`teamwork_orchestrator`).
-2. **Execution Monitoring**: Sentinel monitored execution progress and liveness via scheduled crons while the swarm performed server setup, student registration, consent, wallet registration, admin approval, and issuance via `POST /api/nft/mint`.
-3. **On-Chain Assertion & Verification**: Worker and challengers verified that stored Tier 1 hash and on-chain asset data hash matched bit-for-bit, and `GET /api/verify` returned VALID.
-4. **Mandatory Victory Audit**: Victory Auditor independently corroborated all identifiers, verified zero hardcoding or facade logic, recomputed SHA-256 hash matching Tier 1 hash (`sha256:56a51c98cce45b2675301c1727964c3dd90b58bcac6d120ebed97eebaf600244`), confirmed clean lint/tsc build, and validated that n=30 experiment datasets were untouched (0 bytes modified).
-5. **Verdict**: Independent Victory Auditor returned `VICTORY CONFIRMED`.
+---
 
-## Caveats
-- Git commit `00973f6` was cleanly created on `feat/bab4-experiments`. Remote push was attempted in the environment; if non-interactive push credentials are required on origin, standard local authentication applies.
-- Existing n=30 benchmark trials and Phase 3 boundaries remain completely intact.
+## 1. Observation
+- Orchestrated execution for two critical fixes in SIJAGA:
+  1. **Tugas 1 (TC-12 Outage Handling)**: When Solana RPC or IPFS gateway is down, `POST /api/verify/tingkat-1` returned raw HTTP 502/503 errors. Draf skripsi (Tabel 3.3, TC-12) requires "TIDAK DAPAT DIPASTIKAN".
+  2. **Tugas 2 (Challenge on Revoked Certificate)**: The challenge verification flow previously did not check certificate status, allowing revoked certificates to present a green "Kepemilikan Terverifikasi" badge.
+- Orchestrator (`b129e651-00c4-4cf6-b087-5c8baeee3744`) was dispatched on the General route. It mobilized 3 explorers, 1 worker, 2 reviewers, 2 challengers, and 1 forensic auditor.
+- 5 files modified in working tree (uncommitted, awaiting Juan's authorization):
+  - `app/api/verify/tingkat-1/route.ts`
+  - `app/verify-onchain/page.tsx`
+  - `lib/challenge.ts`
+  - `app/api/verify/challenge/route.ts`
+  - `app/ijazah/[id]/page.tsx`
+- Post-victory auditor (`8f5fae82-cf70-483d-a34f-cf6a832dec73`) completed an independent 3-phase audit and issued **VICTORY CONFIRMED**.
 
-## Conclusion
-TRACE P2.6 is 100% complete and independently verified. All acceptance criteria from `ORIGINAL_REQUEST.md` have been met.
+## 2. Logic Chain
+- **Tugas 1 Approach**: Adopted semantic HTTP 502/503 status with structured JSON payload (`verdict: "TIDAK DAPAT DIPASTIKAN"`, full 7-check matrix). This adheres to HTTP semantics (RFC 9110), protects against CDN cache poisoning (where 200 responses could be cached erroneously), preserves APM observability, and renders gracefully in `app/verify-onchain/page.tsx` via an amber Bento card.
+- **Tugas 2 Approach**: Employed a defense-in-depth model across Core Lib (`lib/challenge.ts`), API Route (`app/api/verify/challenge/route.ts`), and UI Component (`app/ijazah/[id]/page.tsx`). Preserved 100% of Ed25519 cryptographic primitives while rejecting challenge nonce issuance/verification on revoked certificates and preventing affirmative badge rendering.
 
-## Verification Method
-- Independent Victory Auditor Handoff: `.agents/teamwork/victory_auditor/handoff.md`
-- Orchestrator Handoff: `.agents/teamwork/orchestrator/handoff.md`
-- Documentation & Evidence: `BAB4_PROGRESS.md` and `experiments/CHECKPOINT.json` (Commit `00973f6`)
+## 3. Caveats
+- Working changes are on branch `feat/bab4-experiments`. Per user instructions, NO git commit or git push has been performed. Git commit must be reviewed and approved by Juan.
+- Devnet RPC calls were conserved; no additional third-party dependencies were added to `package.json`.
+
+## 4. Conclusion
+Both tasks have been fully completed, strictly verified against regressions, and validated by an independent post-victory auditor with zero failures.
+
+## 5. Verification Method
+- Static type check: `npx tsc --noEmit` (Exit code 0)
+- Linting: `npx eslint app/api/verify/tingkat-1/route.ts app/verify-onchain/page.tsx lib/challenge.ts app/api/verify/challenge/route.ts app/ijazah/[id]/page.tsx` (Exit code 0)
+- Production build: `npm run build` (Exit code 0, 44/44 static pages)
+- Baseline cryptography tests: `npx tsx scripts/test-challenge.ts` (TC-05 & TC-06a-d passing 100%)
+- Empirical revocation tests: `npx tsx scripts/test-challenger-revoked.ts` (28/28 assertions passing)
+- TC-12 dead RPC simulation: HTTP 503, `verdict: "TIDAK DAPAT DIPASTIKAN"`
+- Live Tingkat-1 regression: Trace P2.6 valid, issuer mismatch, wallet, and random address tests all confirmed
