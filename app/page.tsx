@@ -1071,16 +1071,12 @@ export default function HomePage() {
                   Infrastruktur modern bagi institusi pendidikan untuk memfasilitasi penelusuran rekam jejak akademik.
                 </p>
                 <div className="flex flex-col sm:flex-row items-center gap-5">
-                  <Button
-                    className="h-14 px-8 rounded-full text-base font-bold bg-white text-foreground hover:bg-zinc-100 shadow-xl shadow-black/40 hover:scale-105 transition-transform"
-                    onClick={() =>
-                      document
-                        .getElementById("verification")
-                        ?.scrollIntoView({ behavior: "smooth" })
-                    }
+                  <Link
+                    className="flex items-center justify-center h-14 px-8 rounded-full text-base font-bold bg-white text-foreground hover:bg-zinc-100 shadow-xl shadow-black/40 hover:scale-105 transition-transform"
+                    href="/verify-onchain"
                   >
                     Mulai Verifikasi
-                  </Button>
+                  </Link>
                 </div>
               </div>
             </div>
