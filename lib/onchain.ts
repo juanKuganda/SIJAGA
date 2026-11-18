@@ -54,11 +54,15 @@ async function fetchMetadataJson(
   try {
     // Resolve IPFS URIs to gateway
     let resolvedUri = uri;
+    const customGateway = process.env.NEXT_PUBLIC_PINATA_GATEWAY?.replace(/\/$/, "");
     if (uri.startsWith("ipfs://")) {
       const gateway =
-        process.env.NEXT_PUBLIC_PINATA_GATEWAY ||
+        customGateway ||
         "https://gateway.pinata.cloud";
       resolvedUri = `${gateway}/ipfs/${uri.replace("ipfs://", "")}`;
+    } else if (customGateway && uri.includes("/ipfs/")) {
+      const cid = uri.slice(uri.indexOf("/ipfs/") + 6);
+      resolvedUri = `${customGateway}/ipfs/${cid}`;
     }
 
     const controller = new AbortController();
