@@ -48,12 +48,42 @@ export async function getAuthUser(request?: Request): Promise<JWTPayload | null>
     }
 
     // 2. Neon Auth session
-    let session = null;
-    try {
-      const res = await auth.getSession();
-      session = res.data;
-    } catch {
-      session = null;
+    let session: { user?: { id: string; email: string } } | null = null;
+
+    // Fast-path / CLI-safe: extract and cryptographically verify Neon Auth session cookie from request headers if present
+    if (request?.headers) {
+      const cookieHeader = request.headers.get("cookie");
+      if (cookieHeader) {
+        const match = cookieHeader.match(/__Secure-neon-auth\.local\.session_data=([^;]+)/);
+        if (match && match[1]) {
+          try {
+            const { jwtVerify } = await import("jose");
+            const secret = process.env.NEON_AUTH_COOKIE_SECRET;
+            if (secret) {
+              const { payload } = await jwtVerify(
+                decodeURIComponent(match[1]),
+                new TextEncoder().encode(secret),
+                { algorithms: ["HS256"] }
+              );
+              if (payload && typeof payload === "object" && (payload as { user?: { id: string; email: string } }).user) {
+                session = { user: (payload as { user: { id: string; email: string } }).user };
+              }
+            }
+          } catch {
+            // Invalid cookie or expired signature
+          }
+        }
+      }
+    }
+
+    // Upstream Neon Auth getSession if session was not resolved from request cookie
+    if (!session?.user) {
+      try {
+        const res = await auth.getSession();
+        session = res.data;
+      } catch {
+        session = null;
+      }
     }
 
     if (!session?.user) {

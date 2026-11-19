@@ -5,9 +5,9 @@ import { getAuthUser } from "@/lib/auth";
 /**
  * GET — Ambil status consent mahasiswa saat ini
  */
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    const payload = await getAuthUser();
+    const payload = await getAuthUser(request);
     if (!payload) {
       return NextResponse.json({ error: "Sesi Anda telah berakhir. Silakan login kembali." }, { status: 401 });
     }
@@ -47,7 +47,7 @@ export async function GET(_request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const payload = await getAuthUser();
+    const payload = await getAuthUser(request);
     if (!payload) {
       return NextResponse.json({ error: "Sesi Anda telah berakhir. Silakan login kembali." }, { status: 401 });
     }
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   try {
-    const payload = await getAuthUser();
+    const payload = await getAuthUser(request);
     if (!payload) {
       return NextResponse.json({ error: "Sesi Anda telah berakhir. Silakan login kembali." }, { status: 401 });
     }

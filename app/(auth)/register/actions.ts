@@ -50,21 +50,72 @@ export async function registerWithEmail(
     let authUserId: string | undefined;
 
     // Register ke Neon Auth
-    const { data, error } = await auth.signUp.email({
-      email,
-      name,
-      password,
-    });
+    let data: { user?: { id: string } } | null = null;
+    let error: { message?: string } | null = null;
+
+    try {
+      const res = await auth.signUp.email({
+        email,
+        name,
+        password,
+      });
+      data = res.data;
+      error = res.error;
+    } catch {
+      // Fallback untuk eksekusi CLI script di luar request store Next.js
+      try {
+        const handler = auth.handler();
+        const req = new Request("http://localhost:3000/api/auth/sign-up/email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, name, password }),
+        });
+        const res = await handler.POST(req, { params: Promise.resolve({ path: ["sign-up", "email"] }) });
+        const json = (await res.json().catch(() => ({}))) as { message?: string; error?: string; user?: { id: string } };
+        if (!res.ok) {
+          error = { message: json.message || json.error || `HTTP ${res.status}` };
+        } else {
+          data = { user: json.user };
+        }
+      } catch (handlerErr: unknown) {
+        error = { message: handlerErr instanceof Error ? handlerErr.message : "Gagal menghubungi Neon Auth" };
+      }
+    }
 
     if (error) {
       // Fallback untuk Vercel Preview / Database Branching Terisolasi:
       // Neon Auth bersifat global. Jika user sudah pernah register di branch production/local,
       // signUp akan gagal karena email sudah digunakan. Kita coba signIn untuk sinkronisasi.
       console.warn(`[WARN] auth.signUp.email error: ${error.message}. Mencoba auth.signIn.email...`);
-      const { data: signInData, error: signInError } = await auth.signIn.email({
-        email,
-        password,
-      });
+      let signInData: { user?: { id: string } } | null = null;
+      let signInError: { message?: string } | null = null;
+
+      try {
+        const res = await auth.signIn.email({
+          email,
+          password,
+        });
+        signInData = res.data;
+        signInError = res.error;
+      } catch {
+        try {
+          const handler = auth.handler();
+          const req = new Request("http://localhost:3000/api/auth/sign-in/email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+          });
+          const res = await handler.POST(req, { params: Promise.resolve({ path: ["sign-in", "email"] }) });
+          const json = (await res.json().catch(() => ({}))) as { message?: string; error?: string; user?: { id: string } };
+          if (!res.ok) {
+            signInError = { message: json.message || json.error || `HTTP ${res.status}` };
+          } else {
+            signInData = { user: json.user };
+          }
+        } catch (handlerErr: unknown) {
+          signInError = { message: handlerErr instanceof Error ? handlerErr.message : "Gagal sign in ke Neon Auth" };
+        }
+      }
 
       if (signInError) {
         return { error: error.message || "Akun sudah terdaftar di Neon Auth (dari branch lain), namun password salah. Silakan login atau gunakan password yang sesuai." };

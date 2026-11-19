@@ -14,7 +14,7 @@ import { createAuditLog } from "@/lib/audit";
  */
 export async function POST(request: NextRequest) {
   try {
-    const payload = await getAuthUser();
+    const payload = await getAuthUser(request);
     if (!payload || payload.role !== "ADMIN") {
       return NextResponse.json({ error: "Anda harus login sebagai admin. Silakan login kembali." }, { status: 401 });
     }
